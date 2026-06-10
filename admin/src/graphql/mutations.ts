@@ -118,3 +118,18 @@ export const UPDATE_SETTINGS = gql`
     }
   }
 `;
+
+export const REFUND_PAYMENT = gql`
+  mutation RefundPayment($paymentId: ID!, $amount: Float, $reason: String) {
+    refundPayment(paymentId: $paymentId, amount: $amount, reason: $reason) {
+      id
+      status
+      refunds {
+        providerRefundId
+        amount
+        reason
+        at
+      }
+    }
+  }
+`;

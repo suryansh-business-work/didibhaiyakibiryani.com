@@ -183,3 +183,35 @@ export const SETTINGS = gql`
     }
   }
 `;
+
+export const PAYMENTS = gql`
+  query Payments($status: PaymentRecordStatus) {
+    payments(status: $status) {
+      id
+      provider
+      providerOrderId
+      providerPaymentId
+      amount
+      currency
+      status
+      method
+      createdAt
+      order {
+        id
+        orderNumber
+        paymentStatus
+      }
+      refunds {
+        providerRefundId
+        amount
+        reason
+        at
+      }
+      events {
+        type
+        at
+        data
+      }
+    }
+  }
+`;

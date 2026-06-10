@@ -9,6 +9,7 @@ import Categories from "./pages/Categories";
 import Coupons from "./pages/Coupons";
 import Customers from "./pages/Customers";
 import Branding from "./pages/Branding";
+import Payments from "./pages/Payments";
 import type { ReactNode } from "react";
 
 function Protected({ children }: Readonly<{ children: ReactNode }>) {
@@ -30,6 +31,7 @@ export default function App() {
       <Route path="/coupons" element={<Protected><Coupons /></Protected>} />
       <Route path="/customers" element={<Protected><Customers /></Protected>} />
       <Route path="/branding" element={<Protected><Branding /></Protected>} />
+      <Route path="/payments" element={<Protected><Payments /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

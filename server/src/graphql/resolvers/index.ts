@@ -5,6 +5,7 @@ import { couponResolvers } from "./coupon.js";
 import { orderResolvers } from "./order.js";
 import { dashboardResolvers } from "./dashboard.js";
 import { settingsResolvers } from "./settings.js";
+import { paymentResolvers } from "./payment.js";
 
 export const resolvers = {
   DateTime,
@@ -16,6 +17,7 @@ export const resolvers = {
     ...orderResolvers.Query,
     ...dashboardResolvers.Query,
     ...settingsResolvers.Query,
+    ...paymentResolvers.Query,
   },
 
   Mutation: {
@@ -24,6 +26,7 @@ export const resolvers = {
     ...couponResolvers.Mutation,
     ...orderResolvers.Mutation,
     ...settingsResolvers.Mutation,
+    ...paymentResolvers.Mutation,
   },
 
   // Field resolvers
@@ -34,4 +37,5 @@ export const resolvers = {
   OrderItem: dashboardResolvers.OrderItem,
   TopItem: dashboardResolvers.TopItem,
   User: dashboardResolvers.User,
+  Payment: paymentResolvers.Payment,
 };

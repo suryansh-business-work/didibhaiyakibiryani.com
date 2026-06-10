@@ -90,6 +90,20 @@ bash deploy/healthcheck.sh
 docker compose --env-file deploy/.env up -d --build
 ```
 
+## Razorpay setup
+
+1. Add `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` to
+   GitHub Actions secrets (and `server/.env` locally). Until they exist, online
+   payment mutations return "not configured" and COD keeps working.
+2. In the Razorpay dashboard create a webhook pointing to
+   `https://server.didibhaiyakibiryani.com/webhooks/razorpay` with the same
+   webhook secret, subscribed to `payment.captured`, `payment.failed` and
+   `refund.*` events.
+3. Flow: `placeOrder(paymentMethod: ONLINE)` → `createRazorpayOrder(orderId)` →
+   Razorpay Checkout in the client → `verifyRazorpayPayment(input)`. The webhook
+   independently confirms captures/refunds (idempotent), and admins can refund
+   from the Payments page.
+
 ## Notes
 
 - **MongoDB**: the server exits on a bad `MONGODB_URI` and the container will

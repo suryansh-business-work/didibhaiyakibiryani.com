@@ -5,6 +5,7 @@ export { Coupon } from "./Coupon.js";
 export { Order } from "./Order.js";
 export { Review } from "./Review.js";
 export { Settings, getOrCreateSettings, SETTINGS_KEY } from "./Settings.js";
+export { Payment } from "./Payment.js";
 
 export type { IUser, IAddress, Role } from "./User.js";
 export type { ICategory } from "./Category.js";
@@ -19,3 +20,4 @@ export type {
 } from "./Order.js";
 export type { IReview } from "./Review.js";
 export type { ISettings } from "./Settings.js";
+export type { IPayment, PaymentRecordStatus } from "./Payment.js";

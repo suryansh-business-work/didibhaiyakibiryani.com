@@ -316,10 +316,62 @@ export const typeDefs = /* GraphQL */ `
     youtubeUrl: String
   }
 
+  enum PaymentRecordStatus {
+    CREATED
+    CAPTURED
+    FAILED
+    REFUNDED
+    PARTIALLY_REFUNDED
+  }
+
+  type PaymentRefund {
+    providerRefundId: String!
+    amount: Float!
+    reason: String
+    at: DateTime!
+  }
+
+  type PaymentEvent {
+    type: String!
+    at: DateTime!
+    data: String
+  }
+
+  type Payment {
+    id: ID!
+    order: Order
+    provider: String!
+    providerOrderId: String!
+    providerPaymentId: String
+    amount: Float!
+    currency: String!
+    status: PaymentRecordStatus!
+    method: String
+    refunds: [PaymentRefund!]!
+    events: [PaymentEvent!]!
+    createdAt: DateTime!
+  }
+
+  type RazorpayOrderPayload {
+    keyId: String!
+    razorpayOrderId: String!
+    amount: Int! # paise
+    currency: String!
+  }
+
+  input VerifyPaymentInput {
+    orderId: ID!
+    razorpayOrderId: String!
+    razorpayPaymentId: String!
+    razorpaySignature: String!
+  }
+
   type Query {
     me: User
 
     settings: Settings!
+
+    payments(status: PaymentRecordStatus): [Payment!]! # admin
 
     categories(activeOnly: Boolean): [Category!]!
     menuItems(categoryId: ID, search: String, availableOnly: Boolean): [MenuItem!]!
@@ -368,5 +420,10 @@ export const typeDefs = /* GraphQL */ `
 
     # Branding & company settings (admin)
     updateSettings(input: SettingsInput!): Settings!
+
+    # Payments (Razorpay)
+    createRazorpayOrder(orderId: ID!): RazorpayOrderPayload!
+    verifyRazorpayPayment(input: VerifyPaymentInput!): Order!
+    refundPayment(paymentId: ID!, amount: Float, reason: String): Payment! # admin
   }
 `;

@@ -9,6 +9,7 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 
 import { logger } from "./utils/logger.js";
 import { connectDB } from "./config/db.js";
+import { razorpayWebhook } from "./webhooks/razorpay.js";
 import { typeDefs } from "./graphql/typeDefs.js";
 import { resolvers } from "./graphql/resolvers/index.js";
 import { getUserFromAuthHeader, type Context } from "./utils/auth.js";
@@ -44,6 +45,13 @@ async function start() {
     res.json({ ok: true, service: "ddb-server", graphql: "/graphql", health: "/health" })
   );
   app.get("/health", (_req, res) => res.json({ ok: true, service: "ddb-server" }));
+
+  // Razorpay webhook — raw body so the HMAC covers the exact bytes sent.
+  app.post(
+    "/webhooks/razorpay",
+    express.raw({ type: "application/json", limit: "1mb" }),
+    razorpayWebhook
+  );
 
   app.use(
     "/graphql",
