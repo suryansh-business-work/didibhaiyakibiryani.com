@@ -2,13 +2,9 @@
 import Layout from "../layouts/Layout.astro";
 import Hero from "../components/Hero.astro";
 import Marquee from "../components/Marquee.astro";
-import ProductCard from "../components/ProductCard.astro";
 import AppBadges from "../components/AppBadges.astro";
 import { iconSvg } from "../lib/icons";
-import { fetchMenu, ORDER_URL } from "../lib/api";
-
-// Products are managed in the admin panel and fetched from the API at build time.
-const menu = await fetchMenu();
+import { API_URL, ORDER_URL } from "../lib/api";
 
 const features = [
   {
@@ -125,15 +121,87 @@ const partyPerks = [
         </a>
       </div>
 
-      {menu.length > 0 ? (
-        <div class="menu-grid">
-          {menu.map((m) => <ProductCard {...m} />)}
-        </div>
-      ) : (
-        <p class="menu-empty">Our menu is being updated — please check back shortly.</p>
-      )}
+      <div class="menu-grid" id="menu-grid">
+        <p class="menu-empty" id="menu-status">Loading our menu…</p>
+      </div>
     </div>
   </section>
+
+  <script is:inline define:vars={{ apiUrl: API_URL, orderUrl: ORDER_URL }}>
+    (function () {
+      const grid = document.getElementById("menu-grid");
+      const QUERY =
+        "query { menuItems(availableOnly: true) { name description price spiceLevel serves badge } }";
+      const esc = (v) =>
+        String(v == null ? "" : v).replace(/[&<>"]/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
+        );
+      function card(m, i) {
+        const badge = m.badge === "BESTSELLER" || m.badge === "NEW" ? m.badge : "";
+        const hue = (i * 9 + 12) % 40;
+        const spice = m.spiceLevel > 0 ? "🌶️".repeat(m.spiceLevel) : "";
+        const badgeHtml = badge
+          ? '<span class="product__badge ' +
+            (badge === "NEW" ? "is-new" : "") +
+            '">' +
+            badge +
+            "</span>"
+          : "";
+        const spiceHtml = spice ? '<span class="product__spice">' + spice + "</span>" : "";
+        return (
+          '<article class="product">' +
+          '<div class="product__img" style="--h:' +
+          hue +
+          '">' +
+          badgeHtml +
+          '<svg class="product__bowl" viewBox="0 0 120 90" aria-hidden="true">' +
+          '<ellipse cx="60" cy="62" rx="42" ry="20" fill="rgba(0,0,0,0.35)"/>' +
+          '<path d="M22 50a38 16 0 0 0 76 0Z" fill="#3a1410"/>' +
+          '<ellipse cx="60" cy="50" rx="38" ry="15" fill="#5e2218"/>' +
+          '<circle cx="52" cy="46" r="2" fill="#e4b65c"/>' +
+          '<circle cx="68" cy="44" r="2" fill="#5fb45f"/>' +
+          '<circle cx="60" cy="50" r="2" fill="#e4b65c"/></svg></div>' +
+          '<div class="product__body"><div class="product__head">' +
+          '<h3 class="product__name">' +
+          esc(m.name) +
+          '</h3><span class="product__price">₹' +
+          esc(m.price) +
+          "</span></div>" +
+          '<p class="product__desc">' +
+          esc(m.description) +
+          '</p><div class="product__meta">' +
+          '<span class="product__serves">' +
+          esc(m.serves) +
+          "</span>" +
+          spiceHtml +
+          "</div></div>" +
+          '<a class="product__add btn" href="' +
+          orderUrl +
+          '"><svg class="icon" viewBox="0 0 24 24" width="16" height="16">' +
+          '<path d="M12 5v14M5 12h14"/></svg>Add to cart</a></article>'
+        );
+      }
+      fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: QUERY }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          const items = (res && res.data && res.data.menuItems) || [];
+          if (!items.length) {
+            grid.innerHTML =
+              '<p class="menu-empty">Our menu is being updated — please check back shortly.</p>';
+            return;
+          }
+          grid.innerHTML = items.map(card).join("");
+        })
+        .catch(() => {
+          grid.innerHTML =
+            '<p class="menu-empty">Couldn\'t load the menu — please refresh.</p>';
+        });
+    })();
+  </script>
 
   <!-- ============ HOW IT WORKS ============ -->
   <section class="section">
