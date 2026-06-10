@@ -8,6 +8,7 @@ import {
   ITag,
   ILayers,
   IUsers,
+  IPalette,
   ILogout,
 } from "./icons";
 
@@ -18,6 +19,7 @@ const NAV = [
   { to: "/categories", label: "Categories", icon: ILayers },
   { to: "/coupons", label: "Coupons", icon: ITag },
   { to: "/customers", label: "Customers", icon: IUsers },
+  { to: "/branding", label: "Branding", icon: IPalette },
 ];
 
 export default function Layout({ title, children }: Readonly<{ title: string; children: ReactNode }>) {

@@ -95,3 +95,26 @@ export const DELETE_COUPON = gql`
     deleteCoupon(id: $id)
   }
 `;
+
+export const UPDATE_SETTINGS = gql`
+  mutation UpdateSettings($input: SettingsInput!) {
+    updateSettings(input: $input) {
+      brandName
+      tagline
+      logoUrl
+      primaryColor
+      accentColor
+      companyName
+      companyAddress
+      companyPhone
+      companyEmail
+      supportPhone
+      supportEmail
+      fssaiLicense
+      instagramUrl
+      facebookUrl
+      youtubeUrl
+      updatedAt
+    }
+  }
+`;

@@ -279,8 +279,47 @@ export const typeDefs = /* GraphQL */ `
   }
 
   # ─────────────── Queries ───────────────
+  type Settings {
+    brandName: String!
+    tagline: String!
+    logoUrl: String!
+    primaryColor: String!
+    accentColor: String!
+    companyName: String!
+    companyAddress: String!
+    companyPhone: String!
+    companyEmail: String!
+    supportPhone: String!
+    supportEmail: String!
+    fssaiLicense: String!
+    instagramUrl: String!
+    facebookUrl: String!
+    youtubeUrl: String!
+    updatedAt: DateTime!
+  }
+
+  input SettingsInput {
+    brandName: String
+    tagline: String
+    logoUrl: String
+    primaryColor: String
+    accentColor: String
+    companyName: String
+    companyAddress: String
+    companyPhone: String
+    companyEmail: String
+    supportPhone: String
+    supportEmail: String
+    fssaiLicense: String
+    instagramUrl: String
+    facebookUrl: String
+    youtubeUrl: String
+  }
+
   type Query {
     me: User
+
+    settings: Settings!
 
     categories(activeOnly: Boolean): [Category!]!
     menuItems(categoryId: ID, search: String, availableOnly: Boolean): [MenuItem!]!
@@ -326,5 +365,8 @@ export const typeDefs = /* GraphQL */ `
     placeOrder(input: PlaceOrderInput!): Order!
     cancelOrder(id: ID!): Order!
     updateOrderStatus(id: ID!, status: OrderStatus!, note: String): Order! # admin/staff
+
+    # Branding & company settings (admin)
+    updateSettings(input: SettingsInput!): Settings!
   }
 `;

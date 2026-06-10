@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { logger } from "../utils/logger.js";
 
 export async function connectDB(uri: string): Promise<void> {
   if (!uri) {
@@ -10,9 +11,9 @@ export async function connectDB(uri: string): Promise<void> {
   await mongoose.connect(uri, {
     serverSelectionTimeoutMS: 10000,
   });
-  console.log("✅ MongoDB connected:", mongoose.connection.name);
+  logger.info({ db: mongoose.connection.name }, "MongoDB connected");
 
   mongoose.connection.on("error", (err) => {
-    console.error("MongoDB error:", err.message);
+    logger.error({ err: err.message }, "MongoDB error");
   });
 }

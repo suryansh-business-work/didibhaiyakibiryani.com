@@ -160,3 +160,26 @@ export const CUSTOMERS = gql`
     }
   }
 `;
+
+export const SETTINGS = gql`
+  query Settings {
+    settings {
+      brandName
+      tagline
+      logoUrl
+      primaryColor
+      accentColor
+      companyName
+      companyAddress
+      companyPhone
+      companyEmail
+      supportPhone
+      supportEmail
+      fssaiLicense
+      instagramUrl
+      facebookUrl
+      youtubeUrl
+      updatedAt
+    }
+  }
+`;

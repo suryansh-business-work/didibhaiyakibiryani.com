@@ -5,8 +5,24 @@
 set -euo pipefail
 
 DOMAIN="didibhaiyakibiryani.com"
-# Only domains with live DNS A-records (no www — it is not mapped).
-SUBDOMAINS=("server.${DOMAIN}" "admin.${DOMAIN}" "native.${DOMAIN}")
+# Candidate subdomains. Certbot is all-or-nothing per request, so each one is
+# included only if its DNS A-record actually resolves (a missing record would
+# fail the whole certificate request).
+CANDIDATE_SUBDOMAINS=(
+  "server.${DOMAIN}"
+  "admin.${DOMAIN}"
+  "native.${DOMAIN}"
+  "delivery.${DOMAIN}"
+  "signoz.${DOMAIN}"
+)
+SUBDOMAINS=()
+for d in "${CANDIDATE_SUBDOMAINS[@]}"; do
+  if getent hosts "${d}" >/dev/null 2>&1; then
+    SUBDOMAINS+=("${d}")
+  else
+    echo "⚠ Skipping ${d} (no DNS record yet)"
+  fi
+done
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-admin@${DOMAIN}}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

@@ -116,6 +116,42 @@ const {
         nav?.classList.toggle("open");
         navToggle.classList.toggle("open");
       });
+
+      // Admin-managed branding: apply primary color + company details live.
+      const API =
+        (import.meta.env.PUBLIC_API_URL as string) ||
+        "https://server.didibhaiyakibiryani.com/graphql";
+      fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query:
+            "query { settings { brandName tagline primaryColor companyAddress companyPhone companyEmail supportPhone supportEmail } }",
+        }),
+      })
+        .then((r) => r.json())
+        .then(({ data }) => {
+          const s = data?.settings;
+          if (!s) return;
+          if (s.primaryColor) {
+            document.documentElement.style.setProperty("--gold", s.primaryColor);
+          }
+          document.querySelectorAll<HTMLElement>("[data-setting]").forEach((el) => {
+            const key = el.getAttribute("data-setting") || "";
+            const value = (s as Record<string, string>)[key];
+            if (value) {
+              el.textContent = value;
+              if (el instanceof HTMLAnchorElement) {
+                if (key.toLowerCase().includes("phone")) el.href = `tel:${value}`;
+                if (key.toLowerCase().includes("email")) el.href = `mailto:${value}`;
+              }
+              el.closest("[data-setting-row]")?.removeAttribute("hidden");
+            }
+          });
+        })
+        .catch(() => {
+          /* branding falls back to the built-in defaults */
+        });
     </script>
   </body>
 </html>

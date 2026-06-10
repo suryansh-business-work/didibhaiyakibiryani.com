@@ -4,6 +4,7 @@ import { menuResolvers } from "./menu.js";
 import { couponResolvers } from "./coupon.js";
 import { orderResolvers } from "./order.js";
 import { dashboardResolvers } from "./dashboard.js";
+import { settingsResolvers } from "./settings.js";
 
 export const resolvers = {
   DateTime,
@@ -14,6 +15,7 @@ export const resolvers = {
     ...couponResolvers.Query,
     ...orderResolvers.Query,
     ...dashboardResolvers.Query,
+    ...settingsResolvers.Query,
   },
 
   Mutation: {
@@ -21,6 +23,7 @@ export const resolvers = {
     ...menuResolvers.Mutation,
     ...couponResolvers.Mutation,
     ...orderResolvers.Mutation,
+    ...settingsResolvers.Mutation,
   },
 
   // Field resolvers

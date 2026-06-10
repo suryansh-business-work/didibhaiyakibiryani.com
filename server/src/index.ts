@@ -2,10 +2,12 @@ import "dotenv/config";
 import express from "express";
 import http from "node:http";
 import cors from "cors";
+import { pinoHttp } from "pino-http";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 
+import { logger } from "./utils/logger.js";
 import { connectDB } from "./config/db.js";
 import { typeDefs } from "./graphql/typeDefs.js";
 import { resolvers } from "./graphql/resolvers/index.js";
@@ -22,6 +24,14 @@ async function start() {
 
   const app = express();
   const httpServer = http.createServer(app);
+
+  // Structured request logging (quiet for health checks).
+  app.use(
+    pinoHttp({
+      logger,
+      autoLogging: { ignore: (req) => req.url === "/health" },
+    })
+  );
 
   const apollo = new ApolloServer<Context>({
     typeDefs,
@@ -50,10 +60,10 @@ async function start() {
   );
 
   await new Promise<void>((resolve) => httpServer.listen({ port: PORT }, resolve));
-  console.log(`🚀 GraphQL ready at http://localhost:${PORT}/graphql`);
+  logger.info({ port: PORT }, "GraphQL server ready");
 }
 
 start().catch((err) => {
-  console.error("❌ Failed to start server:", err.message);
+  logger.fatal({ err: err.message }, "Failed to start server");
   process.exit(1);
 });

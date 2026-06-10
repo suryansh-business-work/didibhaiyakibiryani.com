@@ -77,3 +77,11 @@ export const ISearch = ({ size }: P) => (
     <path d="m21 21-4.3-4.3" />
   </svg>
 );
+export const IPalette = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M12 21a9 9 0 1 1 9-9c0 2.2-1.8 3-3 3h-2a2 2 0 0 0-1.5 3.3c.4.5.5 1.2 0 1.7-.6.6-1.6 1-2.5 1Z" />
+    <circle cx="7.5" cy="11.5" r="1.2" />
+    <circle cx="10.5" cy="7.5" r="1.2" />
+    <circle cx="15" cy="7.5" r="1.2" />
+  </svg>
+);
