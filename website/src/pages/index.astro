@@ -5,6 +5,10 @@ import Marquee from "../components/Marquee.astro";
 import ProductCard from "../components/ProductCard.astro";
 import AppBadges from "../components/AppBadges.astro";
 import { iconSvg } from "../lib/icons";
+import { fetchMenu, ORDER_URL } from "../lib/api";
+
+// Products are managed in the admin panel and fetched from the API at build time.
+const menu = await fetchMenu();
 
 const features = [
   {
@@ -26,45 +30,6 @@ const features = [
     icon: "heart",
     title: "Made with Pyaar",
     text: "Family recipes from Didi & Bhaiya's own kitchen. Har bite, yaad rahe.",
-  },
-];
-
-const menu = [
-  {
-    name: "Hyderabadi Veg Dum",
-    price: 249,
-    desc: "Long-grain basmati, fried onion, mint & saffron — dum-sealed the classic Hyderabadi way.",
-    serves: "Serves 1–2",
-    spice: 2,
-    badge: "BESTSELLER" as const,
-    hue: 14,
-  },
-  {
-    name: "Paneer Tikka Biryani",
-    price: 289,
-    desc: "Char-grilled paneer tikka folded through smoky, spiced rice with caramelised onion.",
-    serves: "Serves 1–2",
-    spice: 2,
-    badge: "BESTSELLER" as const,
-    hue: 28,
-  },
-  {
-    name: "Kathal (Jackfruit) Biryani",
-    price: 299,
-    desc: "Tender raw jackfruit braised in royal spices — the legendary veg 'meat' biryani.",
-    serves: "Serves 1–2",
-    spice: 3,
-    badge: "NEW" as const,
-    hue: 20,
-  },
-  {
-    name: "Gulab Jamun (2 pc)",
-    price: 79,
-    desc: "Warm khoya dumplings soaked in rose-cardamom syrup. The happy ending.",
-    serves: "Serves 1",
-    spice: 0,
-    badge: "BESTSELLER" as const,
-    hue: 32,
   },
 ];
 
@@ -155,14 +120,18 @@ const partyPerks = [
             The ones everyone <span class="italic-accent">orders twice.</span>
           </h2>
         </div>
-        <a href="/offers" class="link-arrow">See full menu
+        <a href={ORDER_URL} class="link-arrow">Order on the app
           <svg class="icon" viewBox="0 0 24 24" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
       </div>
 
-      <div class="menu-grid">
-        {menu.map((m) => <ProductCard {...m} />)}
-      </div>
+      {menu.length > 0 ? (
+        <div class="menu-grid">
+          {menu.map((m) => <ProductCard {...m} />)}
+        </div>
+      ) : (
+        <p class="menu-empty">Our menu is being updated — please check back shortly.</p>
+      )}
     </div>
   </section>
 
@@ -339,7 +308,7 @@ const partyPerks = [
           Your next favourite biryani<br />is 35 minutes away.
         </h2>
         <div class="final-cta__btns">
-          <a href="/offers" class="btn btn-gold">
+          <a href={ORDER_URL} class="btn btn-gold">
             <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
               <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
               <path d="M3 6h18M16 10a4 4 0 0 1-8 0" />
@@ -406,6 +375,11 @@ const partyPerks = [
     white-space: nowrap;
   }
   .link-arrow:hover { gap: 12px; }
+  .menu-empty {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 32px 0;
+  }
   .menu-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

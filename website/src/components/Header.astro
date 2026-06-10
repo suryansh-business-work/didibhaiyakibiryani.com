@@ -1,5 +1,6 @@
 ---
 import Logo from "./Logo.astro";
+import { ORDER_URL } from "../lib/api";
 
 interface Props {
   active?: string;
@@ -41,7 +42,7 @@ const links = [
         <span class="cart__badge">3</span>
       </a>
 
-      <a href="/offers" class="btn btn-gold order-btn">Order Now</a>
+      <a href={ORDER_URL} class="btn btn-gold order-btn">Order Now</a>
 
       <button id="nav-toggle" class="nav-toggle" aria-label="Toggle menu" aria-controls="site-nav">
         <span></span><span></span><span></span>

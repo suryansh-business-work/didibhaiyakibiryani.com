@@ -1,5 +1,6 @@
 ---
 import AppBadges from "./AppBadges.astro";
+import { ORDER_URL } from "../lib/api";
 ---
 
 <footer class="site-footer" id="contact">
@@ -60,7 +61,7 @@ import AppBadges from "./AppBadges.astro";
       <a href="/#menu">Full Menu</a>
       <a href="/offers">Offers</a>
       <a href="/#party">Party Orders</a>
-      <a href="/offers">Order Now</a>
+      <a href={ORDER_URL}>Order Now</a>
     </nav>
 
     <nav class="footer-col" aria-label="Company">

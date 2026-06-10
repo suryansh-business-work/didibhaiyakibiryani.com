@@ -71,6 +71,8 @@ jobs:
           source: "docker-compose.yml,deploy/"
           target: "/opt/ddb"
           overwrite: true
+          timeout: 120s
+          command_timeout: 10m
 
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -91,6 +93,8 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          timeout: 60s
+          command_timeout: 20m
           envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,MONGODB_URI,JWT_SECRET,SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_PASS,IMAGEKIT_PUBLIC_KEY,IMAGEKIT_PRIVATE_KEY,IMAGEKIT_URL_ENDPOINTS
           script: |
             set -euo pipefail
