@@ -215,3 +215,23 @@ export const PAYMENTS = gql`
     }
   }
 `;
+
+export const CAMPAIGNS = gql`
+  query Campaigns {
+    campaigns {
+      id
+      name
+      channel
+      subject
+      body
+      ctaLabel
+      ctaUrl
+      status
+      audienceCount
+      sentCount
+      failedCount
+      sentAt
+      createdAt
+    }
+  }
+`;

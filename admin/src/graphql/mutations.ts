@@ -133,3 +133,12 @@ export const REFUND_PAYMENT = gql`
     }
   }
 `;
+
+export const SEND_CAMPAIGN = gql`
+  mutation SendCampaign($input: CampaignInput!) {
+    sendCampaign(input: $input) {
+      id
+      status
+    }
+  }
+`;

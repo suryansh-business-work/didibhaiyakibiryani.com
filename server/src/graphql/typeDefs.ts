@@ -366,12 +366,50 @@ export const typeDefs = /* GraphQL */ `
     razorpaySignature: String!
   }
 
+  enum CampaignChannel {
+    EMAIL
+    WHATSAPP
+  }
+
+  enum CampaignStatus {
+    DRAFT
+    SENDING
+    SENT
+    FAILED
+  }
+
+  type Campaign {
+    id: ID!
+    name: String!
+    channel: CampaignChannel!
+    subject: String!
+    body: String!
+    ctaLabel: String
+    ctaUrl: String
+    status: CampaignStatus!
+    audienceCount: Int!
+    sentCount: Int!
+    failedCount: Int!
+    sentAt: DateTime
+    createdAt: DateTime!
+  }
+
+  input CampaignInput {
+    name: String!
+    channel: CampaignChannel!
+    subject: String!
+    body: String!
+    ctaLabel: String
+    ctaUrl: String
+  }
+
   type Query {
     me: User
 
     settings: Settings!
 
     payments(status: PaymentRecordStatus): [Payment!]! # admin
+    campaigns: [Campaign!]! # admin
 
     categories(activeOnly: Boolean): [Category!]!
     menuItems(categoryId: ID, search: String, availableOnly: Boolean): [MenuItem!]!
@@ -425,5 +463,12 @@ export const typeDefs = /* GraphQL */ `
     createRazorpayOrder(orderId: ID!): RazorpayOrderPayload!
     verifyRazorpayPayment(input: VerifyPaymentInput!): Order!
     refundPayment(paymentId: ID!, amount: Float, reason: String): Payment! # admin
+
+    # Password reset (OTP over email)
+    requestPasswordReset(email: String!): Boolean!
+    resetPassword(email: String!, otp: String!, newPassword: String!): Boolean!
+
+    # Campaigns (admin)
+    sendCampaign(input: CampaignInput!): Campaign!
   }
 `;

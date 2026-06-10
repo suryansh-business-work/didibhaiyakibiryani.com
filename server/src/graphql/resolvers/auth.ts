@@ -7,6 +7,23 @@ import {
   requireAuth,
   type Context,
 } from "../../utils/auth.js";
+import { sendMailAsync } from "../../utils/mailer.js";
+import { signupEmail, loginAlertEmail } from "../../emails/auth.js";
+import { loadEmailBrand } from "../../emails/marketing.js";
+
+const ORDER_URL = process.env.PUBLIC_ORDER_URL || "https://native.didibhaiyakibiryani.com";
+
+function notifySignup(email: string, name: string): void {
+  loadEmailBrand()
+    .then((brand) => sendMailAsync({ to: email, ...signupEmail(brand, name, ORDER_URL) }))
+    .catch(() => undefined);
+}
+
+function notifyLogin(email: string, name: string): void {
+  loadEmailBrand()
+    .then((brand) => sendMailAsync({ to: email, ...loginAlertEmail(brand, name, new Date()) }))
+    .catch(() => undefined);
+}
 
 interface RegisterInput {
   name: string;
@@ -56,6 +73,7 @@ export const authResolvers = {
         role: "CUSTOMER",
       });
       const token = signToken({ id: user.id, role: user.role });
+      notifySignup(user.email, user.name);
       return { token, user };
     },
 
@@ -78,6 +96,7 @@ export const authResolvers = {
         });
       }
       const token = signToken({ id: user.id, role: user.role });
+      notifyLogin(user.email, user.name);
       return { token, user };
     },
 

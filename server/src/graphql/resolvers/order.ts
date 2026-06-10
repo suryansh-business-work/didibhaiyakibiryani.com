@@ -3,7 +3,26 @@ import { Order, MenuItem, Coupon, User } from "../../models/index.js";
 import { requireAuth, requireRole, type Context } from "../../utils/auth.js";
 import { evaluateCoupon, deliveryFeeFor } from "../../utils/pricing.js";
 import { genOrderNumber } from "../../utils/helpers.js";
-import type { OrderStatus } from "../../models/index.js";
+import { sendMailAsync } from "../../utils/mailer.js";
+import { orderConfirmedEmail, orderDeliveredEmail } from "../../emails/order.js";
+import { loadEmailBrand } from "../../emails/marketing.js";
+import type { IOrder, OrderStatus } from "../../models/index.js";
+
+const APP_URL = process.env.PUBLIC_ORDER_URL || "https://native.didibhaiyakibiryani.com";
+
+function notifyOrderEmail(order: IOrder, kind: "CONFIRMED" | "DELIVERED"): void {
+  Promise.all([User.findById(order.user).exec(), loadEmailBrand()])
+    .then(([customer, brand]) => {
+      if (!customer?.email) return;
+      const url = `${APP_URL}/order/${order.id}`;
+      const content =
+        kind === "CONFIRMED"
+          ? orderConfirmedEmail(brand, customer.name, order, url)
+          : orderDeliveredEmail(brand, customer.name, order, APP_URL);
+      sendMailAsync({ to: customer.email, ...content });
+    })
+    .catch(() => undefined);
+}
 
 interface CartItemInput {
   menuItemId: string;
@@ -150,6 +169,7 @@ export const orderResolvers = {
         await Coupon.findByIdAndUpdate(appliedCoupon._id, { $inc: { usedCount: 1 } });
       }
 
+      notifyOrderEmail(order, "CONFIRMED");
       return order;
     },
 
@@ -189,8 +209,13 @@ export const orderResolvers = {
       }
       order.status = status;
       order.statusHistory.push({ status, at: new Date(), note });
-      if (status === "DELIVERED") order.paymentStatus = "PAID";
+      if (status === "DELIVERED") {
+        order.paymentStatus = "PAID";
+      }
       await order.save();
+      if (status === "DELIVERED") {
+        notifyOrderEmail(order, "DELIVERED");
+      }
       return order;
     },
   },

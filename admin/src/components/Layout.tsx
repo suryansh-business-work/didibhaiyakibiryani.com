@@ -9,6 +9,7 @@ import {
   ILayers,
   IUsers,
   IRupee,
+  ISend,
   IPalette,
   ILogout,
 } from "./icons";
@@ -21,6 +22,7 @@ const NAV = [
   { to: "/categories", label: "Categories", icon: ILayers },
   { to: "/coupons", label: "Coupons", icon: ITag },
   { to: "/customers", label: "Customers", icon: IUsers },
+  { to: "/campaigns", label: "Campaigns", icon: ISend },
   { to: "/branding", label: "Branding", icon: IPalette },
 ];
 
