@@ -67,7 +67,9 @@ On every push to `main` (or **Run workflow**), `.github/workflows/deploy.yml`:
 
 `setup-server.sh` installs everything it needs, so a bare Ubuntu host only needs:
 
-1. DNS A-records for `@`, `www`, `server`, `admin`, `native` → `148.135.136.107` (done).
+1. DNS A-records for `@`, `server`, `admin`, `native` → `148.135.136.107` (done).
+   (`www` is intentionally not used — add it to both `deploy/nginx/...` and
+   `setup-server.sh` only if you create a `www` A-record.)
 2. Ports `80` and `443` open.
 3. The Actions secrets above configured.
 

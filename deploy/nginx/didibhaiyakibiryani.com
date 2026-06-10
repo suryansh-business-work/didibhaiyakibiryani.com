@@ -11,7 +11,7 @@
 server {
     listen 80;
     listen [::]:80;
-    server_name didibhaiyakibiryani.com www.didibhaiyakibiryani.com;
+    server_name didibhaiyakibiryani.com;
 
     client_max_body_size 25m;
 

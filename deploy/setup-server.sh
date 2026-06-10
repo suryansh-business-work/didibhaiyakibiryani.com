@@ -5,7 +5,8 @@
 set -euo pipefail
 
 DOMAIN="didibhaiyakibiryani.com"
-SUBDOMAINS=("www.${DOMAIN}" "server.${DOMAIN}" "admin.${DOMAIN}" "native.${DOMAIN}")
+# Only domains with live DNS A-records (no www — it is not mapped).
+SUBDOMAINS=("server.${DOMAIN}" "admin.${DOMAIN}" "native.${DOMAIN}")
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-admin@${DOMAIN}}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
