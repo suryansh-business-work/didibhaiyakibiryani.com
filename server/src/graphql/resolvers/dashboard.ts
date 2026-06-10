@@ -14,7 +14,8 @@ export const dashboardResolvers = {
     reviews: async (_: unknown, { limit }: { limit?: number }) => {
       return Review.find({ isPublished: true })
         .sort({ createdAt: -1 })
-        .limit(limit ?? 12);
+        .limit(limit ?? 12)
+        .exec();
     },
 
     customers: async (_: unknown, { search }: { search?: string }, ctx: Context) => {
@@ -27,7 +28,7 @@ export const dashboardResolvers = {
           { phone: { $regex: search, $options: "i" } },
         ];
       }
-      return User.find(filter).sort({ createdAt: -1 }).limit(200);
+      return User.find(filter).sort({ createdAt: -1 }).limit(200).exec();
     },
 
     dashboardStats: async (_: unknown, __: unknown, ctx: Context) => {
@@ -120,7 +121,7 @@ export const dashboardResolvers = {
   // Field resolvers that need DB lookups
   User: {
     orderCount: (parent: { id?: string; _id?: unknown }) =>
-      Order.countDocuments({ user: parent.id ?? parent._id }),
+      Order.countDocuments({ user: parent.id ?? parent._id }).exec(),
     totalSpent: async (parent: { id?: string; _id?: unknown }) => {
       const agg = await Order.aggregate([
         {
@@ -137,11 +138,11 @@ export const dashboardResolvers = {
 
   TopItem: {
     menuItem: (parent: { menuItemId?: unknown }) =>
-      parent.menuItemId ? MenuItem.findById(parent.menuItemId as string) : null,
+      parent.menuItemId ? MenuItem.findById(parent.menuItemId as string).exec() : null,
   },
 
   OrderItem: {
     menuItem: (parent: { menuItem?: unknown }) =>
-      parent.menuItem ? MenuItem.findById(parent.menuItem as string) : null,
+      parent.menuItem ? MenuItem.findById(parent.menuItem as string).exec() : null,
   },
 };

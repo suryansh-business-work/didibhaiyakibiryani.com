@@ -33,7 +33,7 @@ export const couponResolvers = {
   Query: {
     coupons: async (_: unknown, { activeOnly }: { activeOnly?: boolean }) => {
       const filter = activeOnly ? { isActive: true } : {};
-      return Coupon.find(filter).sort({ createdAt: -1 });
+      return Coupon.find(filter).sort({ createdAt: -1 }).exec();
     },
 
     validateCoupon: async (
@@ -82,6 +82,6 @@ export const couponResolvers = {
 
   Coupon: {
     freeItem: (parent: { freeItem?: unknown }) =>
-      parent.freeItem ? MenuItem.findById(parent.freeItem as string) : null,
+      parent.freeItem ? MenuItem.findById(parent.freeItem as string).exec() : null,
   },
 };

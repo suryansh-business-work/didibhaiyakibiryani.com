@@ -28,7 +28,7 @@ export const menuResolvers = {
   Query: {
     categories: async (_: unknown, { activeOnly }: { activeOnly?: boolean }) => {
       const filter = activeOnly ? { isActive: true } : {};
-      return Category.find(filter).sort({ sortOrder: 1, name: 1 });
+      return Category.find(filter).sort({ sortOrder: 1, name: 1 }).exec();
     },
 
     menuItems: async (
@@ -43,12 +43,12 @@ export const menuResolvers = {
       if (categoryId) filter.category = categoryId;
       if (availableOnly) filter.isAvailable = true;
       if (search) filter.$text = { $search: search };
-      return MenuItem.find(filter).sort({ createdAt: -1 });
+      return MenuItem.find(filter).sort({ createdAt: -1 }).exec();
     },
 
     menuItem: async (_: unknown, { id, slug }: { id?: string; slug?: string }) => {
-      if (id) return MenuItem.findById(id);
-      if (slug) return MenuItem.findOne({ slug });
+      if (id) return MenuItem.findById(id).exec();
+      if (slug) return MenuItem.findOne({ slug }).exec();
       return null;
     },
   },
@@ -127,7 +127,8 @@ export const menuResolvers = {
 
   // Field resolvers
   Category: {
-    itemCount: (parent: { id: string }) => MenuItem.countDocuments({ category: parent.id }),
+    itemCount: (parent: { id: string }) =>
+      MenuItem.countDocuments({ category: parent.id }).exec(),
   },
 
   MenuItem: {
@@ -135,7 +136,7 @@ export const menuResolvers = {
       const c = parent.category as { name?: string } | string | null;
       // already populated (a Category doc has a `name`)
       if (c && typeof c === "object" && "name" in c && c.name) return c;
-      return c ? Category.findById(c as string) : null;
+      return c ? Category.findById(c as string).exec() : null;
     },
   },
 };

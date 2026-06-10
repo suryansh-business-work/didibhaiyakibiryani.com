@@ -40,7 +40,7 @@ export const orderResolvers = {
   Query: {
     myOrders: async (_: unknown, __: unknown, ctx: Context) => {
       const u = requireAuth(ctx);
-      return Order.find({ user: u.id }).sort({ placedAt: -1 });
+      return Order.find({ user: u.id }).sort({ placedAt: -1 }).exec();
     },
 
     order: async (_: unknown, { id }: { id: string }, ctx: Context) => {
@@ -58,7 +58,7 @@ export const orderResolvers = {
     orders: async (_: unknown, { status }: { status?: OrderStatus }, ctx: Context) => {
       requireRole(ctx, "ADMIN", "STAFF", "DELIVERY");
       const filter = status ? { status } : {};
-      return Order.find(filter).sort({ placedAt: -1 }).limit(200);
+      return Order.find(filter).sort({ placedAt: -1 }).limit(200).exec();
     },
   },
 
@@ -199,7 +199,7 @@ export const orderResolvers = {
     user: (parent: { user: unknown }) => {
       const usr = parent.user as { name?: string } | string | null;
       if (usr && typeof usr === "object" && "name" in usr && usr.name) return usr;
-      return usr ? User.findById(usr as string) : null;
+      return usr ? User.findById(usr as string).exec() : null;
     },
   },
 };

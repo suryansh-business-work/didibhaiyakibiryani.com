@@ -30,7 +30,7 @@ export const authResolvers = {
   Query: {
     me: async (_: unknown, __: unknown, ctx: Context) => {
       if (!ctx.user) return null;
-      return User.findById(ctx.user.id);
+      return User.findById(ctx.user.id).exec();
     },
   },
 
@@ -90,7 +90,7 @@ export const authResolvers = {
       const update: Record<string, unknown> = {};
       if (name !== undefined) update.name = name.trim();
       if (phone !== undefined) update.phone = phone.trim();
-      return User.findByIdAndUpdate(u.id, update, { new: true });
+      return User.findByIdAndUpdate(u.id, update, { new: true }).exec();
     },
 
     addAddress: async (_: unknown, { input }: { input: AddressInput }, ctx: Context) => {
