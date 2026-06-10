@@ -83,6 +83,14 @@ export const ISend = ({ size }: P) => (
     <path d="M22 2 11 13" />
   </svg>
 );
+export const IHeadset = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M4 13v-1a8 8 0 0 1 16 0v1" />
+    <rect x="2.5" y="13" width="4" height="6" rx="1.5" />
+    <rect x="17.5" y="13" width="4" height="6" rx="1.5" />
+    <path d="M20 19a4 4 0 0 1-4 3h-2" />
+  </svg>
+);
 export const IBike = ({ size }: P) => (
   <svg {...s(size)}>
     <circle cx="5.5" cy="17.5" r="3.5" />

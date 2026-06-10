@@ -1,3 +1,4 @@
+import "./instrumentation.js";
 import "dotenv/config";
 import express from "express";
 import http from "node:http";
@@ -8,9 +9,10 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 
 import { logger } from "./utils/logger.js";
-import { connectDB } from "./config/db.js";
+import { connectDBWithRetry } from "./config/db.js";
 import { razorpayWebhook } from "./webhooks/razorpay.js";
 import { ratingRouter } from "./routes/rating.js";
+import { healthRouter } from "./routes/health.js";
 import { typeDefs } from "./graphql/typeDefs.js";
 import { resolvers } from "./graphql/resolvers/index.js";
 import { getUserFromAuthHeader, type Context } from "./utils/auth.js";
@@ -22,7 +24,8 @@ const ORIGINS = (process.env.CORS_ORIGINS || "")
   .filter(Boolean);
 
 async function start() {
-  await connectDB(process.env.MONGODB_URI || "");
+  // Non-fatal: HTTP (health/status) stays up while Mongo reconnects.
+  connectDBWithRetry(process.env.MONGODB_URI || "");
 
   const app = express();
   const httpServer = http.createServer(app);
@@ -46,6 +49,9 @@ async function start() {
     res.json({ ok: true, service: "ddb-server", graphql: "/graphql", health: "/health" })
   );
   app.get("/health", (_req, res) => res.json({ ok: true, service: "ddb-server" }));
+
+  // Aggregated platform health for the public /status page.
+  app.use(healthRouter);
 
   // Razorpay webhook — raw body so the HMAC covers the exact bytes sent.
   app.post(

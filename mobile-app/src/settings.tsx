@@ -15,6 +15,7 @@ export interface AppSettings {
   codEnabled: boolean;
   onlineEnabled: boolean;
   supportPhone: string;
+  supportSubjects: string[];
   maintenance: { native: boolean };
 }
 
@@ -30,6 +31,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   codEnabled: true,
   onlineEnabled: true,
   supportPhone: "",
+  supportSubjects: [],
   maintenance: { native: false },
 };
 

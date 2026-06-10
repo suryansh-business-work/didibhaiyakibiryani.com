@@ -336,6 +336,7 @@ export const typeDefs = /* GraphQL */ `
     gstNumber: String!
     codEnabled: Boolean!
     onlineEnabled: Boolean!
+    supportSubjects: [String!]!
     updatedAt: DateTime!
   }
 
@@ -368,11 +369,42 @@ export const typeDefs = /* GraphQL */ `
     gstNumber: String
     codEnabled: Boolean
     onlineEnabled: Boolean
+    supportSubjects: [String!]
   }
 
   type UploadedImage {
     url: String!
     fileId: String!
+  }
+
+  type Captcha {
+    id: String!
+    question: String!
+  }
+
+  enum TicketStatus {
+    OPEN
+    IN_PROGRESS
+    RESOLVED
+  }
+
+  type SupportMessage {
+    by: String!
+    text: String!
+    at: DateTime!
+  }
+
+  type SupportTicket {
+    id: ID!
+    order: Order
+    user: User
+    subject: String!
+    body: String!
+    imageUrl: String
+    status: TicketStatus!
+    messages: [SupportMessage!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
   }
 
   enum PaymentRecordStatus {
@@ -485,6 +517,12 @@ export const typeDefs = /* GraphQL */ `
     deliveryQueue: [Order!]! # DELIVERY: my active assigned orders
     myDeliveries(limit: Int): [Order!]! # DELIVERY: my delivered orders (earnings)
 
+    captcha: Captcha! # public: arithmetic challenge for sensitive actions
+
+    myTickets: [SupportTicket!]!
+    orderTickets(orderId: ID!): [SupportTicket!]! # owner or staff
+    supportTickets(status: TicketStatus): [SupportTicket!]! # admin
+
     reviews(limit: Int): [Review!]!
 
     customers(search: String): [User!]! # admin
@@ -526,6 +564,15 @@ export const typeDefs = /* GraphQL */ `
 
     # Media (ImageKit)
     uploadImage(file: String!, fileName: String!, folder: String): UploadedImage! # admin
+    uploadSupportImage(file: String!, fileName: String!): UploadedImage! # any signed-in user
+
+    # Support (order help box)
+    createSupportTicket(orderId: ID!, subject: String!, body: String!, imageUrl: String): SupportTicket!
+    replySupportTicket(ticketId: ID!, text: String!): SupportTicket! # owner or admin
+    updateSupportTicketStatus(ticketId: ID!, status: TicketStatus!): SupportTicket! # admin
+
+    # Admin access recovery: emails fresh credentials to the admin's own inbox
+    emailAdminCredentials(email: String!, captchaId: String!, captchaAnswer: String!): Boolean!
 
     # Branding & company settings (admin)
     updateSettings(input: SettingsInput!): Settings!

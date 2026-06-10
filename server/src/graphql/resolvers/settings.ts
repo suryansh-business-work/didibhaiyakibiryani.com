@@ -46,6 +46,13 @@ export function cleanSettingsInput(input: SettingsInput): Record<string, unknown
       }
     }
   }
+  if (Array.isArray(input.supportSubjects)) {
+    update.supportSubjects = input.supportSubjects
+      .filter((s): s is string => typeof s === "string")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 30);
+  }
   return update;
 }
 

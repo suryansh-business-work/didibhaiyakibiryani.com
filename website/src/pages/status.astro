@@ -1,0 +1,176 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { API_URL } from "../lib/api";
+
+const healthUrl = API_URL.replace(/\/graphql$/, "") + "/health/full";
+---
+
+<Layout
+  title="Platform status — Didi Bhaiya ki Biryani"
+  description="Live health of the website, apps, API, database, email and integrations."
+  active="status"
+>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Live platform health</p>
+      <h1 class="section-title">System <span class="italic-accent">status.</span></h1>
+      <p class="status-sub" id="status-summary">Checking all systems…</p>
+
+      <div id="status-groups">
+        <p class="status-loading">Running health checks…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Detail dialog -->
+  <div class="hdialog-backdrop" id="hdialog" hidden>
+    <div class="hdialog" role="dialog" aria-modal="true" aria-labelledby="hdialog-title">
+      <div class="hdialog__head">
+        <h3 id="hdialog-title">Service</h3>
+        <button class="hdialog__close" id="hdialog-close" aria-label="Close">×</button>
+      </div>
+      <div id="hdialog-body"></div>
+    </div>
+  </div>
+
+  <script is:inline define:vars={{ healthUrl }}>
+    (function () {
+      const groupsEl = document.getElementById("status-groups");
+      const summaryEl = document.getElementById("status-summary");
+      const dialog = document.getElementById("hdialog");
+      const dialogTitle = document.getElementById("hdialog-title");
+      const dialogBody = document.getElementById("hdialog-body");
+      const esc = (v) =>
+        String(v == null ? "" : v).replace(/[&<>"]/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
+        );
+
+      function openDialog(s) {
+        dialogTitle.textContent = s.name;
+        const rows = [
+          ["Status", s.ok ? "✅ Operational" : "❌ Down / degraded"],
+          ["Category", s.category],
+          ["Detail", s.detail],
+          s.latencyMs != null ? ["Latency", s.latencyMs + " ms"] : null,
+          s.url ? ["Endpoint", s.url] : null,
+        ].filter(Boolean);
+        dialogBody.innerHTML = rows
+          .map(
+            (r) =>
+              '<div class="hrow"><span>' + esc(r[0]) + "</span><b>" + esc(r[1]) + "</b></div>"
+          )
+          .join("");
+        dialog.hidden = false;
+      }
+
+      document.getElementById("hdialog-close").addEventListener("click", () => {
+        dialog.hidden = true;
+      });
+      dialog.addEventListener("click", (e) => {
+        if (e.target === dialog) dialog.hidden = true;
+      });
+
+      function render(data) {
+        const groups = {};
+        for (const s of data.services) {
+          (groups[s.category] = groups[s.category] || []).push(s);
+        }
+        const allOk = data.ok;
+        summaryEl.innerHTML = allOk
+          ? '<span class="status-pill is-ok">● All systems operational</span>'
+          : '<span class="status-pill is-bad">● Some systems need attention</span>';
+        summaryEl.innerHTML +=
+          '<span class="status-checked">Checked ' +
+          esc(new Date(data.checkedAt).toLocaleString("en-IN")) +
+          "</span>";
+
+        groupsEl.innerHTML = Object.entries(groups)
+          .map(
+            ([cat, list]) =>
+              '<h2 class="status-cat">' +
+              esc(cat) +
+              "</h2>" +
+              '<div class="status-list">' +
+              list
+                .map(
+                  (s, i) =>
+                    '<button class="status-item" data-idx="' +
+                    esc(s.key) +
+                    '">' +
+                    '<span class="status-dot ' +
+                    (s.ok ? "is-ok" : "is-bad") +
+                    '"></span>' +
+                    '<span class="status-name">' +
+                    esc(s.name) +
+                    "</span>" +
+                    '<span class="status-detail">' +
+                    esc(s.detail) +
+                    "</span></button>"
+                )
+                .join("") +
+              "</div>"
+          )
+          .join("");
+
+        for (const btn of groupsEl.querySelectorAll(".status-item")) {
+          btn.addEventListener("click", () => {
+            const svc = data.services.find((s) => s.key === btn.dataset.idx);
+            if (svc) openDialog(svc);
+          });
+        }
+      }
+
+      function load() {
+        fetch(healthUrl)
+          .then((r) => r.json())
+          .then(render)
+          .catch(() => {
+            summaryEl.innerHTML = '<span class="status-pill is-bad">● Server unreachable</span>';
+            groupsEl.innerHTML =
+              '<p class="status-loading">Could not reach the health API — the server itself may be down.</p>';
+          });
+      }
+      load();
+      setInterval(load, 60000);
+    })();
+  </script>
+</Layout>
+
+<style>
+  .section { padding: 90px 0 70px; }
+  .status-sub { margin: 14px 0 26px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .status-pill { font-weight: 800; padding: 8px 16px; border-radius: 999px; font-size: 0.9rem; }
+  .status-pill.is-ok { color: #5fb45f; background: rgba(95, 180, 95, 0.12); }
+  .status-pill.is-bad { color: #e0584b; background: rgba(224, 88, 75, 0.12); }
+  .status-checked { color: #8d8073; font-size: 0.82rem; }
+  .status-cat { margin: 28px 0 12px; font-size: 1.05rem; color: #e4b65c; }
+  .status-list { display: flex; flex-direction: column; gap: 8px; }
+  .status-item {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    background: #17110c; border: 1px solid rgba(232, 200, 140, 0.14); border-radius: 12px;
+    padding: 14px 16px; cursor: pointer; color: inherit; transition: border-color 0.15s;
+  }
+  .status-item:hover { border-color: #b9852f; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.is-ok { background: #5fb45f; box-shadow: 0 0 8px rgba(95, 180, 95, 0.7); }
+  .status-dot.is-bad { background: #e0584b; box-shadow: 0 0 8px rgba(224, 88, 75, 0.7); }
+  .status-name { font-weight: 700; min-width: 200px; }
+  .status-detail { color: #8d8073; font-size: 0.84rem; }
+  .status-loading { color: #8d8073; padding: 30px 0; }
+  .hdialog-backdrop {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); z-index: 200;
+    display: grid; place-items: center; padding: 20px;
+  }
+  .hdialog {
+    width: 100%; max-width: 420px; background: #1a130d;
+    border: 1px solid rgba(232, 200, 140, 0.25); border-radius: 16px; padding: 22px;
+  }
+  .hdialog__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .hdialog__close { background: none; border: 0; color: #8d8073; font-size: 1.4rem; cursor: pointer; }
+  .hrow { display: flex; justify-content: space-between; gap: 14px; padding: 7px 0;
+    border-bottom: 1px solid rgba(232, 200, 140, 0.1); font-size: 0.9rem; }
+  .hrow:last-child { border-bottom: 0; }
+  .hrow span { color: #8d8073; }
+  .hrow b { text-align: right; word-break: break-all; }
+  @media (max-width: 620px) { .status-name { min-width: 140px; } }
+</style>

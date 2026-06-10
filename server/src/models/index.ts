@@ -8,6 +8,7 @@ export { Settings, getOrCreateSettings, SETTINGS_KEY } from "./Settings.js";
 export { Payment } from "./Payment.js";
 export { Otp } from "./Otp.js";
 export { Campaign } from "./Campaign.js";
+export { SupportTicket } from "./SupportTicket.js";
 
 export type { IUser, IAddress, Role } from "./User.js";
 export type { ICategory } from "./Category.js";
@@ -26,3 +27,4 @@ export type { ISettings, IMaintenanceFlags } from "./Settings.js";
 export type { IPayment, PaymentRecordStatus } from "./Payment.js";
 export type { IOtp, OtpPurpose } from "./Otp.js";
 export type { ICampaign, CampaignChannel, CampaignStatus } from "./Campaign.js";
+export type { ISupportTicket, ISupportMessage, TicketStatus } from "./SupportTicket.js";

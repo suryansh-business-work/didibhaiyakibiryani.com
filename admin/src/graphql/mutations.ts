@@ -134,6 +134,35 @@ export const CREATE_STAFF_USER = gql`
   }
 `;
 
+export const EMAIL_ADMIN_CREDENTIALS = gql`
+  mutation EmailAdminCredentials($email: String!, $captchaId: String!, $captchaAnswer: String!) {
+    emailAdminCredentials(email: $email, captchaId: $captchaId, captchaAnswer: $captchaAnswer)
+  }
+`;
+
+export const REPLY_TICKET = gql`
+  mutation ReplySupportTicket($ticketId: ID!, $text: String!) {
+    replySupportTicket(ticketId: $ticketId, text: $text) {
+      id
+      status
+      messages {
+        by
+        text
+        at
+      }
+    }
+  }
+`;
+
+export const UPDATE_TICKET_STATUS = gql`
+  mutation UpdateSupportTicketStatus($ticketId: ID!, $status: TicketStatus!) {
+    updateSupportTicketStatus(ticketId: $ticketId, status: $status) {
+      id
+      status
+    }
+  }
+`;
+
 export const UPLOAD_IMAGE = gql`
   mutation UploadImage($file: String!, $fileName: String!, $folder: String) {
     uploadImage(file: $file, fileName: $fileName, folder: $folder) {

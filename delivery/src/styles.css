@@ -290,3 +290,30 @@ tbody tr:last-child td { border-bottom: none; }
   border-top: 1px solid var(--border); padding-top: 12px; }
 .rider-stats { grid-template-columns: repeat(3, 1fr); margin-bottom: 16px; }
 @media (max-width: 560px) { .rider-stats { grid-template-columns: 1fr; } }
+
+/* ---------- Rider animations ---------- */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.rider-top, .rider-tabs { animation: fadeIn 0.4s ease both; }
+.rider-order, .rider-stats .card, .rider-content .card {
+  animation: riseIn 0.38s ease both;
+}
+.rider-content > *:nth-child(1) { animation-delay: 0.03s; }
+.rider-content > *:nth-child(2) { animation-delay: 0.09s; }
+.rider-content > *:nth-child(3) { animation-delay: 0.15s; }
+.rider-content > *:nth-child(4) { animation-delay: 0.21s; }
+.rider-content > *:nth-child(5) { animation-delay: 0.27s; }
+.rider-content > *:nth-child(n+6) { animation-delay: 0.33s; }
+.rider-tabs a, .btn { transition: transform 0.12s ease, background 0.2s ease; }
+.rider-tabs a:active, .btn:active { transform: scale(0.97); }
+.login-card { animation: riseIn 0.45s ease both; }
+@media (prefers-reduced-motion: reduce) {
+  .rider-top, .rider-tabs, .rider-order, .rider-stats .card,
+  .rider-content .card, .login-card { animation: none; }
+}

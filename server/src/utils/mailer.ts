@@ -34,6 +34,11 @@ export interface MailJob {
   attachments?: MailAttachment[];
 }
 
+/** Verify the SMTP login (used by the platform health report). */
+export async function verifySmtp(): Promise<void> {
+  await getTransport().verify();
+}
+
 /** Compile MJML → HTML and send. Returns false when SMTP isn't configured. */
 export async function sendMail(job: MailJob): Promise<boolean> {
   if (!mailConfigured()) {

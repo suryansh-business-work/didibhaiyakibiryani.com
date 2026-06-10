@@ -10,6 +10,8 @@ import { passwordResetResolvers } from "./passwordReset.js";
 import { campaignResolvers } from "./campaign.js";
 import { deliveryResolvers } from "./delivery.js";
 import { uploadResolvers } from "./upload.js";
+import { supportResolvers } from "./support.js";
+import { adminAccessResolvers } from "./adminAccess.js";
 
 export const resolvers = {
   DateTime,
@@ -24,6 +26,8 @@ export const resolvers = {
     ...paymentResolvers.Query,
     ...campaignResolvers.Query,
     ...deliveryResolvers.Query,
+    ...supportResolvers.Query,
+    ...adminAccessResolvers.Query,
   },
 
   Mutation: {
@@ -37,6 +41,8 @@ export const resolvers = {
     ...campaignResolvers.Mutation,
     ...deliveryResolvers.Mutation,
     ...uploadResolvers.Mutation,
+    ...supportResolvers.Mutation,
+    ...adminAccessResolvers.Mutation,
   },
 
   // Field resolvers
@@ -49,4 +55,5 @@ export const resolvers = {
   User: dashboardResolvers.User,
   Payment: paymentResolvers.Payment,
   Settings: settingsResolvers.Settings,
+  SupportTicket: supportResolvers.SupportTicket,
 };

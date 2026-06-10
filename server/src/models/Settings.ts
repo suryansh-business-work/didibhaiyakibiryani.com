@@ -49,6 +49,8 @@ export interface ISettings extends Document {
   // Finance — payment options
   codEnabled: boolean;
   onlineEnabled: boolean;
+  // Support — admin-managed subject lines for the order support box
+  supportSubjects: string[];
   updatedAt: Date;
   createdAt: Date;
 }
@@ -97,6 +99,17 @@ const settingsSchema = new Schema<ISettings>(
     gstNumber: { type: String, default: "" },
     codEnabled: { type: Boolean, default: true },
     onlineEnabled: { type: Boolean, default: true },
+    supportSubjects: {
+      type: [String],
+      default: () => [
+        "Order not delivered",
+        "Wrong or missing items",
+        "Food quality issue",
+        "Payment / refund issue",
+        "Delivery partner behaviour",
+        "App issue",
+      ],
+    },
   },
   { timestamps: true }
 );

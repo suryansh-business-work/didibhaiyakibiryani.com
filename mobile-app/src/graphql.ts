@@ -14,9 +14,58 @@ export const APP_SETTINGS = gql`
       codEnabled
       onlineEnabled
       supportPhone
+      supportSubjects
       maintenance {
         native
       }
+    }
+  }
+`;
+
+export const ORDER_TICKETS = gql`
+  query OrderTickets($orderId: ID!) {
+    orderTickets(orderId: $orderId) {
+      id
+      subject
+      body
+      imageUrl
+      status
+      createdAt
+      messages {
+        by
+        text
+        at
+      }
+    }
+  }
+`;
+
+export const CREATE_SUPPORT_TICKET = gql`
+  mutation CreateSupportTicket($orderId: ID!, $subject: String!, $body: String!, $imageUrl: String) {
+    createSupportTicket(orderId: $orderId, subject: $subject, body: $body, imageUrl: $imageUrl) {
+      id
+      status
+    }
+  }
+`;
+
+export const REPLY_SUPPORT_TICKET = gql`
+  mutation ReplySupportTicket($ticketId: ID!, $text: String!) {
+    replySupportTicket(ticketId: $ticketId, text: $text) {
+      id
+      messages {
+        by
+        text
+        at
+      }
+    }
+  }
+`;
+
+export const UPLOAD_SUPPORT_IMAGE = gql`
+  mutation UploadSupportImage($file: String!, $fileName: String!) {
+    uploadSupportImage(file: $file, fileName: $fileName) {
+      url
     }
   }
 `;

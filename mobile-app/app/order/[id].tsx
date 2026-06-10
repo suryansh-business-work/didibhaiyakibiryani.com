@@ -6,6 +6,7 @@ import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { ORDER } from "../../src/graphql";
 import { RatingCard, type OrderRating } from "../../src/order/RatingCard";
 import { CancelOrder } from "../../src/order/CancelOrder";
+import { SupportBox } from "../../src/order/SupportBox";
 import { FadeInView } from "../../src/animations";
 import { brand, inr, STATUS_FLOW, STATUS_META } from "../../src/theme";
 
@@ -114,6 +115,9 @@ export default function OrderTracking() {
           <Text color={brand.muted}>{o.address.city} — {o.address.pincode}</Text>
           {o.address.phone ? <Text color={brand.muted}>{o.address.phone}</Text> : null}
         </YStack>
+
+        {/* Order support box */}
+        <SupportBox orderId={o.id} />
 
         {canCancel && <CancelOrder orderId={o.id} onCancelled={() => refetch()} />}
       </ScrollView>

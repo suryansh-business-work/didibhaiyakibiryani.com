@@ -223,7 +223,45 @@ export const SETTINGS_CORE_FIELDS = `
   gstNumber
   codEnabled
   onlineEnabled
+  supportSubjects
   updatedAt
+`;
+
+export const CAPTCHA = gql`
+  query Captcha {
+    captcha {
+      id
+      question
+    }
+  }
+`;
+
+export const SUPPORT_TICKETS = gql`
+  query SupportTickets($status: TicketStatus) {
+    supportTickets(status: $status) {
+      id
+      subject
+      body
+      imageUrl
+      status
+      createdAt
+      updatedAt
+      messages {
+        by
+        text
+        at
+      }
+      order {
+        id
+        orderNumber
+      }
+      user {
+        name
+        email
+        phone
+      }
+    }
+  }
 `;
 
 export const SETTINGS = gql`

@@ -46,6 +46,31 @@ export function loginAlertEmail(brand: EmailBrand, name: string, when: Date): Em
   };
 }
 
+export function adminCredentialsEmail(
+  brand: EmailBrand,
+  name: string,
+  email: string,
+  password: string,
+  adminUrl: string
+): EmailContent {
+  const body = cardSection(`
+    <mj-text color="#f5ece0" font-size="18px" font-weight="700">Your admin sign-in credentials 🔐</mj-text>
+    <mj-text color="#cdbfb0">Hi ${name}, fresh credentials were requested from the admin panel. Your previous password no longer works.</mj-text>
+    <mj-table>
+      <tr><td style="padding:6px 0;color:#8d8073;">Email</td>
+          <td style="padding:6px 0;color:#f5ece0;font-weight:700;text-align:right;">${email}</td></tr>
+      <tr><td style="padding:6px 0;color:#8d8073;">Password</td>
+          <td style="padding:6px 0;color:#f5ece0;font-weight:700;text-align:right;font-family:monospace;">${password}</td></tr>
+    </mj-table>
+    ${ctaButton(brand, "Open the admin panel", adminUrl)}
+    <mj-text color="#8d8073" font-size="12px">Didn't request this? Someone tried to recover your account — sign in and change your password immediately.</mj-text>
+  `);
+  return {
+    subject: `Your ${brand.brandName} admin credentials`,
+    mjml: emailShell(brand, body),
+  };
+}
+
 export function passwordChangedEmail(brand: EmailBrand, name: string): EmailContent {
   const support = brand.supportEmail || brand.supportPhone || "our support team";
   const body = cardSection(`

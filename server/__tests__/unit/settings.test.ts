@@ -57,4 +57,10 @@ describe("cleanSettingsInput", () => {
       cleanSettingsInput({ hacker: "x", minDeliveryCost: "39" as unknown as number })
     ).toEqual({});
   });
+
+  it("trims, de-blanks and caps support subjects", () => {
+    expect(
+      cleanSettingsInput({ supportSubjects: ["  Late order  ", "", "App issue", 5 as unknown as string] })
+    ).toEqual({ supportSubjects: ["Late order", "App issue"] });
+  });
 });

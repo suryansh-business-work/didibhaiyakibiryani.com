@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { useAuth } from "../auth";
+import { useAuth } from "../../auth";
+import RecoverAccess from "./RecoverAccess";
 
 export default function Login() {
   const { login } = useAuth();
-  const [email, setEmail] = useState("admin@didibhaiyakibiryani.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -39,7 +40,7 @@ export default function Login() {
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@didibhaiyakibiryani.com"
+            placeholder="you@didibhaiyakibiryani.com"
             autoComplete="username"
           />
         </div>
@@ -60,11 +61,7 @@ export default function Login() {
           {busy ? "Signing in…" : "Sign in"}
         </button>
 
-        <p className="login-hint">
-          Seeded admin: <b>admin@didibhaiyakibiryani.com</b> / <b>Admin@123</b>
-          <br />
-          (run <code>npm run seed</code> in the server first)
-        </p>
+        <RecoverAccess />
       </form>
     </div>
   );
