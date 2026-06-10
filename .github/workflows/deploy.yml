@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ── Build each app as its own parallel job (website/server/admin/native) ──
+  # ── Build each app as its own parallel job (website/server/admin/native/delivery) ──
   build:
     name: build-${{ matrix.app }}
     runs-on: ubuntu-latest
@@ -30,6 +30,10 @@ jobs:
             context: ./mobile-app
             image: ddb-native
             build-args: EXPO_PUBLIC_API_URL=https://server.didibhaiyakibiryani.com/graphql
+          - app: delivery
+            context: ./delivery
+            image: ddb-delivery
+            build-args: VITE_API_URL=https://server.didibhaiyakibiryani.com/graphql
     steps:
       - uses: actions/checkout@v4
 
@@ -117,7 +121,7 @@ jobs:
             MONGODB_URI=${MONGODB_URI}
             JWT_SECRET=${JWT_SECRET}
             JWT_EXPIRES_IN=30d
-            CORS_ORIGINS=https://didibhaiyakibiryani.com,https://admin.didibhaiyakibiryani.com,https://native.didibhaiyakibiryani.com
+            CORS_ORIGINS=https://didibhaiyakibiryani.com,https://admin.didibhaiyakibiryani.com,https://native.didibhaiyakibiryani.com,https://delivery.didibhaiyakibiryani.com
             SMTP_HOST=${SMTP_HOST}
             SMTP_PORT=${SMTP_PORT}
             SMTP_USER=${SMTP_USER}

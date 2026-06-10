@@ -11,30 +11,40 @@ interface MenuItemCardProps {
   onAdd: (item: Item) => void;
 }
 
-export function MenuItemCard({ item, hue, onAdd }: Readonly<MenuItemCardProps>) {
+function TopBadge({ item }: Readonly<{ item: Item }>) {
+  if (!item.isAvailable) {
+    return <Badge label="Out of stock" color={brand.red} bg="rgba(224,88,75,0.15)" />;
+  }
+  if (item.badge === "NONE") return null;
   const isNew = item.badge === "NEW";
+  return (
+    <Badge
+      label={item.badge}
+      color={isNew ? brand.green : brand.gold}
+      bg={isNew ? "rgba(95,180,95,0.15)" : "rgba(228,182,92,0.15)"}
+    />
+  );
+}
+
+export function MenuItemCard({ item, hue, onAdd }: Readonly<MenuItemCardProps>) {
+  const soldOut = !item.isAvailable;
 
   return (
     <Link href={`/item/${item.id}`} asChild>
       <YStack
-        pressStyle={{ opacity: 0.85 }}
+        pressStyle={{ opacity: 0.85, scale: 0.985 }}
         backgroundColor={brand.card}
         borderColor={brand.border}
         borderWidth={1}
         borderRadius={16}
         padding={12}
+        opacity={soldOut ? 0.65 : 1}
       >
         <XStack gap={12}>
           <FoodThumb size={92} hue={hue} />
           <YStack flex={1} justifyContent="space-between">
             <YStack gap={4}>
-              {item.badge !== "NONE" && (
-                <Badge
-                  label={item.badge}
-                  color={isNew ? brand.green : brand.gold}
-                  bg={isNew ? "rgba(95,180,95,0.15)" : "rgba(228,182,92,0.15)"}
-                />
-              )}
+              <TopBadge item={item} />
               <Text fontSize={16} fontWeight="800" color={brand.text}>
                 {item.name}
               </Text>
@@ -57,18 +67,19 @@ export function MenuItemCard({ item, hue, onAdd }: Readonly<MenuItemCardProps>) 
         <Button
           size="$3"
           marginTop={10}
-          backgroundColor="rgba(228,182,92,0.12)"
-          borderColor={brand.gold}
+          backgroundColor={soldOut ? "rgba(255,255,255,0.05)" : "rgba(228,182,92,0.12)"}
+          borderColor={soldOut ? brand.border : brand.gold}
           borderWidth={1}
-          color={brand.gold}
+          color={soldOut ? brand.muted : brand.gold}
           fontWeight="800"
-          pressStyle={{ backgroundColor: brand.gold }}
+          disabled={soldOut}
+          pressStyle={soldOut ? undefined : { backgroundColor: brand.gold, scale: 0.97 }}
           onPress={(e: GestureResponderEvent) => {
             e?.stopPropagation?.();
-            onAdd(item);
+            if (!soldOut) onAdd(item);
           }}
         >
-          + Add to cart
+          {soldOut ? "Out of stock" : "+ Add to cart"}
         </Button>
       </YStack>
     </Link>

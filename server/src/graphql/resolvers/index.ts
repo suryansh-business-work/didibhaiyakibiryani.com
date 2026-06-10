@@ -8,6 +8,8 @@ import { settingsResolvers } from "./settings.js";
 import { paymentResolvers } from "./payment.js";
 import { passwordResetResolvers } from "./passwordReset.js";
 import { campaignResolvers } from "./campaign.js";
+import { deliveryResolvers } from "./delivery.js";
+import { uploadResolvers } from "./upload.js";
 
 export const resolvers = {
   DateTime,
@@ -21,6 +23,7 @@ export const resolvers = {
     ...settingsResolvers.Query,
     ...paymentResolvers.Query,
     ...campaignResolvers.Query,
+    ...deliveryResolvers.Query,
   },
 
   Mutation: {
@@ -32,6 +35,8 @@ export const resolvers = {
     ...paymentResolvers.Mutation,
     ...passwordResetResolvers.Mutation,
     ...campaignResolvers.Mutation,
+    ...deliveryResolvers.Mutation,
+    ...uploadResolvers.Mutation,
   },
 
   // Field resolvers
@@ -43,4 +48,5 @@ export const resolvers = {
   TopItem: dashboardResolvers.TopItem,
   User: dashboardResolvers.User,
   Payment: paymentResolvers.Payment,
+  Settings: settingsResolvers.Settings,
 };

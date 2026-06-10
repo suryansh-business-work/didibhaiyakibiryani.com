@@ -1,9 +1,18 @@
 import { Schema, model, Document } from "mongoose";
 
+/** Per-app maintenance switches, toggled from the admin panel. */
+export interface IMaintenanceFlags {
+  website: boolean;
+  server: boolean;
+  admin: boolean;
+  native: boolean;
+  delivery: boolean;
+}
+
 /**
- * Site-wide branding & company settings. Singleton document (key: "default")
- * managed from the admin panel; every client (website, apps, emails) reads it
- * so branding stays fully dynamic.
+ * Site-wide branding, company, store and finance settings. Singleton document
+ * (key: "default") managed from the admin panel; every client (website, apps,
+ * emails, invoices) reads it so configuration stays fully dynamic.
  */
 export interface ISettings extends Document {
   key: string;
@@ -22,11 +31,40 @@ export interface ISettings extends Document {
   instagramUrl: string;
   facebookUrl: string;
   youtubeUrl: string;
+  // Maintenance (per app)
+  maintenance: IMaintenanceFlags;
+  // Store hours
+  storeOpenTime: string; // "HH:mm" 24h
+  storeCloseTime: string; // "HH:mm" 24h
+  storeTimezone: string; // IANA zone, e.g. "Asia/Kolkata"
+  // Finance — delivery cost
+  minDeliveryCost: number;
+  perKmCharge: number;
+  freeDeliveryAbove: number;
+  storeLat: number;
+  storeLng: number;
+  // Finance — invoice / compliance
+  gstLegalName: string;
+  gstNumber: string;
+  // Finance — payment options
+  codEnabled: boolean;
+  onlineEnabled: boolean;
   updatedAt: Date;
   createdAt: Date;
 }
 
 export const SETTINGS_KEY = "default";
+
+const maintenanceSchema = new Schema<IMaintenanceFlags>(
+  {
+    website: { type: Boolean, default: false },
+    server: { type: Boolean, default: false },
+    admin: { type: Boolean, default: false },
+    native: { type: Boolean, default: false },
+    delivery: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
 
 const settingsSchema = new Schema<ISettings>(
   {
@@ -46,6 +84,19 @@ const settingsSchema = new Schema<ISettings>(
     instagramUrl: { type: String, default: "" },
     facebookUrl: { type: String, default: "" },
     youtubeUrl: { type: String, default: "" },
+    maintenance: { type: maintenanceSchema, default: () => ({}) },
+    storeOpenTime: { type: String, default: "11:00" },
+    storeCloseTime: { type: String, default: "23:00" },
+    storeTimezone: { type: String, default: "Asia/Kolkata" },
+    minDeliveryCost: { type: Number, default: 39, min: 0 },
+    perKmCharge: { type: Number, default: 0, min: 0 },
+    freeDeliveryAbove: { type: Number, default: 399, min: 0 },
+    storeLat: { type: Number, default: 0 },
+    storeLng: { type: Number, default: 0 },
+    gstLegalName: { type: String, default: "" },
+    gstNumber: { type: String, default: "" },
+    codEnabled: { type: Boolean, default: true },
+    onlineEnabled: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

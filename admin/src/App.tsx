@@ -11,6 +11,9 @@ import Customers from "./pages/Customers";
 import Branding from "./pages/Branding";
 import Payments from "./pages/Payments";
 import Campaigns from "./pages/Campaigns";
+import Finance from "./pages/Finance";
+import Store from "./pages/Store";
+import Riders from "./pages/Riders";
 import type { ReactNode } from "react";
 
 function Protected({ children }: Readonly<{ children: ReactNode }>) {
@@ -34,6 +37,9 @@ export default function App() {
       <Route path="/branding" element={<Protected><Branding /></Protected>} />
       <Route path="/payments" element={<Protected><Payments /></Protected>} />
       <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
+      <Route path="/finance" element={<Protected><Finance /></Protected>} />
+      <Route path="/store" element={<Protected><Store /></Protected>} />
+      <Route path="/riders" element={<Protected><Riders /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -1,5 +1,7 @@
 import { XStack, YStack, Text } from "tamagui";
 import { brand } from "../theme";
+import { useSettings } from "../settings";
+import { FadeInView } from "../animations";
 import { HERO_STATS } from "../config";
 
 interface HomeHeaderProps {
@@ -9,6 +11,8 @@ interface HomeHeaderProps {
 }
 
 export function HomeHeader({ count, paddingTop, onOpenCart }: Readonly<HomeHeaderProps>) {
+  const settings = useSettings();
+
   return (
     <YStack
       paddingTop={paddingTop}
@@ -16,29 +20,31 @@ export function HomeHeader({ count, paddingTop, onOpenCart }: Readonly<HomeHeade
       paddingBottom={12}
       backgroundColor="#0c0805"
     >
-      <XStack alignItems="center" justifyContent="space-between">
-        <YStack>
-          <Text fontSize={13} color={brand.gold} fontFamily="$body">
-            Har bite, yaad rahe!
-          </Text>
-          <Text fontSize={22} fontWeight="800" color={brand.text}>
-            Didi Bhaiya ki Biryani
-          </Text>
-        </YStack>
-        <CartButton count={count} onPress={onOpenCart} />
-      </XStack>
-      <XStack marginTop={10} gap={14}>
-        {HERO_STATS.map((stat) => (
-          <YStack key={stat.id}>
-            <Text fontSize={15} fontWeight="800" color={brand.text}>
-              {stat.big}
+      <FadeInView>
+        <XStack alignItems="center" justifyContent="space-between">
+          <YStack>
+            <Text fontSize={13} color={brand.gold} fontFamily="$body">
+              {settings.tagline}
             </Text>
-            <Text fontSize={10} color={brand.muted}>
-              {stat.small}
+            <Text fontSize={22} fontWeight="800" color={brand.text}>
+              {settings.brandName}
             </Text>
           </YStack>
-        ))}
-      </XStack>
+          <CartButton count={count} onPress={onOpenCart} />
+        </XStack>
+        <XStack marginTop={10} gap={14}>
+          {HERO_STATS.map((stat) => (
+            <YStack key={stat.id}>
+              <Text fontSize={15} fontWeight="800" color={brand.text}>
+                {stat.big}
+              </Text>
+              <Text fontSize={10} color={brand.muted}>
+                {stat.small}
+              </Text>
+            </YStack>
+          ))}
+        </XStack>
+      </FadeInView>
     </YStack>
   );
 }
@@ -54,7 +60,7 @@ function CartButton({ count, onPress }: Readonly<{ count: number; onPress: () =>
       borderWidth={1}
       alignItems="center"
       justifyContent="center"
-      pressStyle={{ opacity: 0.8 }}
+      pressStyle={{ opacity: 0.8, scale: 0.94 }}
       onPress={onPress}
     >
       <Text fontSize={18}>🛒</Text>

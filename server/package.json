@@ -10,8 +10,11 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "seed": "tsx src/seed.ts",
+    "cleanup:dummy": "tsx src/scripts/cleanup-dummy-data.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run __tests__/unit",
+    "test:integration": "vitest run __tests__/integration",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
@@ -26,6 +29,7 @@
     "mjml": "^5.3.0",
     "mongoose": "^8.8.3",
     "nodemailer": "^8.0.10",
+    "pdfkit": "^0.19.0",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0"
   },
@@ -36,6 +40,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.10.1",
     "@types/nodemailer": "^8.0.0",
+    "@types/pdfkit": "^0.17.6",
     "@vitest/coverage-v8": "^2.1.8",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",

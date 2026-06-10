@@ -10,6 +10,7 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import { logger } from "./utils/logger.js";
 import { connectDB } from "./config/db.js";
 import { razorpayWebhook } from "./webhooks/razorpay.js";
+import { ratingRouter } from "./routes/rating.js";
 import { typeDefs } from "./graphql/typeDefs.js";
 import { resolvers } from "./graphql/resolvers/index.js";
 import { getUserFromAuthHeader, type Context } from "./utils/auth.js";
@@ -53,13 +54,17 @@ async function start() {
     razorpayWebhook
   );
 
+  // Public post-delivery rating survey (linked from the delivered email).
+  app.use(ratingRouter);
+
   app.use(
     "/graphql",
     cors<cors.CorsRequest>({
       origin: ORIGINS.length ? ORIGINS : true,
       credentials: true,
     }),
-    express.json({ limit: "1mb" }),
+    // 12mb: admin image uploads travel as base64 through the uploadImage mutation.
+    express.json({ limit: "12mb" }),
     expressMiddleware(apollo, {
       context: async ({ req }): Promise<Context> => ({
         user: getUserFromAuthHeader(req.headers.authorization),

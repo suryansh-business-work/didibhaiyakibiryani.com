@@ -1,4 +1,5 @@
 import { Modal } from "../../components/ui";
+import ImageUpload from "../../components/ImageUpload";
 import { BADGE_OPTIONS, type Cat, type MenuForm } from "./types";
 
 interface MenuItemModalProps {
@@ -50,6 +51,12 @@ export default function MenuItemModal({
           onChange={(e) => set({ description: e.target.value })}
         />
       </div>
+      <ImageUpload
+        label="Item photo"
+        folder="/menu"
+        currentUrl={form.image}
+        onUploaded={(url) => set({ image: url })}
+      />
       <div className="field-row">
         <div className="field">
           <label>Price (₹)</label>
@@ -113,10 +120,10 @@ export default function MenuItemModal({
       <label className="check">
         <input
           type="checkbox"
-          checked={form.isAvailable}
-          onChange={(e) => set({ isAvailable: e.target.checked })}
+          checked={!form.isAvailable}
+          onChange={(e) => set({ isAvailable: !e.target.checked })}
         />
-        Available for ordering
+        Out of stock (hides “Add” in apps and blocks ordering)
       </label>
       {error && <div className="error-text">{error}</div>}
     </Modal>

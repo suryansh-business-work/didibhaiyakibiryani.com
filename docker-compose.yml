@@ -3,10 +3,13 @@
 # which terminates TLS and reverse-proxies each domain to the ports below.
 #
 # Values come from the .env file written next to this file by the deploy job.
-#   Website  127.0.0.1:3000  ->  https://didibhaiyakibiryani.com
-#   Server   127.0.0.1:3001  ->  https://server.didibhaiyakibiryani.com
-#   Admin    127.0.0.1:3002  ->  https://admin.didibhaiyakibiryani.com
-#   Native   127.0.0.1:3003  ->  https://native.didibhaiyakibiryani.com
+#   Website   127.0.0.1:3000  ->  https://didibhaiyakibiryani.com
+#   Server    127.0.0.1:3001  ->  https://server.didibhaiyakibiryani.com
+#   Admin     127.0.0.1:3002  ->  https://admin.didibhaiyakibiryani.com
+#   Native    127.0.0.1:3003  ->  https://native.didibhaiyakibiryani.com
+#   Delivery  127.0.0.1:3004  ->  https://delivery.didibhaiyakibiryani.com
+#   Signoz    127.0.0.1:3005  ->  https://signoz.didibhaiyakibiryani.com
+#             (shared Signoz stack on the host publishes 3005 separately)
 
 services:
   website:
@@ -50,3 +53,10 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:3003:3003"
+
+  delivery:
+    image: ${DOCKERHUB_USERNAME}/ddb-delivery:latest
+    container_name: ddb-delivery
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3004:3004"

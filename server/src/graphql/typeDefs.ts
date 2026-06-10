@@ -144,12 +144,21 @@ export const typeDefs = /* GraphQL */ `
     city: String!
     pincode: String!
     phone: String
+    lat: Float
+    lng: Float
   }
 
   type StatusEvent {
     status: OrderStatus!
     at: DateTime!
     note: String
+  }
+
+  type OrderRating {
+    food: Int!
+    delivery: Int!
+    comment: String
+    ratedAt: DateTime!
   }
 
   type Order {
@@ -166,7 +175,9 @@ export const typeDefs = /* GraphQL */ `
     paymentMethod: PaymentMethod!
     paymentStatus: PaymentStatus!
     address: OrderAddress!
+    deliveryPartner: User
     statusHistory: [StatusEvent!]!
+    rating: OrderRating
     notes: String
     placedAt: DateTime!
   }
@@ -279,6 +290,22 @@ export const typeDefs = /* GraphQL */ `
   }
 
   # ─────────────── Queries ───────────────
+  type MaintenanceFlags {
+    website: Boolean!
+    server: Boolean!
+    admin: Boolean!
+    native: Boolean!
+    delivery: Boolean!
+  }
+
+  input MaintenanceInput {
+    website: Boolean
+    server: Boolean
+    admin: Boolean
+    native: Boolean
+    delivery: Boolean
+  }
+
   type Settings {
     brandName: String!
     tagline: String!
@@ -295,6 +322,20 @@ export const typeDefs = /* GraphQL */ `
     instagramUrl: String!
     facebookUrl: String!
     youtubeUrl: String!
+    maintenance: MaintenanceFlags!
+    storeOpenTime: String!
+    storeCloseTime: String!
+    storeTimezone: String!
+    storeOpenNow: Boolean!
+    minDeliveryCost: Float!
+    perKmCharge: Float!
+    freeDeliveryAbove: Float!
+    storeLat: Float!
+    storeLng: Float!
+    gstLegalName: String!
+    gstNumber: String!
+    codEnabled: Boolean!
+    onlineEnabled: Boolean!
     updatedAt: DateTime!
   }
 
@@ -314,6 +355,24 @@ export const typeDefs = /* GraphQL */ `
     instagramUrl: String
     facebookUrl: String
     youtubeUrl: String
+    maintenance: MaintenanceInput
+    storeOpenTime: String
+    storeCloseTime: String
+    storeTimezone: String
+    minDeliveryCost: Float
+    perKmCharge: Float
+    freeDeliveryAbove: Float
+    storeLat: Float
+    storeLng: Float
+    gstLegalName: String
+    gstNumber: String
+    codEnabled: Boolean
+    onlineEnabled: Boolean
+  }
+
+  type UploadedImage {
+    url: String!
+    fileId: String!
   }
 
   enum PaymentRecordStatus {
@@ -422,6 +481,10 @@ export const typeDefs = /* GraphQL */ `
     order(id: ID!): Order
     orders(status: OrderStatus): [Order!]! # admin/staff
 
+    riders: [User!]! # admin/staff
+    deliveryQueue: [Order!]! # DELIVERY: my active assigned orders
+    myDeliveries(limit: Int): [Order!]! # DELIVERY: my delivered orders (earnings)
+
     reviews(limit: Int): [Review!]!
 
     customers(search: String): [User!]! # admin
@@ -455,6 +518,14 @@ export const typeDefs = /* GraphQL */ `
     placeOrder(input: PlaceOrderInput!): Order!
     cancelOrder(id: ID!): Order!
     updateOrderStatus(id: ID!, status: OrderStatus!, note: String): Order! # admin/staff
+    rateOrder(orderId: ID!, food: Int!, delivery: Int!, comment: String): Order!
+
+    # Delivery management
+    assignDeliveryPartner(orderId: ID!, riderId: ID!): Order! # admin/staff
+    createStaffUser(name: String!, email: String!, phone: String, password: String!, role: Role!): User! # admin
+
+    # Media (ImageKit)
+    uploadImage(file: String!, fileName: String!, folder: String): UploadedImage! # admin
 
     # Branding & company settings (admin)
     updateSettings(input: SettingsInput!): Settings!

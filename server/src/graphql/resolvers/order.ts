@@ -1,28 +1,12 @@
 import { GraphQLError } from "graphql";
-import { Order, MenuItem, Coupon, User } from "../../models/index.js";
-import { requireAuth, requireRole, type Context } from "../../utils/auth.js";
-import { evaluateCoupon, deliveryFeeFor } from "../../utils/pricing.js";
+import { Order, MenuItem, Coupon, User, getOrCreateSettings } from "../../models/index.js";
+import { requireAuth, requireRole, type Context, type TokenPayload } from "../../utils/auth.js";
+import { evaluateCoupon, computeDeliveryFee, haversineKm } from "../../utils/pricing.js";
+import { assertOrderingAvailable } from "../../utils/ordering.js";
 import { genOrderNumber } from "../../utils/helpers.js";
-import { sendMailAsync } from "../../utils/mailer.js";
-import { orderConfirmedEmail, orderDeliveredEmail } from "../../emails/order.js";
-import { loadEmailBrand } from "../../emails/marketing.js";
-import type { IOrder, OrderStatus } from "../../models/index.js";
-
-const APP_URL = process.env.PUBLIC_ORDER_URL || "https://native.didibhaiyakibiryani.com";
-
-function notifyOrderEmail(order: IOrder, kind: "CONFIRMED" | "DELIVERED"): void {
-  Promise.all([User.findById(order.user).exec(), loadEmailBrand()])
-    .then(([customer, brand]) => {
-      if (!customer?.email) return;
-      const url = `${APP_URL}/order/${order.id}`;
-      const content =
-        kind === "CONFIRMED"
-          ? orderConfirmedEmail(brand, customer.name, order, url)
-          : orderDeliveredEmail(brand, customer.name, order, APP_URL);
-      sendMailAsync({ to: customer.email, ...content });
-    })
-    .catch(() => undefined);
-}
+import { notifyOrderEmail } from "../../emails/notify.js";
+import { saveOrderRating } from "../../utils/rating.js";
+import type { IOrder, ISettings, OrderStatus } from "../../models/index.js";
 
 interface CartItemInput {
   menuItemId: string;
@@ -36,6 +20,8 @@ interface AddressInput {
   city: string;
   pincode: string;
   phone?: string;
+  lat?: number;
+  lng?: number;
 }
 interface PlaceOrderInput {
   items: CartItemInput[];
@@ -54,6 +40,30 @@ const NEXT: Record<OrderStatus, OrderStatus[]> = {
   DELIVERED: [],
   CANCELLED: [],
 };
+
+// A rider may only move their own assigned orders along the delivery leg.
+const RIDER_ALLOWED = new Set<OrderStatus>(["OUT_FOR_DELIVERY", "DELIVERED"]);
+
+function distanceKmFor(settings: ISettings, address: AddressInput): number {
+  const hasStore = Boolean(settings.storeLat && settings.storeLng);
+  const hasCustomer = Boolean(address.lat && address.lng);
+  if (!hasStore || !hasCustomer) return 0;
+  return haversineKm(settings.storeLat, settings.storeLng, address.lat ?? 0, address.lng ?? 0);
+}
+
+function assertRiderCanUpdate(order: IOrder, user: TokenPayload, status: OrderStatus): void {
+  if (user.role !== "DELIVERY") return;
+  if (String(order.deliveryPartner ?? "") !== user.id) {
+    throw new GraphQLError("This order is not assigned to you.", {
+      extensions: { code: "FORBIDDEN" },
+    });
+  }
+  if (!RIDER_ALLOWED.has(status)) {
+    throw new GraphQLError("Riders can only mark pickup and delivery.", {
+      extensions: { code: "FORBIDDEN" },
+    });
+  }
+}
 
 export const orderResolvers = {
   Query: {
@@ -88,6 +98,10 @@ export const orderResolvers = {
         throw new GraphQLError("Your cart is empty.", { extensions: { code: "BAD_USER_INPUT" } });
       }
 
+      const settings = await getOrCreateSettings();
+      const paymentMethod = input.paymentMethod ?? "COD";
+      assertOrderingAvailable(settings, paymentMethod);
+
       // Resolve items from DB (never trust client prices).
       const ids = input.items.map((i) => i.menuItemId);
       const dbItems = await MenuItem.find({ _id: { $in: ids } });
@@ -97,7 +111,7 @@ export const orderResolvers = {
         const dbItem = map.get(ci.menuItemId);
         if (!dbItem) throw new GraphQLError(`An item in your cart is unavailable.`);
         if (!dbItem.isAvailable)
-          throw new GraphQLError(`“${dbItem.name}” is currently unavailable.`);
+          throw new GraphQLError(`“${dbItem.name}” is currently out of stock.`);
         if (ci.qty < 1) throw new GraphQLError("Invalid quantity.");
         return {
           menuItem: dbItem._id,
@@ -110,9 +124,16 @@ export const orderResolvers = {
 
       const subtotal = orderItems.reduce((s, i) => s + i.price * i.qty, 0);
 
+      // Delivery fee from admin-configured Finance settings (+ distance when known).
+      const baseDeliveryFee = computeDeliveryFee(subtotal, distanceKmFor(settings, input.address), {
+        minDeliveryCost: settings.minDeliveryCost,
+        perKmCharge: settings.perKmCharge,
+        freeDeliveryAbove: settings.freeDeliveryAbove,
+      });
+
       // Coupon
       let discount = 0;
-      let deliveryFee = deliveryFeeFor(subtotal);
+      let deliveryFee = baseDeliveryFee;
       let couponCode: string | undefined;
       let appliedCoupon = null;
 
@@ -122,6 +143,7 @@ export const orderResolvers = {
         const evalResult = evaluateCoupon(appliedCoupon, subtotal, {
           isFirstOrder,
           fromApp: true,
+          baseDeliveryFee,
         });
         if (!evalResult.valid) {
           throw new GraphQLError(evalResult.message, { extensions: { code: "BAD_USER_INPUT" } });
@@ -156,7 +178,7 @@ export const orderResolvers = {
         deliveryFee,
         total,
         couponCode,
-        paymentMethod: input.paymentMethod ?? "COD",
+        paymentMethod,
         paymentStatus: "PENDING",
         address: input.address,
         status: "PLACED",
@@ -198,9 +220,10 @@ export const orderResolvers = {
       { id, status, note }: { id: string; status: OrderStatus; note?: string },
       ctx: Context
     ) => {
-      requireRole(ctx, "ADMIN", "STAFF", "DELIVERY");
+      const u = requireRole(ctx, "ADMIN", "STAFF", "DELIVERY");
       const order = await Order.findById(id);
       if (!order) throw new GraphQLError("Order not found.");
+      assertRiderCanUpdate(order, u, status);
       if (!NEXT[order.status].includes(status)) {
         throw new GraphQLError(
           `Cannot move an order from ${order.status} to ${status}.`,
@@ -218,6 +241,20 @@ export const orderResolvers = {
       }
       return order;
     },
+
+    rateOrder: async (
+      _: unknown,
+      args: { orderId: string; food: number; delivery: number; comment?: string },
+      ctx: Context
+    ) => {
+      const u = requireAuth(ctx);
+      const order = await Order.findById(args.orderId);
+      if (!order) throw new GraphQLError("Order not found.");
+      if (String(order.user) !== u.id) {
+        throw new GraphQLError("Not allowed.", { extensions: { code: "FORBIDDEN" } });
+      }
+      return saveOrderRating(order, args.food, args.delivery, args.comment);
+    },
   },
 
   Order: {
@@ -226,5 +263,7 @@ export const orderResolvers = {
       if (usr && typeof usr === "object" && "name" in usr && usr.name) return usr;
       return usr ? User.findById(usr as string).exec() : null;
     },
+    deliveryPartner: (parent: { deliveryPartner?: unknown }) =>
+      parent.deliveryPartner ? User.findById(parent.deliveryPartner as string).exec() : null,
   },
 };

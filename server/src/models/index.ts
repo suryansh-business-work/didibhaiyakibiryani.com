@@ -16,12 +16,13 @@ export type { ICoupon, CouponType } from "./Coupon.js";
 export type {
   IOrder,
   IOrderItem,
+  IOrderRating,
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
 } from "./Order.js";
 export type { IReview } from "./Review.js";
-export type { ISettings } from "./Settings.js";
+export type { ISettings, IMaintenanceFlags } from "./Settings.js";
 export type { IPayment, PaymentRecordStatus } from "./Payment.js";
 export type { IOtp, OtpPurpose } from "./Otp.js";
 export type { ICampaign, CampaignChannel, CampaignStatus } from "./Campaign.js";

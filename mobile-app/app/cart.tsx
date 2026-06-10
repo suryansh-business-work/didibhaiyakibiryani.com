@@ -3,17 +3,16 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button } from "tamagui";
 import { useCart } from "../src/cart";
+import { useSettings, previewDeliveryFee } from "../src/settings";
 import { brand, inr } from "../src/theme";
-
-const DELIVERY_FEE = 39;
-const FREE_OVER = 399;
 
 export default function Cart() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lines, subtotal, setQty, remove } = useCart();
+  const settings = useSettings();
 
-  const deliveryFee = subtotal >= FREE_OVER || subtotal === 0 ? 0 : DELIVERY_FEE;
+  const deliveryFee = previewDeliveryFee(subtotal, settings);
   const total = subtotal + deliveryFee;
 
   return (
@@ -53,8 +52,8 @@ export default function Cart() {
             <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={14} padding={16} gap={8} marginTop={4}>
               <Row k="Subtotal" v={inr(subtotal)} />
               <Row k="Delivery" v={deliveryFee === 0 ? "Free" : inr(deliveryFee)} />
-              {subtotal < FREE_OVER && (
-                <Text fontSize={12} color={brand.gold}>Add {inr(FREE_OVER - subtotal)} more for free delivery 🚚</Text>
+              {settings.freeDeliveryAbove > 0 && subtotal < settings.freeDeliveryAbove && (
+                <Text fontSize={12} color={brand.gold}>Add {inr(settings.freeDeliveryAbove - subtotal)} more for free delivery 🚚</Text>
               )}
               <YStack height={1} backgroundColor={brand.border} marginVertical={4} />
               <Row k="Total" v={inr(total)} strong />

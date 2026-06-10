@@ -73,12 +73,12 @@ export default function MenuTable({
               </td>
               <td>
                 <button
-                  className={`badge ${it.isAvailable ? "badge--green" : "badge--muted"}`}
+                  className={`badge ${it.isAvailable ? "badge--green" : "badge--red"}`}
                   onClick={() => onToggle(it)}
-                  title="Toggle availability"
+                  title="Toggle out of stock"
                 >
                   <span className="dot" />
-                  {it.isAvailable ? "Live" : "Off"}
+                  {it.isAvailable ? "In stock" : "Out of stock"}
                 </button>
               </td>
               <td className="t-mono" style={{ textAlign: "right" }}>

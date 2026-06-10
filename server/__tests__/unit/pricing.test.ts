@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
-  deliveryFeeFor,
+  computeDeliveryFee,
+  haversineKm,
   evaluateCoupon,
-  DELIVERY_FEE,
-  FREE_DELIVERY_THRESHOLD,
+  DEFAULT_DELIVERY_PRICING,
 } from "../../src/utils/pricing";
 import type { ICoupon } from "../../src/models";
 
@@ -21,15 +21,44 @@ function coupon(overrides: Partial<ICoupon> = {}): ICoupon {
   } as ICoupon;
 }
 
-describe("deliveryFeeFor", () => {
-  it("charges the flat fee below the free-delivery threshold", () => {
-    expect(deliveryFeeFor(FREE_DELIVERY_THRESHOLD - 1)).toBe(DELIVERY_FEE);
-    expect(deliveryFeeFor(0)).toBe(DELIVERY_FEE);
+describe("computeDeliveryFee", () => {
+  const pricing = { minDeliveryCost: 30, perKmCharge: 10, freeDeliveryAbove: 399 };
+
+  it("charges the minimum cost when distance is unknown", () => {
+    expect(computeDeliveryFee(100, 0, pricing)).toBe(30);
+    expect(computeDeliveryFee(100, Number.NaN, pricing)).toBe(30);
   });
 
-  it("is free at or above the threshold", () => {
-    expect(deliveryFeeFor(FREE_DELIVERY_THRESHOLD)).toBe(0);
-    expect(deliveryFeeFor(FREE_DELIVERY_THRESHOLD + 100)).toBe(0);
+  it("adds the per-km charge on top of the minimum", () => {
+    expect(computeDeliveryFee(100, 5, pricing)).toBe(30 + 50);
+    expect(computeDeliveryFee(100, 2.5, pricing)).toBe(Math.round(30 + 25));
+  });
+
+  it("is free at or above the free-delivery threshold", () => {
+    expect(computeDeliveryFee(399, 5, pricing)).toBe(0);
+    expect(computeDeliveryFee(1000, 12, pricing)).toBe(0);
+  });
+
+  it("never applies free delivery when the threshold is disabled (0)", () => {
+    const noFree = { ...pricing, freeDeliveryAbove: 0 };
+    expect(computeDeliveryFee(5000, 0, noFree)).toBe(30);
+  });
+
+  it("falls back to sane defaults", () => {
+    expect(computeDeliveryFee(100, 0)).toBe(DEFAULT_DELIVERY_PRICING.minDeliveryCost);
+    expect(computeDeliveryFee(DEFAULT_DELIVERY_PRICING.freeDeliveryAbove, 0)).toBe(0);
+  });
+});
+
+describe("haversineKm", () => {
+  it("is zero for the same point", () => {
+    expect(haversineKm(12.97, 77.59, 12.97, 77.59)).toBe(0);
+  });
+
+  it("computes a known distance (Bengaluru → Mysuru ≈ 128–146 km)", () => {
+    const km = haversineKm(12.9716, 77.5946, 12.2958, 76.6394);
+    expect(km).toBeGreaterThan(120);
+    expect(km).toBeLessThan(150);
   });
 });
 
@@ -38,6 +67,11 @@ describe("evaluateCoupon", () => {
     const r = evaluateCoupon(null, 500);
     expect(r.valid).toBe(false);
     expect(r.discount).toBe(0);
+  });
+
+  it("uses the supplied base delivery fee", () => {
+    const r = evaluateCoupon(coupon(), 200, { baseDeliveryFee: 77 });
+    expect(r.deliveryFee).toBe(77);
   });
 
   it("applies a FLAT discount, capped at the subtotal", () => {
@@ -53,7 +87,7 @@ describe("evaluateCoupon", () => {
   });
 
   it("zeroes the delivery fee for FREE_DELIVERY", () => {
-    const r = evaluateCoupon(coupon({ type: "FREE_DELIVERY" }), 200);
+    const r = evaluateCoupon(coupon({ type: "FREE_DELIVERY" }), 200, { baseDeliveryFee: 39 });
     expect(r.valid).toBe(true);
     expect(r.deliveryFee).toBe(0);
     expect(r.discount).toBe(0);

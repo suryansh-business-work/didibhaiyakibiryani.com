@@ -8,6 +8,7 @@ export interface Item {
   name: string;
   description?: string;
   price: number;
+  image?: string;
   spiceLevel: number;
   serves: string;
   badge: string;
@@ -20,6 +21,7 @@ export interface MenuForm {
   name: string;
   description: string;
   price: number;
+  image: string;
   categoryId: string;
   spiceLevel: number;
   serves: string;
@@ -33,6 +35,7 @@ export const BLANK_FORM: MenuForm = {
   name: "",
   description: "",
   price: 0,
+  image: "",
   categoryId: "",
   spiceLevel: 0,
   serves: "Serves 1",

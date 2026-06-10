@@ -1,7 +1,7 @@
 import { GraphQLError } from "graphql";
-import { Coupon, Order, MenuItem } from "../../models/index.js";
+import { Coupon, Order, MenuItem, getOrCreateSettings } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
-import { evaluateCoupon } from "../../utils/pricing.js";
+import { evaluateCoupon, computeDeliveryFee } from "../../utils/pricing.js";
 
 interface CouponInput {
   code: string;
@@ -41,12 +41,20 @@ export const couponResolvers = {
       { code, subtotal }: { code: string; subtotal: number },
       ctx: Context
     ) => {
-      const coupon = await Coupon.findOne({ code: code.toUpperCase().trim() });
+      const [coupon, settings] = await Promise.all([
+        Coupon.findOne({ code: code.toUpperCase().trim() }).exec(),
+        getOrCreateSettings(),
+      ]);
       let isFirstOrder = true;
       if (ctx.user) {
         isFirstOrder = (await Order.countDocuments({ user: ctx.user.id })) === 0;
       }
-      const result = evaluateCoupon(coupon, subtotal, { isFirstOrder, fromApp: true });
+      const baseDeliveryFee = computeDeliveryFee(subtotal, 0, {
+        minDeliveryCost: settings.minDeliveryCost,
+        perKmCharge: settings.perKmCharge,
+        freeDeliveryAbove: settings.freeDeliveryAbove,
+      });
+      const result = evaluateCoupon(coupon, subtotal, { isFirstOrder, fromApp: true, baseDeliveryFee });
       return { ...result, coupon: result.valid ? coupon : null };
     },
   },

@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
+import { useQuery } from "@apollo/client";
 import { useAuth } from "../auth";
+import { SETTINGS } from "../graphql/queries";
 import {
   IGrid,
   IOrders,
@@ -9,6 +11,9 @@ import {
   ILayers,
   IUsers,
   IRupee,
+  IBank,
+  IBike,
+  IClock,
   ISend,
   IPalette,
   ILogout,
@@ -18,17 +23,22 @@ const NAV = [
   { to: "/", label: "Dashboard", icon: IGrid, end: true },
   { to: "/orders", label: "Orders", icon: IOrders },
   { to: "/payments", label: "Payments", icon: IRupee },
+  { to: "/finance", label: "Finance", icon: IBank },
   { to: "/menu", label: "Menu", icon: IMenu },
   { to: "/categories", label: "Categories", icon: ILayers },
   { to: "/coupons", label: "Coupons", icon: ITag },
   { to: "/customers", label: "Customers", icon: IUsers },
+  { to: "/riders", label: "Riders", icon: IBike },
   { to: "/campaigns", label: "Campaigns", icon: ISend },
+  { to: "/store", label: "Store", icon: IClock },
   { to: "/branding", label: "Branding", icon: IPalette },
 ];
 
 export default function Layout({ title, children }: Readonly<{ title: string; children: ReactNode }>) {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const { data } = useQuery<{ settings?: { maintenance?: { admin?: boolean } } }>(SETTINGS);
+  const adminMaintenance = data?.settings?.maintenance?.admin ?? false;
 
   return (
     <div className="shell">
@@ -78,7 +88,15 @@ export default function Layout({ title, children }: Readonly<{ title: string; ch
             <h1>{title}</h1>
           </div>
         </header>
-        <div className="content">{children}</div>
+        <div className="content">
+          {adminMaintenance && (
+            <div className="maint-banner">
+              ⚠ Maintenance mode is ON for the admin panel — turn it off under Store →
+              Maintenance when you're done.
+            </div>
+          )}
+          {children}
+        </div>
       </div>
     </div>
   );

@@ -116,9 +116,12 @@ const partyPerks = [
             The ones everyone <span class="italic-accent">orders twice.</span>
           </h2>
         </div>
-        <a href={ORDER_URL} class="link-arrow">Order on the app
-          <svg class="icon" viewBox="0 0 24 24" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </a>
+        <div class="menu-head__side">
+          <span class="store-status" id="store-status" hidden></span>
+          <a href={ORDER_URL} class="link-arrow">Order on the app
+            <svg class="icon" viewBox="0 0 24 24" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
       </div>
 
       <div class="menu-grid" id="menu-grid">
@@ -131,25 +134,36 @@ const partyPerks = [
     (function () {
       const grid = document.getElementById("menu-grid");
       const QUERY =
-        "query { menuItems(availableOnly: true) { name description price spiceLevel serves badge } }";
+        "query { menuItems { name description price spiceLevel serves badge isAvailable } }";
       const esc = (v) =>
         String(v == null ? "" : v).replace(/[&<>"]/g, (c) =>
           ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
         );
       function card(m, i) {
-        const badge = m.badge === "BESTSELLER" || m.badge === "NEW" ? m.badge : "";
+        const soldOut = m.isAvailable === false;
+        const promoBadge = m.badge === "BESTSELLER" || m.badge === "NEW" ? m.badge : "";
         const hue = (i * 9 + 12) % 40;
         const spice = m.spiceLevel > 0 ? "🌶️".repeat(m.spiceLevel) : "";
-        const badgeHtml = badge
-          ? '<span class="product__badge ' +
-            (badge === "NEW" ? "is-new" : "") +
+        let badgeHtml = "";
+        if (soldOut) {
+          badgeHtml = '<span class="product__badge is-out">OUT OF STOCK</span>';
+        } else if (promoBadge) {
+          badgeHtml =
+            '<span class="product__badge ' +
+            (promoBadge === "NEW" ? "is-new" : "") +
             '">' +
-            badge +
-            "</span>"
-          : "";
+            promoBadge +
+            "</span>";
+        }
         const spiceHtml = spice ? '<span class="product__spice">' + spice + "</span>" : "";
+        const addHtml = soldOut
+          ? '<span class="product__add btn is-disabled" aria-disabled="true">Out of stock</span>'
+          : '<a class="product__add btn" href="' +
+            orderUrl +
+            '"><svg class="icon" viewBox="0 0 24 24" width="16" height="16">' +
+            '<path d="M12 5v14M5 12h14"/></svg>Add to cart</a>';
         return (
-          '<article class="product">' +
+          '<article class="product' + (soldOut ? " is-out" : "") + '">' +
           '<div class="product__img" style="--h:' +
           hue +
           '">' +
@@ -175,10 +189,8 @@ const partyPerks = [
           "</span>" +
           spiceHtml +
           "</div></div>" +
-          '<a class="product__add btn" href="' +
-          orderUrl +
-          '"><svg class="icon" viewBox="0 0 24 24" width="16" height="16">' +
-          '<path d="M12 5v14M5 12h14"/></svg>Add to cart</a></article>'
+          addHtml +
+          "</article>"
         );
       }
       fetch(apiUrl, {
@@ -200,6 +212,43 @@ const partyPerks = [
           grid.innerHTML =
             '<p class="menu-empty">Couldn\'t load the menu — please refresh.</p>';
         });
+
+      // Store status + maintenance mode (admin-managed settings)
+      const SETTINGS_QUERY =
+        "query { settings { storeOpenNow storeOpenTime storeCloseTime maintenance { website } } }";
+      fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: SETTINGS_QUERY }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          const s = res && res.data && res.data.settings;
+          if (!s) return;
+          if (s.maintenance && s.maintenance.website) {
+            const overlay = document.createElement("div");
+            overlay.className = "maint-overlay";
+            overlay.innerHTML =
+              '<div class="maint-card"><div class="maint-emoji">🛠️</div>' +
+              "<h2>Back in a bit!</h2>" +
+              "<p>We're doing a little maintenance. The biryani isn't going anywhere — check back soon.</p></div>";
+            document.body.appendChild(overlay);
+            document.body.style.overflow = "hidden";
+            return;
+          }
+          const status = document.getElementById("store-status");
+          if (status) {
+            status.hidden = false;
+            if (s.storeOpenNow) {
+              status.textContent = "● Open now · " + s.storeOpenTime + "–" + s.storeCloseTime;
+              status.classList.add("is-open");
+            } else {
+              status.textContent = "● Closed · opens " + s.storeOpenTime;
+              status.classList.add("is-closed");
+            }
+          }
+        })
+        .catch(() => undefined);
     })();
   </script>
 
@@ -709,6 +758,26 @@ const partyPerks = [
     flex-wrap: wrap;
     margin-top: 28px;
   }
+
+  /* Store status + out-of-stock + maintenance */
+  .menu-head__side { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .store-status { font-size: 0.82rem; font-weight: 700; padding: 6px 12px; border-radius: 999px; }
+  .store-status.is-open { color: #5fb45f; background: rgba(95, 180, 95, 0.12); }
+  .store-status.is-closed { color: #e0584b; background: rgba(224, 88, 75, 0.12); }
+  .product.is-out { opacity: 0.6; }
+  .product__badge.is-out { background: #e0584b; color: #fff; }
+  .product__add.is-disabled { pointer-events: none; opacity: 0.55; cursor: not-allowed; }
+  .maint-overlay {
+    position: fixed; inset: 0; z-index: 999; background: rgba(11, 7, 5, 0.97);
+    display: grid; place-items: center; padding: 24px;
+  }
+  .maint-card {
+    max-width: 420px; text-align: center; background: #17110c;
+    border: 1px solid rgba(232, 200, 140, 0.2); border-radius: 18px; padding: 40px 32px;
+  }
+  .maint-emoji { font-size: 3rem; margin-bottom: 12px; }
+  .maint-card h2 { margin-bottom: 8px; }
+  .maint-card p { color: #8d8073; }
 
   /* Responsive */
   @media (max-width: 980px) {

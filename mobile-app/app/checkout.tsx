@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView, Alert } from "react-native";
+import { ScrollView } from "react-native";
 import { useLazyQuery, useMutation } from "@apollo/client";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,16 +7,16 @@ import { YStack, XStack, Text, Button, Input, Spinner } from "tamagui";
 import { VALIDATE_COUPON, PLACE_ORDER } from "../src/graphql";
 import { useCart } from "../src/cart";
 import { useAuth } from "../src/auth";
+import { useSettings, previewDeliveryFee } from "../src/settings";
+import { Section, Field, PayOption, Row, Notice } from "../src/checkout/fields";
 import { brand, inr } from "../src/theme";
-
-const DELIVERY_FEE = 39;
-const FREE_OVER = 399;
 
 export default function Checkout() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { lines, subtotal, clear } = useCart();
+  const settings = useSettings();
 
   const def = user?.addresses?.find((a) => a.isDefault) ?? user?.addresses?.[0];
   const [line1, setLine1] = useState(def?.line1 ?? "");
@@ -24,8 +24,10 @@ export default function Checkout() {
   const [city, setCity] = useState(def?.city ?? "");
   const [pincode, setPincode] = useState(def?.pincode ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
-  const [payment, setPayment] = useState<"COD" | "ONLINE">("COD");
+  const defaultPayment = settings.codEnabled ? "COD" : "ONLINE";
+  const [payment, setPayment] = useState<"COD" | "ONLINE">(defaultPayment);
   const [notes, setNotes] = useState("");
+  const [formError, setFormError] = useState("");
 
   const [code, setCode] = useState("");
   const [discount, setDiscount] = useState(0);
@@ -46,9 +48,11 @@ export default function Checkout() {
     );
   }
 
-  const baseDelivery = subtotal >= FREE_OVER ? 0 : DELIVERY_FEE;
+  const baseDelivery = previewDeliveryFee(subtotal, settings);
   const effDelivery = freeDelivery ? 0 : baseDelivery;
   const total = Math.max(0, subtotal - discount) + effDelivery;
+  const noPaymentMethod = !settings.codEnabled && !settings.onlineEnabled;
+  const blocked = !settings.storeOpenNow || noPaymentMethod;
 
   async function apply() {
     if (!code.trim()) return;
@@ -69,8 +73,9 @@ export default function Checkout() {
   }
 
   async function submit() {
+    setFormError("");
     if (!line1 || !city || !pincode) {
-      Alert.alert("Add a delivery address", "Address line, city and pincode are required.");
+      setFormError("Address line, city and pincode are required.");
       return;
     }
     try {
@@ -88,7 +93,7 @@ export default function Checkout() {
       clear();
       router.replace(`/order/${data.placeOrder.id}`);
     } catch (e: unknown) {
-      Alert.alert("Couldn't place order", e instanceof Error ? e.message : "Please try again.");
+      setFormError(e instanceof Error ? e.message : "Couldn't place the order — please try again.");
     }
   }
 
@@ -100,6 +105,12 @@ export default function Checkout() {
       </XStack>
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 18, paddingBottom: 20 }}>
+        {!settings.storeOpenNow && (
+          <Notice kind="warn">
+            We're closed right now — open {settings.storeOpenTime}–{settings.storeCloseTime}. You can place your order once we're open.
+          </Notice>
+        )}
+
         <Section title="Delivery address">
           <Field label="Flat / House / Street" value={line1} onChange={setLine1} />
           <Field label="Landmark (optional)" value={line2} onChange={setLine2} />
@@ -122,10 +133,18 @@ export default function Checkout() {
         </Section>
 
         <Section title="Payment">
-          <XStack gap={10}>
-            <PayOption label="Cash on delivery" active={payment === "COD"} onPress={() => setPayment("COD")} />
-            <PayOption label="Pay online" active={payment === "ONLINE"} onPress={() => setPayment("ONLINE")} />
-          </XStack>
+          {noPaymentMethod ? (
+            <Notice kind="error">Payments are temporarily unavailable — please try again later.</Notice>
+          ) : (
+            <XStack gap={10}>
+              {settings.codEnabled && (
+                <PayOption label="Cash on delivery" active={payment === "COD"} onPress={() => setPayment("COD")} />
+              )}
+              {settings.onlineEnabled && (
+                <PayOption label="Pay online" active={payment === "ONLINE"} onPress={() => setPayment("ONLINE")} />
+              )}
+            </XStack>
+          )}
         </Section>
 
         <Section title="Cooking / delivery notes">
@@ -140,54 +159,16 @@ export default function Checkout() {
           <YStack height={1} backgroundColor={brand.border} marginVertical={4} />
           <Row k="To pay" v={inr(total)} strong />
         </YStack>
+
+        {formError ? <Notice kind="error">{formError}</Notice> : null}
       </ScrollView>
 
       <XStack paddingHorizontal={16} paddingBottom={insets.bottom + 12} paddingTop={12} backgroundColor="#0c0805" borderTopColor={brand.border} borderTopWidth={1}>
-        <Button flex={1} height={52} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" fontSize={16} disabled={placing || lines.length === 0} onPress={submit}>
+        <Button flex={1} height={52} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" fontSize={16}
+          disabled={placing || lines.length === 0 || blocked} opacity={blocked ? 0.6 : 1} onPress={submit}>
           {placing ? <Spinner color="#2a1a06" /> : `Place order · ${inr(total)}`}
         </Button>
       </XStack>
     </YStack>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <YStack gap={10}>
-      <Text fontWeight="800" color={brand.text} fontSize={16}>{title}</Text>
-      {children}
-    </YStack>
-  );
-}
-
-function Field({
-  label, value, onChange, keyboard,
-}: { label: string; value: string; onChange: (s: string) => void; keyboard?: "default" | "number-pad" | "phone-pad" }) {
-  return (
-    <YStack gap={5}>
-      <Text fontSize={12} color={brand.muted} fontWeight="700">{label}</Text>
-      <Input value={value} onChangeText={onChange} keyboardType={keyboard ?? "default"}
-        backgroundColor={brand.bgSoft} borderColor={brand.borderStrong} color={brand.text} />
-    </YStack>
-  );
-}
-
-function PayOption({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return (
-    <Button flex={1} onPress={onPress}
-      backgroundColor={active ? "rgba(228,182,92,0.16)" : brand.card}
-      borderColor={active ? brand.goldDeep : brand.border} borderWidth={1}
-      color={active ? brand.gold : brand.dim} fontWeight="700">
-      {label}
-    </Button>
-  );
-}
-
-function Row({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
-  return (
-    <XStack justifyContent="space-between">
-      <Text color={strong ? brand.text : brand.dim} fontWeight={strong ? "800" : "400"} fontSize={strong ? 17 : 14}>{k}</Text>
-      <Text color={strong ? brand.gold : brand.dim} fontWeight={strong ? "800" : "600"} fontSize={strong ? 17 : 14}>{v}</Text>
-    </XStack>
   );
 }

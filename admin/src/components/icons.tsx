@@ -83,6 +83,18 @@ export const ISend = ({ size }: P) => (
     <path d="M22 2 11 13" />
   </svg>
 );
+export const IBike = ({ size }: P) => (
+  <svg {...s(size)}>
+    <circle cx="5.5" cy="17.5" r="3.5" />
+    <circle cx="18.5" cy="17.5" r="3.5" />
+    <path d="M12 17.5h-2L7.5 12H12l3 5.5M15 6.5h2.5L19 9M9 6.5h3.5l4 11" />
+  </svg>
+);
+export const IBank = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="m3 9 9-6 9 6M4 9v10M20 9v10M2 19h20M8 12v4M12 12v4M16 12v4" />
+  </svg>
+);
 export const IPalette = ({ size }: P) => (
   <svg {...s(size)}>
     <path d="M12 21a9 9 0 1 1 9-9c0 2.2-1.8 3-3 3h-2a2 2 0 0 0-1.5 3.3c.4.5.5 1.2 0 1.7-.6.6-1.6 1-2.5 1Z" />

@@ -1,5 +1,39 @@
 import { gql } from "@apollo/client";
 
+export const APP_SETTINGS = gql`
+  query AppSettings {
+    settings {
+      brandName
+      tagline
+      storeOpenTime
+      storeCloseTime
+      storeOpenNow
+      minDeliveryCost
+      perKmCharge
+      freeDeliveryAbove
+      codEnabled
+      onlineEnabled
+      supportPhone
+      maintenance {
+        native
+      }
+    }
+  }
+`;
+
+export const RATE_ORDER = gql`
+  mutation RateOrder($orderId: ID!, $food: Int!, $delivery: Int!, $comment: String) {
+    rateOrder(orderId: $orderId, food: $food, delivery: $delivery, comment: $comment) {
+      id
+      rating {
+        food
+        delivery
+        comment
+      }
+    }
+  }
+`;
+
 export const ME = gql`
   query Me {
     me {
@@ -53,7 +87,7 @@ export const HOME_DATA = gql`
       id
       name
     }
-    menuItems(availableOnly: true) {
+    menuItems {
       id
       name
       description
@@ -62,6 +96,7 @@ export const HOME_DATA = gql`
       serves
       badge
       isVeg
+      isAvailable
       rating
       ratingCount
       category { id name }
@@ -80,6 +115,7 @@ export const MENU_ITEM = gql`
       serves
       badge
       isVeg
+      isAvailable
       rating
       ratingCount
       category { id name }
@@ -155,6 +191,7 @@ export const ORDER = gql`
       items { name price qty spiceLevel }
       address { line1 line2 city pincode phone }
       statusHistory { status at }
+      rating { food delivery comment }
     }
   }
 `;

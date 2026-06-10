@@ -61,11 +61,19 @@ export function orderDeliveredEmail(
   brand: EmailBrand,
   name: string,
   order: IOrder,
-  orderUrl: string
+  orderUrl: string,
+  rateUrl?: string
 ): EmailContent {
+  const rateBlock = rateUrl
+    ? `
+    <mj-text color="#cdbfb0" padding-top="6px">How was the food and the delivery? It takes 10 seconds:</mj-text>
+    ${ctaButton(brand, "Rate your order ★", rateUrl)}`
+    : "";
   const body = cardSection(`
     <mj-text color="#f5ece0" font-size="18px" font-weight="700">Delivered! Enjoy your biryani 🎉</mj-text>
     <mj-text color="#cdbfb0">Hi ${name}, order <strong>${order.orderNumber}</strong> (${inr(order.total)}) has been delivered. ${brand.tagline}</mj-text>
+    <mj-text color="#8d8073" font-size="13px">Your invoice is attached to this email as a PDF.</mj-text>
+    ${rateBlock}
     <mj-text color="#8d8073" font-size="13px">Loved it? Order again anytime — your favourites are saved in the app.</mj-text>
     ${ctaButton(brand, "Order again", orderUrl)}
   `);

@@ -4,6 +4,7 @@ import { SETTINGS } from "../../graphql/queries";
 import { UPDATE_SETTINGS } from "../../graphql/mutations";
 import Layout from "../../components/Layout";
 import { Spinner } from "../../components/ui";
+import ImageUpload from "../../components/ImageUpload";
 import { useAlert } from "../../components/dialog";
 import BrandingSection from "./BrandingSection";
 import { BLANK_FORM, SECTIONS, settingsToForm, type SettingsData, type SettingsForm } from "./types";
@@ -54,6 +55,16 @@ export default function Branding() {
         These settings drive the website, customer app and emails — logo, colors and
         company details update everywhere without a deploy.
       </p>
+
+      <div className="card" style={{ padding: 18, marginBottom: 16 }}>
+        <h3 style={{ marginBottom: 12 }}>Logo</h3>
+        <ImageUpload
+          label="Brand logo (used on the website, apps and emails)"
+          folder="/branding"
+          currentUrl={form.logoUrl}
+          onUploaded={(url) => patch({ logoUrl: url })}
+        />
+      </div>
 
       {SECTIONS.map((s) => (
         <BrandingSection key={s.title} section={s} form={form} onChange={patch} />

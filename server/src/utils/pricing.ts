@@ -1,10 +1,42 @@
 import type { ICoupon } from "../models/index.js";
 
-export const DELIVERY_FEE = 39;
-export const FREE_DELIVERY_THRESHOLD = 399;
+export interface DeliveryPricing {
+  minDeliveryCost: number;
+  perKmCharge: number;
+  freeDeliveryAbove: number;
+}
 
-export function deliveryFeeFor(subtotal: number): number {
-  return subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
+/** Defaults used when admin has not configured Finance settings yet. */
+export const DEFAULT_DELIVERY_PRICING: DeliveryPricing = {
+  minDeliveryCost: 39,
+  perKmCharge: 0,
+  freeDeliveryAbove: 399,
+};
+
+/** Great-circle distance in km between two coordinates (haversine). */
+export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+/**
+ * Delivery fee = min delivery cost + per-km charge × distance, free above the
+ * configured subtotal. Distance is 0 when either side has no coordinates yet.
+ */
+export function computeDeliveryFee(
+  subtotal: number,
+  distanceKm: number,
+  pricing: DeliveryPricing = DEFAULT_DELIVERY_PRICING
+): number {
+  if (pricing.freeDeliveryAbove > 0 && subtotal >= pricing.freeDeliveryAbove) return 0;
+  const km = Number.isFinite(distanceKm) && distanceKm > 0 ? distanceKm : 0;
+  return Math.round(pricing.minDeliveryCost + pricing.perKmCharge * km);
 }
 
 export interface CouponEval {
@@ -18,14 +50,16 @@ export interface CouponEval {
 
 /**
  * Evaluate a coupon against a subtotal. `isFirstOrder` lets first-order-only
- * coupons be checked at order time.
+ * coupons be checked at order time. `baseDeliveryFee` is the fee computed from
+ * the admin-configured delivery pricing for this order.
  */
 export function evaluateCoupon(
   coupon: ICoupon | null,
   subtotal: number,
-  opts: { isFirstOrder?: boolean; fromApp?: boolean } = {}
+  opts: { isFirstOrder?: boolean; fromApp?: boolean; baseDeliveryFee?: number } = {}
 ): CouponEval {
-  const baseDelivery = deliveryFeeFor(subtotal);
+  const baseDelivery =
+    opts.baseDeliveryFee ?? computeDeliveryFee(subtotal, 0, DEFAULT_DELIVERY_PRICING);
   if (!coupon) {
     return { valid: false, message: "Invalid coupon code.", discount: 0, deliveryFee: baseDelivery };
   }

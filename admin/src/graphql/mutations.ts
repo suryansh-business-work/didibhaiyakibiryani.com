@@ -1,4 +1,5 @@
 import { gql } from "@apollo/client";
+import { SETTINGS_CORE_FIELDS } from "./queries";
 
 export const LOGIN = gql`
   mutation Login($emailOrPhone: String!, $password: String!) {
@@ -99,22 +100,45 @@ export const DELETE_COUPON = gql`
 export const UPDATE_SETTINGS = gql`
   mutation UpdateSettings($input: SettingsInput!) {
     updateSettings(input: $input) {
-      brandName
-      tagline
-      logoUrl
-      primaryColor
-      accentColor
-      companyName
-      companyAddress
-      companyPhone
-      companyEmail
-      supportPhone
-      supportEmail
-      fssaiLicense
-      instagramUrl
-      facebookUrl
-      youtubeUrl
-      updatedAt
+      ${SETTINGS_CORE_FIELDS}
+    }
+  }
+`;
+
+export const ASSIGN_RIDER = gql`
+  mutation AssignDeliveryPartner($orderId: ID!, $riderId: ID!) {
+    assignDeliveryPartner(orderId: $orderId, riderId: $riderId) {
+      id
+      deliveryPartner {
+        id
+        name
+        phone
+      }
+    }
+  }
+`;
+
+export const CREATE_STAFF_USER = gql`
+  mutation CreateStaffUser(
+    $name: String!
+    $email: String!
+    $phone: String
+    $password: String!
+    $role: Role!
+  ) {
+    createStaffUser(name: $name, email: $email, phone: $phone, password: $password, role: $role) {
+      id
+      name
+      email
+    }
+  }
+`;
+
+export const UPLOAD_IMAGE = gql`
+  mutation UploadImage($file: String!, $fileName: String!, $folder: String) {
+    uploadImage(file: $file, fileName: $fileName, folder: $folder) {
+      url
+      fileId
     }
   }
 `;

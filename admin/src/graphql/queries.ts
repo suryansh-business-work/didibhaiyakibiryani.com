@@ -71,6 +71,8 @@ export const ORDERS = gql`
         city
         pincode
         phone
+        lat
+        lng
       }
       items {
         name
@@ -83,6 +85,29 @@ export const ORDERS = gql`
         at
         note
       }
+      deliveryPartner {
+        id
+        name
+        phone
+      }
+      rating {
+        food
+        delivery
+        comment
+      }
+    }
+  }
+`;
+
+export const RIDERS = gql`
+  query Riders {
+    riders {
+      id
+      name
+      email
+      phone
+      isActive
+      createdAt
     }
   }
 `;
@@ -108,6 +133,7 @@ export const MENU_ITEMS = gql`
       name
       description
       price
+      image
       spiceLevel
       serves
       badge
@@ -161,25 +187,49 @@ export const CUSTOMERS = gql`
   }
 `;
 
+export const SETTINGS_CORE_FIELDS = `
+  brandName
+  tagline
+  logoUrl
+  primaryColor
+  accentColor
+  companyName
+  companyAddress
+  companyPhone
+  companyEmail
+  supportPhone
+  supportEmail
+  fssaiLicense
+  instagramUrl
+  facebookUrl
+  youtubeUrl
+  maintenance {
+    website
+    server
+    admin
+    native
+    delivery
+  }
+  storeOpenTime
+  storeCloseTime
+  storeTimezone
+  storeOpenNow
+  minDeliveryCost
+  perKmCharge
+  freeDeliveryAbove
+  storeLat
+  storeLng
+  gstLegalName
+  gstNumber
+  codEnabled
+  onlineEnabled
+  updatedAt
+`;
+
 export const SETTINGS = gql`
   query Settings {
     settings {
-      brandName
-      tagline
-      logoUrl
-      primaryColor
-      accentColor
-      companyName
-      companyAddress
-      companyPhone
-      companyEmail
-      supportPhone
-      supportEmail
-      fssaiLicense
-      instagramUrl
-      facebookUrl
-      youtubeUrl
-      updatedAt
+      ${SETTINGS_CORE_FIELDS}
     }
   }
 `;

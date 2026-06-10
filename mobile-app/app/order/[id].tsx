@@ -1,9 +1,12 @@
-import { ScrollView, Alert } from "react-native";
-import { useMutation, useQuery } from "@apollo/client";
+import { ScrollView } from "react-native";
+import { useQuery } from "@apollo/client";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button, Spinner } from "tamagui";
-import { ORDER, CANCEL_ORDER } from "../../src/graphql";
+import { ORDER } from "../../src/graphql";
+import { RatingCard, type OrderRating } from "../../src/order/RatingCard";
+import { CancelOrder } from "../../src/order/CancelOrder";
+import { FadeInView } from "../../src/animations";
 import { brand, inr, STATUS_FLOW, STATUS_META } from "../../src/theme";
 
 interface Order {
@@ -12,6 +15,7 @@ interface Order {
   items: { name: string; price: number; qty: number; spiceLevel?: number }[];
   address: { line1: string; line2?: string; city: string; pincode: string; phone?: string };
   statusHistory: { status: string; at: string }[];
+  rating?: OrderRating | null;
 }
 
 export default function OrderTracking() {
@@ -22,7 +26,6 @@ export default function OrderTracking() {
     variables: { id },
     pollInterval: 15000, // live-ish status refresh
   });
-  const [cancel, { loading: cancelling }] = useMutation(CANCEL_ORDER);
 
   if (loading && !data) {
     return <YStack flex={1} backgroundColor={brand.bg} alignItems="center" justifyContent="center"><Spinner color={brand.gold} /></YStack>;
@@ -35,24 +38,7 @@ export default function OrderTracking() {
   const cancelled = o.status === "CANCELLED";
   const currentIdx = STATUS_FLOW.indexOf(o.status);
   const canCancel = ["PLACED", "CONFIRMED"].includes(o.status);
-
-  async function doCancel() {
-    Alert.alert("Cancel order?", "This can't be undone.", [
-      { text: "Keep order", style: "cancel" },
-      {
-        text: "Cancel order",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await cancel({ variables: { id } });
-            await refetch();
-          } catch (e: unknown) {
-            Alert.alert("Could not cancel", e instanceof Error ? e.message : "Try again.");
-          }
-        },
-      },
-    ]);
-  }
+  const delivered = o.status === "DELIVERED";
 
   return (
     <YStack flex={1} backgroundColor={brand.bg}>
@@ -66,6 +52,7 @@ export default function OrderTracking() {
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 18, paddingBottom: 30 }}>
         {/* Status timeline */}
+        <FadeInView>
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} padding={18} gap={2}>
           {cancelled ? (
             <XStack gap={12} alignItems="center" paddingVertical={6}>
@@ -98,6 +85,10 @@ export default function OrderTracking() {
             })
           )}
         </YStack>
+        </FadeInView>
+
+        {/* Post-delivery rating survey */}
+        {delivered && <RatingCard orderId={o.id} rating={o.rating} onRated={() => refetch()} />}
 
         {/* Items */}
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} padding={16} gap={10}>
@@ -124,11 +115,7 @@ export default function OrderTracking() {
           {o.address.phone ? <Text color={brand.muted}>{o.address.phone}</Text> : null}
         </YStack>
 
-        {canCancel && (
-          <Button backgroundColor="rgba(224,88,75,0.12)" borderColor="rgba(224,88,75,0.4)" borderWidth={1} color={brand.red} fontWeight="800" disabled={cancelling} onPress={doCancel}>
-            {cancelling ? "Cancelling…" : "Cancel order"}
-          </Button>
-        )}
+        {canCancel && <CancelOrder orderId={o.id} onCancelled={() => refetch()} />}
       </ScrollView>
     </YStack>
   );

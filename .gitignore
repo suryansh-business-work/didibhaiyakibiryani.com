@@ -41,3 +41,7 @@ Thumbs.db
 # stray stubs the Astro VS Code language server may regenerate at the repo root
 /src/
 /.astro/
+
+# playwright
+test-results/
+playwright-report/

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Verifies every public URL returns HTTP 200. Exits non-zero if any fail,
 # so the deploy job goes red when something is down.
+# delivery/signoz are checked only once their DNS records exist (a missing
+# A-record is reported loudly but does not fail older, unrelated deploys).
 set -uo pipefail
 
 URLS=(
@@ -9,6 +11,20 @@ URLS=(
   "https://admin.didibhaiyakibiryani.com"
   "https://native.didibhaiyakibiryani.com"
 )
+
+# DNS-gated URLs (new subdomains): enforced as soon as the record resolves.
+CANDIDATE_URLS=(
+  "https://delivery.didibhaiyakibiryani.com"
+  "https://signoz.didibhaiyakibiryani.com"
+)
+for url in "${CANDIDATE_URLS[@]}"; do
+  host="${url#https://}"
+  if getent hosts "${host}" >/dev/null 2>&1; then
+    URLS+=("${url}")
+  else
+    echo "⚠ SKIPPED (no DNS record yet): ${url} — add an A-record → this host to enable it"
+  fi
+done
 
 RETRIES="${RETRIES:-10}"
 SLEEP="${SLEEP:-6}"

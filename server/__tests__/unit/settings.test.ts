@@ -25,4 +25,36 @@ describe("cleanSettingsInput", () => {
   it("returns an empty object for an empty input", () => {
     expect(cleanSettingsInput({})).toEqual({});
   });
+
+  it("keeps finance numbers and clamps them at zero", () => {
+    expect(
+      cleanSettingsInput({ minDeliveryCost: 25, perKmCharge: -3, freeDeliveryAbove: 499 })
+    ).toEqual({ minDeliveryCost: 25, perKmCharge: 0, freeDeliveryAbove: 499 });
+  });
+
+  it("allows negative store coordinates (southern/western hemispheres)", () => {
+    expect(cleanSettingsInput({ storeLat: -12.5, storeLng: 77.6 })).toEqual({
+      storeLat: -12.5,
+      storeLng: 77.6,
+    });
+  });
+
+  it("keeps payment toggles as booleans", () => {
+    expect(cleanSettingsInput({ codEnabled: false, onlineEnabled: true })).toEqual({
+      codEnabled: false,
+      onlineEnabled: true,
+    });
+  });
+
+  it("expands maintenance flags into dotted paths and drops unknown apps", () => {
+    expect(
+      cleanSettingsInput({ maintenance: { website: true, delivery: false, bogus: true } })
+    ).toEqual({ "maintenance.website": true, "maintenance.delivery": false });
+  });
+
+  it("ignores unknown fields and wrong types", () => {
+    expect(
+      cleanSettingsInput({ hacker: "x", minDeliveryCost: "39" as unknown as number })
+    ).toEqual({});
+  });
 });

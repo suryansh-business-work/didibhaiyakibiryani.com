@@ -1,5 +1,5 @@
 import { GraphQLError } from "graphql";
-import { Order, Payment } from "../../models/index.js";
+import { Order, Payment, getOrCreateSettings } from "../../models/index.js";
 import { requireAuth, requireRole, type Context } from "../../utils/auth.js";
 import {
   createProviderOrder,
@@ -35,6 +35,12 @@ export const paymentResolvers = {
       }
       if (order.paymentMethod !== "ONLINE" || order.paymentStatus === "PAID") {
         throw new GraphQLError("This order is not awaiting an online payment.");
+      }
+      const settings = await getOrCreateSettings();
+      if (!settings.onlineEnabled || settings.maintenance?.server) {
+        throw new GraphQLError("Online payment is currently unavailable.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
       }
 
       const existing = await Payment.findOne({ order: order._id, status: "CREATED" }).exec();

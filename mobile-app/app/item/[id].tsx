@@ -11,7 +11,7 @@ import { FoodThumb, Badge, Stars } from "../../src/components";
 
 interface Item {
   id: string; name: string; description?: string; price: number; spiceLevel: number;
-  serves: string; badge: string; rating: number; ratingCount: number;
+  serves: string; badge: string; isAvailable: boolean; rating: number; ratingCount: number;
   category?: { name: string } | null;
 }
 
@@ -46,7 +46,10 @@ export default function ItemDetail() {
         </YStack>
 
         <YStack gap={8}>
-          {it.badge !== "NONE" && (
+          {!it.isAvailable && (
+            <Badge label="Out of stock" color={brand.red} bg="rgba(224,88,75,0.15)" />
+          )}
+          {it.isAvailable && it.badge !== "NONE" && (
             <Badge label={it.badge} color={it.badge === "NEW" ? brand.green : brand.gold} bg={it.badge === "NEW" ? "rgba(95,180,95,0.15)" : "rgba(228,182,92,0.15)"} />
           )}
           <Text fontSize={26} fontWeight="800" color={brand.text}>{it.name}</Text>
@@ -95,17 +98,18 @@ export default function ItemDetail() {
         <Button
           flex={1}
           height={52}
-          backgroundColor={brand.gold}
-          color="#2a1a06"
+          backgroundColor={it.isAvailable ? brand.gold : brand.cardSoft}
+          color={it.isAvailable ? "#2a1a06" : brand.muted}
           fontWeight="800"
           fontSize={16}
-          pressStyle={{ opacity: 0.9 }}
+          disabled={!it.isAvailable}
+          pressStyle={{ opacity: 0.9, scale: 0.98 }}
           onPress={() => {
             add({ id: it.id, name: it.name, price: it.price, spiceLevel: chosenSpice }, qty);
             router.push("/cart");
           }}
         >
-          Add {qty} · {inr(it.price * qty)}
+          {it.isAvailable ? `Add ${qty} · ${inr(it.price * qty)}` : "Out of stock"}
         </Button>
       </XStack>
     </YStack>

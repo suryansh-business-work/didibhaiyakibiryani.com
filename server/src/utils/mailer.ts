@@ -21,10 +21,17 @@ function getTransport(): nodemailer.Transporter {
   return transport;
 }
 
+export interface MailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+}
+
 export interface MailJob {
   to: string;
   subject: string;
   mjml: string;
+  attachments?: MailAttachment[];
 }
 
 /** Compile MJML → HTML and send. Returns false when SMTP isn't configured. */
@@ -48,6 +55,7 @@ export async function sendMail(job: MailJob): Promise<boolean> {
     to: job.to,
     subject: job.subject,
     html,
+    attachments: job.attachments,
   });
   logger.info({ to: job.to, subject: job.subject }, "Email sent");
   return true;

@@ -11,6 +11,7 @@ import {
   CategoryChips,
   HomeList,
   CartBar,
+  StoreClosedBanner,
   type Cat,
   type Item,
 } from "../../src/home";
@@ -38,6 +39,7 @@ export default function Home() {
   return (
     <YStack flex={1} backgroundColor={brand.bg}>
       <HomeHeader count={count} paddingTop={insets.top + 8} onOpenCart={openCart} />
+      <StoreClosedBanner />
       <CategoryChips cats={cats} activeCat={activeCat} onSelect={setActiveCat} />
       <HomeList
         loading={loading && !data}

@@ -1,6 +1,7 @@
 import { ScrollView } from "react-native";
 import { YStack, Text, Spinner } from "tamagui";
 import { brand } from "../theme";
+import { RiseIn } from "../animations";
 import { MenuItemCard } from "./MenuItemCard";
 import type { Item } from "./types";
 
@@ -43,7 +44,9 @@ export function HomeList({ loading, error, items, count, onAdd }: Readonly<HomeL
       contentContainerStyle={{ padding: 14, paddingBottom: count > 0 ? 110 : 30, gap: 12 }}
     >
       {items.map((it, idx) => (
-        <MenuItemCard key={it.id} item={it} hue={hueFor(idx)} onAdd={onAdd} />
+        <RiseIn key={it.id} index={idx}>
+          <MenuItemCard item={it} hue={hueFor(idx)} onAdd={onAdd} />
+        </RiseIn>
       ))}
       {items.length === 0 && (
         <Text color={brand.muted} textAlign="center" marginTop={40}>
