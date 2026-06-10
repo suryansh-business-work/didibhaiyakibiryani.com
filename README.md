@@ -21,7 +21,7 @@ All four share **one GraphQL API** (`server/`) and **one MongoDB Atlas** databas
                        ┌──────────────────────┐
    website (Astro) ───▶│                      │
    admin   (React) ───▶│   GraphQL API        │───▶  MongoDB Atlas
-   mobile  (Expo)  ───▶│   server/ :4000      │
+   mobile  (Expo)  ───▶│   server/ :3001      │
                        └──────────────────────┘
 ```
 
@@ -88,15 +88,16 @@ npm run seed        # = npm --prefix server run seed
 Open separate terminals (or use the root scripts):
 
 ```bash
-npm run dev:server     # GraphQL at  http://localhost:4000/graphql
-npm run dev:admin      # Admin at    http://localhost:5173
-npm run dev:website    # Website at  http://localhost:4321
-npm run dev:mobile     # Expo dev server (scan the QR with Expo Go)
+npm run dev:server     # GraphQL at  http://localhost:3001/graphql
+npm run dev:admin      # Admin at    http://localhost:3002
+npm run dev:website    # Website at  http://localhost:3000
+npm run dev:mobile     # Expo dev server (scan the QR; web at http://localhost:3003)
+npm run all            # all four dev servers at once (concurrently)
 ```
 
 > **Mobile app on a physical device:** `localhost` won't reach your machine.
 > Set `EXPO_PUBLIC_API_URL` in `mobile-app/.env` to your computer's LAN IP, e.g.
-> `http://192.168.1.5:4000/graphql`, and make sure both are on the same Wi-Fi.
+> `http://192.168.1.5:3001/graphql`, and make sure both are on the same Wi-Fi.
 
 ---
 
@@ -113,7 +114,7 @@ npm run dev:mobile     # Expo dev server (scan the QR with Expo Go)
 
 ## GraphQL API (server)
 
-`POST http://localhost:4000/graphql` · health check at `/health`.
+`POST http://localhost:3001/graphql` · health check at `/health`.
 Send `Authorization: Bearer <token>` for authenticated operations.
 
 **Key queries:** `me`, `categories`, `menuItems`, `menuItem`, `coupons`,

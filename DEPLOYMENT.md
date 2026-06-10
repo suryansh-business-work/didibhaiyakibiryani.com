@@ -6,10 +6,12 @@ and reverse-proxies each domain to a loopback port.
 
 | Project | Container port | Host port (loopback) | Domain |
 | ------- | -------------- | -------------------- | ------ |
-| Website (Astro) | 80 | `127.0.0.1:3000` | https://didibhaiyakibiryani.com |
+| Website (Astro) | 3000 | `127.0.0.1:3000` | https://didibhaiyakibiryani.com |
 | Server (GraphQL) | 3001 | `127.0.0.1:3001` | https://server.didibhaiyakibiryani.com |
-| Admin (Vite SPA) | 80 | `127.0.0.1:3002` | https://admin.didibhaiyakibiryani.com |
-| Native (Expo web) | 80 | `127.0.0.1:3003` | https://native.didibhaiyakibiryani.com |
+| Admin (Vite SPA) | 3002 | `127.0.0.1:3002` | https://admin.didibhaiyakibiryani.com |
+| Native (Expo web) | 3003 | `127.0.0.1:3003` | https://native.didibhaiyakibiryani.com |
+
+Each container listens on its own port (1:1 mapping — no port translation).
 
 ```
  Internet ──▶ nginx (host, :443 TLS) ─┬─▶ 127.0.0.1:3000  ddb-website
