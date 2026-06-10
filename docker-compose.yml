@@ -25,14 +25,16 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:3001:3001"
-    extra_hosts:
-      # Reach the host's shared Signoz OTel collector (127.0.0.1:4318)
-      - "host.docker.internal:host-gateway"
+    networks:
+      # default + the shared Signoz network, so OTLP reaches the collector
+      # by container name (its host ports are loopback-only by design).
+      - default
+      - signoz-net
     environment:
       NODE_ENV: production
       PORT: "3001"
       OTEL_SERVICE_NAME: ddb-server
-      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://host.docker.internal:4318}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://signoz-otel-collector:4318}
       MONGODB_URI: ${MONGODB_URI}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30d}
@@ -65,3 +67,9 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:3004:3004"
+
+networks:
+  default:
+  signoz-net:
+    external: true
+    name: signoz-net
