@@ -5,9 +5,9 @@
   "main": "expo-router/entry",
   "description": "Didi Bhaiya ki Biryani — customer ordering app (Expo + React Native + Tamagui).",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start": "expo start --port 3003",
+    "android": "expo start --android --port 3003",
+    "ios": "expo start --ios --port 3003",
     "web": "expo start --web --port 3003",
     "export:web": "expo export --platform web",
     "typecheck": "tsc --noEmit"
