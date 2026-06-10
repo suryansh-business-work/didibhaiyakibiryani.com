@@ -93,7 +93,7 @@ const healthUrl = API_URL.replace(/\/graphql$/, "") + "/health/full";
               '<div class="status-list">' +
               list
                 .map(
-                  (s, i) =>
+                  (s) =>
                     '<button class="status-item" data-idx="' +
                     esc(s.key) +
                     '">' +
