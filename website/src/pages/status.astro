@@ -161,6 +161,8 @@ const healthUrl = API_URL.replace(/\/graphql$/, "") + "/health/full";
     position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); z-index: 200;
     display: grid; place-items: center; padding: 20px;
   }
+  /* author display:grid would otherwise defeat the hidden attribute */
+  .hdialog-backdrop[hidden] { display: none; }
   .hdialog {
     width: 100%; max-width: 420px; background: #1a130d;
     border: 1px solid rgba(232, 200, 140, 0.25); border-radius: 16px; padding: 22px;

@@ -37,22 +37,13 @@
    - Maintain consistent folder structure.
 
 8. Check linting, build, and formatting, then push the code. Ensure that all GitHub CI checks are green and that everything is up and running:
-<https://duncit.com>
-<https://server.duncit.com/>
-<https://admin.duncit.com/>
-<https://mweb.duncit.com/>
-<https://partners.duncit.com/>
-<https://partners-app.duncit.com/>
-<https://ads.duncit.com/>
-<https://crm.duncit.com/>
-<https://finance.duncit.com/>
-<https://tech.duncit.com/>
-<https://support.duncit.com/>
-<https://website.duncit.com/>
-<https://legal.duncit.com/>
-<https://ai.duncit.com/>
-<https://products.duncit.com/>
-<https://marketing.duncit.com/>
+Sr. No.	Project	Port	Domain
+1	Website	3000	https://didibhaiyakibiryani.com
+2	Server	3001	https://server.didibhaiyakibiryani.com
+3	Admin	   3002	https://admin.didibhaiyakibiryani.com
+4	Native	3003	https://native.didibhaiyakibiryani.com
+5	Delivery	3004	https://delivery.didibhaiyakibiryani.com/
+6	Signoz	3005	https://signoz.didibhaiyakibiryani.com/
 
 9. Any .tsx file should not exceed 200 lines. If a file grows beyond 200 lines, create a folder with the same component name and refactor it into multiple smaller components/modules inside that folder using an index-based structure. Ensure the refactor introduces no breaking changes and preserves all existing functionality, imports, exports, and behavior.
 
@@ -64,7 +55,7 @@
 
 13. Use GraphQL and GraphQL Code Generator for all API interactions. Ensure that all queries and mutations are properly typed and that the generated code is used throughout the project for type safety and consistency.
 
-14. After completing all changes, make sure to verify the build, check types, run lint checks, apply code formatting, and only then push the code to the repository. Ensure that all GitHub CI checks pass successfully and that the application is fully functional across all environments (<https://duncit.com>, <https://server.duncit.com/>, <https://admin.duncit.com/>, <https://mweb.duncit.com/>, <https://partners.duncit.com/>, <https://partners-app.duncit.com/>, <https://ads.duncit.com/>, <https://crm.duncit.com/>, <https://finance.duncit.com/>, <https://tech.duncit.com/>, <https://support.duncit.com/>, <https://website.duncit.com/>, <https://legal.duncit.com/>, <https://ai.duncit.com/>, <https://products.duncit.com/>, <https://marketing.duncit.com/>).
+14. After completing all changes, make sure to verify the build, check types, run lint checks, apply code formatting, and only then push the code to the repository. Ensure that all GitHub CI checks pass successfully and that the application is fully functional across all environments , <https://didibhaiyakibiryani.com/>, <https://server.didibhaiyakibiryani.com/>, <https://admin.didibhaiyakibiryani.com/>, <https://native.didibhaiyakibiryani.com/>, <https://delivery.didibhaiyakibiryani.com/>, <https://signoz.didibhaiyakibiryani.com/>.
 
 15. Performance, Security, Accessbility, SEO, Best Practices, Code Quality, Scalability, and Maintainability should be the top priority while writing code. Always follow industry best practices and guidelines to ensure that the codebase remains robust, secure, and maintainable in the long run. Regularly review and refactor code to improve performance, enhance security, and ensure accessibility compliance.
 
