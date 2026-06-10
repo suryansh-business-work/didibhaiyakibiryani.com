@@ -5,14 +5,31 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# The GraphQL endpoint baked into the browser/web builds at compile time.
-env:
-  SERVER_API_URL: https://server.didibhaiyakibiryani.com/graphql
-
 jobs:
-  # ── 1. Build the four images and push them to Docker Hub ────────
+  # ── Build each app as its own parallel job (website/server/admin/native) ──
   build:
+    name: build-${{ matrix.app }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: website
+            context: ./website
+            image: ddb-website
+            build-args: ""
+          - app: server
+            context: ./server
+            image: ddb-server
+            build-args: ""
+          - app: admin
+            context: ./admin
+            image: ddb-admin
+            build-args: VITE_API_URL=https://server.didibhaiyakibiryani.com/graphql
+          - app: native
+            context: ./mobile-app
+            image: ddb-native
+            build-args: EXPO_PUBLIC_API_URL=https://server.didibhaiyakibiryani.com/graphql
     steps:
       - uses: actions/checkout@v4
 
@@ -24,59 +41,20 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & push website
+      - name: Build & push ${{ matrix.app }}
         uses: docker/build-push-action@v6
         with:
-          context: ./website
+          context: ${{ matrix.context }}
           platforms: linux/amd64
           push: true
+          build-args: ${{ matrix.build-args }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-website:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-website:${{ github.sha }}
-          cache-from: type=gha,scope=website
-          cache-to: type=gha,scope=website,mode=max
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,scope=${{ matrix.app }},mode=max
 
-      - name: Build & push server
-        uses: docker/build-push-action@v6
-        with:
-          context: ./server
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-server:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-server:${{ github.sha }}
-          cache-from: type=gha,scope=server
-          cache-to: type=gha,scope=server,mode=max
-
-      - name: Build & push admin
-        uses: docker/build-push-action@v6
-        with:
-          context: ./admin
-          platforms: linux/amd64
-          push: true
-          build-args: |
-            VITE_API_URL=${{ env.SERVER_API_URL }}
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-admin:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-admin:${{ github.sha }}
-          cache-from: type=gha,scope=admin
-          cache-to: type=gha,scope=admin,mode=max
-
-      - name: Build & push native (Expo web)
-        uses: docker/build-push-action@v6
-        with:
-          context: ./mobile-app
-          platforms: linux/amd64
-          push: true
-          build-args: |
-            EXPO_PUBLIC_API_URL=${{ env.SERVER_API_URL }}
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-native:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-native:${{ github.sha }}
-          cache-from: type=gha,scope=native
-          cache-to: type=gha,scope=native,mode=max
-
-  # ── 2. Ship to the host, run the stack, get SSL, verify 200s ────
+  # ── Ship to the host, run the stack, get SSL, verify 200s ───────
   deploy:
     needs: build
     runs-on: ubuntu-latest

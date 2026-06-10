@@ -6,12 +6,15 @@ FROM node:20-slim AS build
 WORKDIR /app
 ARG EXPO_PUBLIC_API_URL=https://server.didibhaiyakibiryani.com/graphql
 ENV EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL
-ENV NODE_ENV=production
 ENV CI=1
 COPY package*.json ./
-RUN npm install --no-audit --no-fund
+# Install ALL deps incl. devDependencies — the Expo/Tamagui/Reanimated babel
+# plugins live in devDependencies and are required by `expo export`.
+RUN npm install --no-audit --no-fund --include=dev
 COPY . .
-RUN npx expo export --platform web --output-dir dist
+# Build a production web bundle (NODE_ENV only set for the export itself so
+# Tamagui style extraction runs, without omitting devDeps during install above).
+RUN NODE_ENV=production npx expo export --platform web --output-dir dist
 
 # ── Serve with nginx (SPA fallback) ──────────────────────────────
 FROM nginx:1.27-alpine

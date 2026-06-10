@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export const TOKEN_KEY = "ddb_token";
 
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000/graphql";
+  process.env.EXPO_PUBLIC_API_URL || "http://localhost:3001/graphql";
 
 const httpLink = createHttpLink({ uri: API_URL });
 
