@@ -1,0 +1,147 @@
+import { Order, User, MenuItem, Review } from "../../models/index.js";
+import { requireRole, type Context } from "../../utils/auth.js";
+
+const REVENUE_STATUSES = ["CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"];
+
+function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export const dashboardResolvers = {
+  Query: {
+    reviews: async (_: unknown, { limit }: { limit?: number }) => {
+      return Review.find({ isPublished: true })
+        .sort({ createdAt: -1 })
+        .limit(limit ?? 12);
+    },
+
+    customers: async (_: unknown, { search }: { search?: string }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      const filter: Record<string, unknown> = { role: "CUSTOMER" };
+      if (search) {
+        filter.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+          { phone: { $regex: search, $options: "i" } },
+        ];
+      }
+      return User.find(filter).sort({ createdAt: -1 }).limit(200);
+    },
+
+    dashboardStats: async (_: unknown, __: unknown, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      const today = startOfToday();
+
+      const [
+        totalOrders,
+        revenueAgg,
+        todayOrders,
+        todayRevenueAgg,
+        pendingOrders,
+        totalCustomers,
+        topItemsAgg,
+        revenueByDayAgg,
+        recentOrders,
+      ] = await Promise.all([
+        Order.countDocuments({ status: { $ne: "CANCELLED" } }),
+        Order.aggregate([
+          { $match: { status: { $in: REVENUE_STATUSES } } },
+          { $group: { _id: null, total: { $sum: "$total" } } },
+        ]),
+        Order.countDocuments({ placedAt: { $gte: today } }),
+        Order.aggregate([
+          { $match: { placedAt: { $gte: today }, status: { $in: REVENUE_STATUSES } } },
+          { $group: { _id: null, total: { $sum: "$total" } } },
+        ]),
+        Order.countDocuments({ status: { $in: ["PLACED", "CONFIRMED", "PREPARING"] } }),
+        User.countDocuments({ role: "CUSTOMER" }),
+        Order.aggregate([
+          { $match: { status: { $ne: "CANCELLED" } } },
+          { $unwind: "$items" },
+          {
+            $group: {
+              _id: "$items.menuItem",
+              name: { $first: "$items.name" },
+              qty: { $sum: "$items.qty" },
+              revenue: { $sum: { $multiply: ["$items.price", "$items.qty"] } },
+            },
+          },
+          { $sort: { qty: -1 } },
+          { $limit: 5 },
+        ]),
+        Order.aggregate([
+          {
+            $match: {
+              status: { $in: REVENUE_STATUSES },
+              placedAt: { $gte: new Date(Date.now() - 7 * 24 * 3600 * 1000) },
+            },
+          },
+          {
+            $group: {
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$placedAt" } },
+              revenue: { $sum: "$total" },
+              orders: { $sum: 1 },
+            },
+          },
+          { $sort: { _id: 1 } },
+        ]),
+        Order.find().sort({ placedAt: -1 }).limit(8),
+      ]);
+
+      const totalRevenue = revenueAgg[0]?.total ?? 0;
+      const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+      return {
+        totalOrders,
+        totalRevenue,
+        todayOrders,
+        todayRevenue: todayRevenueAgg[0]?.total ?? 0,
+        pendingOrders,
+        totalCustomers,
+        avgOrderValue,
+        topItems: topItemsAgg.map((t) => ({
+          menuItemId: t._id,
+          name: t.name,
+          qty: t.qty,
+          revenue: t.revenue,
+        })),
+        revenueByDay: revenueByDayAgg.map((r) => ({
+          date: r._id,
+          revenue: r.revenue,
+          orders: r.orders,
+        })),
+        recentOrders,
+      };
+    },
+  },
+
+  // Field resolvers that need DB lookups
+  User: {
+    orderCount: (parent: { id?: string; _id?: unknown }) =>
+      Order.countDocuments({ user: parent.id ?? parent._id }),
+    totalSpent: async (parent: { id?: string; _id?: unknown }) => {
+      const agg = await Order.aggregate([
+        {
+          $match: {
+            user: typeof parent._id === "object" ? parent._id : parent.id,
+            status: { $in: REVENUE_STATUSES },
+          },
+        },
+        { $group: { _id: null, total: { $sum: "$total" } } },
+      ]);
+      return agg[0]?.total ?? 0;
+    },
+  },
+
+  TopItem: {
+    menuItem: (parent: { menuItemId?: unknown }) =>
+      parent.menuItemId ? MenuItem.findById(parent.menuItemId as string) : null,
+  },
+
+  OrderItem: {
+    menuItem: (parent: { menuItem?: unknown }) =>
+      parent.menuItem ? MenuItem.findById(parent.menuItem as string) : null,
+  },
+};

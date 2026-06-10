@@ -1,0 +1,43 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# builds
+dist/
+**/dist/
+.output/
+**/.astro/
+website/dist/
+admin/dist/
+server/dist/
+
+# env
+.env
+.env.local
+.env.*.local
+**/.env
+
+# expo / react-native
+mobile-app/.expo/
+mobile-app/.expo-shared/
+mobile-app/android/
+mobile-app/ios/
+*.keystore
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# caches
+.vite/
+**/.vite/
+.cache/
+
+# os
+.DS_Store
+Thumbs.db
+
+# stray stubs the Astro VS Code language server may regenerate at the repo root
+/src/
+/.astro/

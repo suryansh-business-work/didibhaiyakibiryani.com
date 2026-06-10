@@ -1,0 +1,52 @@
+# Didi Bhaiya ki Biryani — production stack.
+# Pulls pre-built images from Docker Hub and runs them behind the host nginx,
+# which terminates TLS and reverse-proxies each domain to the ports below.
+#
+# Values come from the .env file written next to this file by the deploy job.
+#   Website  127.0.0.1:3000  ->  https://didibhaiyakibiryani.com
+#   Server   127.0.0.1:3001  ->  https://server.didibhaiyakibiryani.com
+#   Admin    127.0.0.1:3002  ->  https://admin.didibhaiyakibiryani.com
+#   Native   127.0.0.1:3003  ->  https://native.didibhaiyakibiryani.com
+
+services:
+  website:
+    image: ${DOCKERHUB_USERNAME}/ddb-website:latest
+    container_name: ddb-website
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:80"
+
+  server:
+    image: ${DOCKERHUB_USERNAME}/ddb-server:latest
+    container_name: ddb-server
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      MONGODB_URI: ${MONGODB_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30d}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      IMAGEKIT_PUBLIC_KEY: ${IMAGEKIT_PUBLIC_KEY}
+      IMAGEKIT_PRIVATE_KEY: ${IMAGEKIT_PRIVATE_KEY}
+      IMAGEKIT_URL_ENDPOINTS: ${IMAGEKIT_URL_ENDPOINTS}
+
+  admin:
+    image: ${DOCKERHUB_USERNAME}/ddb-admin:latest
+    container_name: ddb-admin
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3002:80"
+
+  native:
+    image: ${DOCKERHUB_USERNAME}/ddb-native:latest
+    container_name: ddb-native
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3003:80"

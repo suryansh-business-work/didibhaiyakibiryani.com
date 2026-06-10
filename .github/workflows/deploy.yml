@@ -1,0 +1,160 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# The GraphQL endpoint baked into the browser/web builds at compile time.
+env:
+  SERVER_API_URL: https://server.didibhaiyakibiryani.com/graphql
+
+jobs:
+  # ── 1. Build the four images and push them to Docker Hub ────────
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push website
+        uses: docker/build-push-action@v6
+        with:
+          context: ./website
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-website:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-website:${{ github.sha }}
+          cache-from: type=gha,scope=website
+          cache-to: type=gha,scope=website,mode=max
+
+      - name: Build & push server
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-server:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-server:${{ github.sha }}
+          cache-from: type=gha,scope=server
+          cache-to: type=gha,scope=server,mode=max
+
+      - name: Build & push admin
+        uses: docker/build-push-action@v6
+        with:
+          context: ./admin
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            VITE_API_URL=${{ env.SERVER_API_URL }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-admin:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-admin:${{ github.sha }}
+          cache-from: type=gha,scope=admin
+          cache-to: type=gha,scope=admin,mode=max
+
+      - name: Build & push native (Expo web)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./mobile-app
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            EXPO_PUBLIC_API_URL=${{ env.SERVER_API_URL }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-native:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ddb-native:${{ github.sha }}
+          cache-from: type=gha,scope=native
+          cache-to: type=gha,scope=native,mode=max
+
+  # ── 2. Ship to the host, run the stack, get SSL, verify 200s ────
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy compose + deploy files to the server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "docker-compose.yml,deploy/"
+          target: "/opt/ddb"
+          overwrite: true
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          IMAGEKIT_PUBLIC_KEY: ${{ secrets.IMAGEKIT_PUBLIC_KEY }}
+          IMAGEKIT_PRIVATE_KEY: ${{ secrets.IMAGEKIT_PRIVATE_KEY }}
+          IMAGEKIT_URL_ENDPOINTS: ${{ secrets.IMAGEKIT_URL_ENDPOINTS }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,MONGODB_URI,JWT_SECRET,SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_PASS,IMAGEKIT_PUBLIC_KEY,IMAGEKIT_PRIVATE_KEY,IMAGEKIT_URL_ENDPOINTS
+          script: |
+            set -euo pipefail
+            cd /opt/ddb
+
+            # Persist a JWT secret across deploys if one was not supplied
+            if [ -z "${JWT_SECRET:-}" ]; then
+              if [ -f .jwt_secret ]; then
+                JWT_SECRET="$(cat .jwt_secret)"
+              else
+                JWT_SECRET="$(openssl rand -hex 32)"
+                echo "$JWT_SECRET" > .jwt_secret
+              fi
+            fi
+
+            # Write the runtime .env consumed by docker-compose
+            umask 077
+            cat > .env <<EOF
+            DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
+            MONGODB_URI=${MONGODB_URI}
+            JWT_SECRET=${JWT_SECRET}
+            JWT_EXPIRES_IN=30d
+            CORS_ORIGINS=https://didibhaiyakibiryani.com,https://admin.didibhaiyakibiryani.com,https://native.didibhaiyakibiryani.com
+            SMTP_HOST=${SMTP_HOST}
+            SMTP_PORT=${SMTP_PORT}
+            SMTP_USER=${SMTP_USER}
+            SMTP_PASS=${SMTP_PASS}
+            IMAGEKIT_PUBLIC_KEY=${IMAGEKIT_PUBLIC_KEY}
+            IMAGEKIT_PRIVATE_KEY=${IMAGEKIT_PRIVATE_KEY}
+            IMAGEKIT_URL_ENDPOINTS=${IMAGEKIT_URL_ENDPOINTS}
+            EOF
+            umask 022
+
+            # Pull the freshly-built images and (re)start the stack
+            echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker image prune -f
+
+            # Install nginx site + obtain/renew SSL (idempotent)
+            chmod +x deploy/*.sh
+            bash deploy/setup-server.sh
+
+            # Fail the deploy if any public URL is not 200
+            bash deploy/healthcheck.sh

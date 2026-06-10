@@ -1,0 +1,82 @@
+---
+interface Props {
+  small?: boolean;
+}
+const { small = false } = Astro.props;
+---
+
+<div class={`app-badges ${small ? "app-badges--sm" : ""}`}>
+  <a href="#app" class="app-badge" aria-label="Download on the App Store">
+    <span class="app-badge__svgwrap">
+      <svg viewBox="0 0 384 512" aria-hidden="true" fill="currentColor">
+        <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
+      </svg>
+    </span>
+    <span class="app-badge__text">
+      <small>Download on the</small>
+      <strong>App Store</strong>
+    </span>
+  </a>
+
+  <a href="#app" class="app-badge" aria-label="Get it on Google Play">
+    <span class="app-badge__svgwrap">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <path fill="#34a853" d="M325 234 92 12c-9-9-21-13-32-10l210 232z" />
+        <path fill="#4285f4" d="M60 2C50 7 44 17 44 31v450c0 14 6 24 16 29l210-233z" />
+        <path fill="#fbbc04" d="M395 217l-70-41-67 74 67 74 71-42c20-12 20-53-1-65z" />
+        <path fill="#ea4335" d="M270 284 60 510c10 4 22 2 33-4l228-130z" />
+      </svg>
+    </span>
+    <span class="app-badge__text">
+      <small>Get it on</small>
+      <strong>Google Play</strong>
+    </span>
+  </a>
+</div>
+
+<style>
+  .app-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .app-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    border-radius: 12px;
+    background: #0a0705;
+    border: 1px solid var(--card-border-strong);
+    color: var(--text);
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  }
+  .app-badge:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold-soft);
+    background: #100b07;
+  }
+  .app-badge__svgwrap {
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+  }
+  .app-badge__svgwrap svg { width: 100%; height: 100%; }
+  .app-badge__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+  .app-badge__text small {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+  }
+  .app-badge__text strong {
+    font-size: 0.98rem;
+    font-weight: 700;
+  }
+  .app-badges--sm .app-badge { padding: 7px 13px; }
+  .app-badges--sm .app-badge__text strong { font-size: 0.88rem; }
+</style>

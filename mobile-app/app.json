@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Didi Bhaiya ki Biryani",
+    "slug": "didi-bhaiya-ki-biryani",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "ddb",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0b0705",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.didibhaiya.biryani"
+    },
+    "android": {
+      "package": "com.didibhaiya.biryani",
+      "adaptiveIcon": {
+        "backgroundColor": "#0b0705"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiUrl": "http://localhost:4000/graphql"
+    }
+  }
+}

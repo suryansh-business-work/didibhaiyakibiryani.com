@@ -1,0 +1,64 @@
+---
+const items = [
+  "Dum-cooked daily",
+  "100% Vegetarian",
+  "Copper handi",
+  "Saffron & mint",
+  "35-min hot delivery",
+  "Har bite, yaad rahe",
+];
+// duplicate for seamless loop
+const loop = [...items, ...items];
+---
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee__track">
+    {
+      loop.map((t) => (
+        <span class="marquee__item">
+          {t}
+          <span class="marquee__star">✦</span>
+        </span>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .marquee {
+    overflow: hidden;
+    border-block: 1px solid var(--card-border);
+    background: linear-gradient(180deg, #0e0a07, #0b0705);
+    padding-block: 16px;
+  }
+  .marquee__track {
+    display: flex;
+    width: max-content;
+    animation: marquee 28s linear infinite;
+  }
+  .marquee__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 28px;
+    padding-inline: 14px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .marquee__star {
+    color: var(--gold);
+    font-style: normal;
+    font-size: 0.8rem;
+  }
+  .marquee:hover .marquee__track { animation-play-state: paused; }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee__track { animation: none; }
+  }
+</style>

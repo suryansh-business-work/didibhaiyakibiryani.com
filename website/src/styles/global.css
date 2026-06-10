@@ -1,0 +1,226 @@
+/* ============================================================
+   Didi Bhaiya ki Biryani — Global styles & design tokens
+   ============================================================ */
+
+:root {
+  /* Surfaces */
+  --bg: #0b0705;
+  --bg-soft: #110c08;
+  --bg-section: #0e0a07;
+  --card: #17110c;
+  --card-soft: #1d160f;
+  --card-border: rgba(232, 200, 140, 0.10);
+  --card-border-strong: rgba(232, 200, 140, 0.22);
+
+  /* Brand */
+  --gold: #e4b65c;
+  --gold-soft: #d9a84c;
+  --gold-deep: #b9852f;
+  --maroon: #4a1515;
+  --maroon-deep: #2a0d0d;
+  --green: #5fb45f;
+
+  /* Text */
+  --text: #f5ece0;
+  --text-dim: #cdbfb0;
+  --text-muted: #8d8073;
+  --text-faint: #6b6157;
+
+  /* Type */
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body: "Mulish", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-script: "Dancing Script", cursive;
+
+  /* Layout */
+  --maxw: 1180px;
+  --radius: 18px;
+  --radius-lg: 26px;
+
+  /* Shadows */
+  --shadow-soft: 0 20px 60px -20px rgba(0, 0, 0, 0.7);
+  --shadow-gold: 0 14px 40px -12px rgba(228, 182, 92, 0.35);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 400;
+  letter-spacing: 0.1px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.08;
+  color: var(--text);
+}
+
+::selection {
+  background: var(--gold);
+  color: #1a1208;
+}
+
+/* ---------- Layout helpers ---------- */
+.container {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+.section {
+  padding-block: 88px;
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.italic-accent {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.section-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-top: 14px;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 24px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn-gold {
+  background: linear-gradient(180deg, #f0c768, #d49a3c);
+  color: #2a1a06;
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-gold:hover {
+  box-shadow: 0 18px 46px -10px rgba(228, 182, 92, 0.5);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--card-border-strong);
+  color: var(--text);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.btn-outline-gold {
+  background: rgba(228, 182, 92, 0.08);
+  border: 1px solid var(--gold-soft);
+  color: var(--gold);
+}
+
+.btn-outline-gold:hover {
+  background: rgba(228, 182, 92, 0.16);
+}
+
+.btn-maroon {
+  background: linear-gradient(180deg, #5a1a1a, #3a1010);
+  color: var(--text);
+  border: 1px solid rgba(232, 200, 140, 0.18);
+}
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+}
+
+/* ---------- Utility ---------- */
+.text-muted { color: var(--text-muted); }
+.text-dim { color: var(--text-dim); }
+.gold { color: var(--gold); }
+.center { text-align: center; }
+
+.icon {
+  width: 1em;
+  height: 1em;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Reveal on scroll ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .section { padding-block: 60px; }
+  .container { padding-inline: 18px; }
+}
