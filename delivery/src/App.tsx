@@ -6,6 +6,7 @@ import { SETTINGS_LITE } from "./graphql";
 import Login from "./pages/Login";
 import Queue from "./pages/Queue";
 import Earnings from "./pages/Earnings";
+import Support from "./pages/Support";
 import type { ReactNode } from "react";
 
 function Protected({ children }: Readonly<{ children: ReactNode }>) {
@@ -44,6 +45,7 @@ export default function App() {
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/" element={<Protected><Queue /></Protected>} />
       <Route path="/earnings" element={<Protected><Earnings /></Protected>} />
+      <Route path="/support" element={<Protected><Support /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -95,6 +95,11 @@ export const authResolvers = {
           extensions: { code: "FORBIDDEN" },
         });
       }
+      if (user.role === "ADMIN" || user.role === "STAFF") {
+        throw new GraphQLError("Admin accounts can only be accessed through the admin portal.", {
+          extensions: { code: "FORBIDDEN" },
+        });
+      }
       const token = signToken({ id: user.id, role: user.role });
       notifyLogin(user.email, user.name);
       return { token, user };

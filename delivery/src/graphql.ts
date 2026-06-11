@@ -30,6 +30,8 @@ export const SETTINGS_LITE = gql`
     settings {
       brandName
       tagline
+      supportPhone
+      supportEmail
       maintenance {
         delivery
       }

@@ -48,6 +48,7 @@ export default function Checkout() {
     );
   }
 
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(def?.id ?? null);
   const baseDelivery = previewDeliveryFee(subtotal, settings);
   const effDelivery = freeDelivery ? 0 : baseDelivery;
   const total = Math.max(0, subtotal - discount) + effDelivery;
@@ -112,6 +113,39 @@ export default function Checkout() {
         )}
 
         <Section title="Delivery address">
+          {user?.addresses && user.addresses.length > 0 && (
+            <>
+              <YStack gap={8}>
+                {user.addresses.map((a) => (
+                  <Button
+                    key={a.id}
+                    height="auto"
+                    paddingVertical={12}
+                    paddingHorizontal={14}
+                    backgroundColor={selectedAddressId === a.id ? "rgba(228,182,92,0.16)" : brand.card}
+                    borderColor={selectedAddressId === a.id ? brand.goldDeep : brand.border}
+                    borderWidth={1}
+                    pressStyle={{ scale: 0.98 }}
+                    onPress={() => {
+                      setSelectedAddressId(a.id);
+                      setLine1(a.line1);
+                      setLine2(a.line2 || "");
+                      setCity(a.city);
+                      setPincode(a.pincode);
+                    }}
+                  >
+                    <YStack gap={4} width="100%">
+                      <Text color={selectedAddressId === a.id ? brand.gold : brand.text} fontWeight="700" fontSize={13}>{a.label}</Text>
+                      <Text color={selectedAddressId === a.id ? brand.dim : brand.muted} fontSize={12}>{a.line1}</Text>
+                      {a.line2 && <Text color={brand.muted} fontSize={11}>{a.line2}</Text>}
+                      <Text color={brand.muted} fontSize={11}>{a.city} — {a.pincode}</Text>
+                    </YStack>
+                  </Button>
+                ))}
+              </YStack>
+              <Text color={brand.muted} fontSize={12} marginVertical={8}>Or enter a different address:</Text>
+            </>
+          )}
           <Field label="Flat / House / Street" value={line1} onChange={setLine1} />
           <Field label="Landmark (optional)" value={line2} onChange={setLine2} />
           <XStack gap={10}>
@@ -119,6 +153,15 @@ export default function Checkout() {
             <YStack flex={1}><Field label="Pincode" value={pincode} onChange={setPincode} keyboard="number-pad" /></YStack>
           </XStack>
           <Field label="Phone" value={phone} onChange={setPhone} keyboard="phone-pad" />
+          <Button
+            borderColor={brand.border}
+            borderWidth={1}
+            color={brand.gold}
+            fontWeight="700"
+            onPress={() => router.push("./addresses")}
+          >
+            📍 Manage addresses
+          </Button>
         </Section>
 
         <Section title="Coupon">

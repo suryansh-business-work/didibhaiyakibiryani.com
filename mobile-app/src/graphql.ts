@@ -130,6 +130,15 @@ export const ADD_ADDRESS = gql`
   }
 `;
 
+export const REMOVE_ADDRESS = gql`
+  mutation RemoveAddress($addressId: ID!) {
+    removeAddress(addressId: $addressId) {
+      id
+      addresses { id label line1 line2 city pincode isDefault }
+    }
+  }
+`;
+
 export const HOME_DATA = gql`
   query HomeData {
     categories(activeOnly: true) {

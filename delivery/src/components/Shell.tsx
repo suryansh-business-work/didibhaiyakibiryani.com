@@ -26,6 +26,7 @@ export default function Shell({ title, children }: Readonly<{ title: string; chi
           🛵 My queue
         </NavLink>
         <NavLink to="/earnings">💰 Earnings</NavLink>
+        <NavLink to="/support">🎧 Support</NavLink>
       </nav>
 
       <main className="rider-content">{children}</main>

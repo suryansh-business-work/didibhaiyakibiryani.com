@@ -43,7 +43,7 @@ export default function Profile() {
         </XStack>
 
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} overflow="hidden">
-          <Row label="Saved addresses" value={`${user.addresses?.length ?? 0}`} />
+          <Row label="Saved addresses" value={`${user.addresses?.length ?? 0}`} onPress={() => router.push("../addresses")} chevron />
           <Separator borderColor={brand.border} />
           <Row label="My orders" onPress={() => router.push("/orders")} chevron />
           <Separator borderColor={brand.border} />
@@ -75,7 +75,7 @@ export default function Profile() {
 
 function Row({
   label, value, valueColor, chevron, onPress,
-}: { label: string; value?: string; valueColor?: string; chevron?: boolean; onPress?: () => void }) {
+}: Readonly<{ label: string; value?: string; valueColor?: string; chevron?: boolean; onPress?: () => void }>) {
   return (
     <XStack
       paddingHorizontal={16}

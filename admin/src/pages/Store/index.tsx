@@ -40,7 +40,11 @@ export default function Store() {
 
   async function submit() {
     try {
-      await save({ variables: { input: form } });
+      const cleanedMaintenance: Record<string, boolean> = {};
+      for (const app of ["website", "server", "admin", "native", "delivery"]) {
+        cleanedMaintenance[app] = form.maintenance[app as keyof typeof form.maintenance];
+      }
+      await save({ variables: { input: { ...form, maintenance: cleanedMaintenance } } });
       setDirty(false);
       await refetch();
       await notify({ title: "Saved", message: "Store settings updated everywhere." });
