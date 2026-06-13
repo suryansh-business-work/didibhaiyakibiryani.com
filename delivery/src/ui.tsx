@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { YStack, XStack, Text, Button, Spinner as TamaguiSpinner } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { useAuth } from "./auth";
 import { brand, STATUS_META } from "./theme";
 
@@ -44,7 +45,7 @@ export function Loading({ label }: Readonly<{ label?: string }>) {
 export function Empty({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <YStack alignItems="center" justifyContent="center" padding={28} gap={10}>
-      <Text fontSize={34}>🛵</Text>
+      <MaterialDesignIcons name="moped-outline" size={44} color={brand.muted} />
       <Text color={brand.muted} textAlign="center">{children}</Text>
     </YStack>
   );

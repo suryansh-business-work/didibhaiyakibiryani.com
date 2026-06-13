@@ -1,29 +1,72 @@
-import { useState } from "react";
 import { Alert } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useForm, Controller, type Control } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { YStack, XStack, Text, Button, Input, Spinner } from "tamagui";
 import { useAuth } from "../src/auth";
 import { brand } from "../src/theme";
+
+const schema = z.object({
+  emailOrPhone: z.string().trim().min(1, "Enter your email or phone"),
+  password: z.string().min(1, "Enter your password"),
+});
+type FormData = z.infer<typeof schema>;
+
+interface FieldProps {
+  control: Control<FormData>;
+  name: keyof FormData;
+  label: string;
+  error?: string;
+  secure?: boolean;
+}
+
+function Field({ control, name, label, error, secure }: Readonly<FieldProps>) {
+  return (
+    <YStack gap={6}>
+      <Text fontSize={12} color={brand.muted} fontWeight="700">{label}</Text>
+      <Controller
+        control={control}
+        name={name}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <Input
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            secureTextEntry={secure}
+            autoCapitalize="none"
+            keyboardType={name === "emailOrPhone" ? "email-address" : "default"}
+            backgroundColor={brand.bgSoft}
+            borderColor={error ? brand.red : brand.borderStrong}
+            color={brand.text}
+          />
+        )}
+      />
+      {error ? <Text fontSize={12} color={brand.red}>{error}</Text> : null}
+    </YStack>
+  );
+}
 
 export default function Login() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login } = useAuth();
-  const [emailOrPhone, setEmailOrPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { emailOrPhone: "", password: "" },
+  });
 
-  async function submit() {
-    if (!emailOrPhone || !password) return;
-    setBusy(true);
+  async function onSubmit(data: FormData) {
     try {
-      await login(emailOrPhone, password);
+      await login(data.emailOrPhone.trim(), data.password);
       router.replace("/");
     } catch (e: unknown) {
       Alert.alert("Login failed", e instanceof Error ? e.message : "Check your details and try again.");
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -41,19 +84,11 @@ export default function Login() {
           <Text color={brand.muted}>Log in to order your favourite biryani.</Text>
         </YStack>
 
-        <YStack gap={6}>
-          <Text fontSize={12} color={brand.muted} fontWeight="700">Email or phone</Text>
-          <Input value={emailOrPhone} onChangeText={setEmailOrPhone} autoCapitalize="none" keyboardType="email-address"
-            backgroundColor={brand.bgSoft} borderColor={brand.borderStrong} color={brand.text} />
-        </YStack>
-        <YStack gap={6}>
-          <Text fontSize={12} color={brand.muted} fontWeight="700">Password</Text>
-          <Input value={password} onChangeText={setPassword} secureTextEntry
-            backgroundColor={brand.bgSoft} borderColor={brand.borderStrong} color={brand.text} />
-        </YStack>
+        <Field control={control} name="emailOrPhone" label="Email or phone" error={errors.emailOrPhone?.message} />
+        <Field control={control} name="password" label="Password" secure error={errors.password?.message} />
 
-        <Button height={52} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" fontSize={16} disabled={busy} onPress={submit}>
-          {busy ? <Spinner color="#2a1a06" /> : "Log in"}
+        <Button height={52} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" fontSize={16} disabled={isSubmitting} onPress={handleSubmit(onSubmit)}>
+          {isSubmitting ? <Spinner color="#2a1a06" /> : "Log in"}
         </Button>
 
         <XStack justifyContent="center" gap={6}>

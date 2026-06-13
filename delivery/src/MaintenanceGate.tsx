@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useQuery } from "@apollo/client";
 import { YStack, Text } from "tamagui";
+import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { SETTINGS_LITE } from "./graphql";
 import { brand } from "./theme";
 
@@ -19,7 +20,7 @@ export function MaintenanceGate({ children }: Readonly<{ children: ReactNode }>)
 
   return (
     <YStack flex={1} backgroundColor={brand.bg} alignItems="center" justifyContent="center" padding={32} gap={12}>
-      <Text fontSize={52}>🛠️</Text>
+      <MaterialDesignIcons name="wrench-outline" size={52} color={brand.gold} />
       <Text fontSize={22} fontWeight="800" color={brand.text} textAlign="center">Back soon</Text>
       <Text color={brand.muted} textAlign="center" fontSize={14}>
         The {s.brandName || "delivery"} portal is down for a quick maintenance break — please check back shortly.

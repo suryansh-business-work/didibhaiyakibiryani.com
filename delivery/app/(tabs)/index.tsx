@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Linking, ScrollView } from "react-native";
 import { useMutation, useQuery } from "@apollo/client";
 import { YStack, XStack, Text, Button } from "tamagui";
+import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { DELIVERY_QUEUE, UPDATE_ORDER_STATUS } from "../../src/graphql";
 import { Loading, Empty, StatusBadge, RiderHeader } from "../../src/ui";
 import { brand, inr, fmtDate } from "../../src/theme";
@@ -54,12 +55,16 @@ function OrderCard({ order, saving, onMove }: Readonly<CardProps>) {
       </XStack>
       {order.notes ? <Text color={brand.muted} fontSize={13}>📝 {order.notes}</Text> : null}
       <XStack gap={8} flexWrap="wrap" marginTop={2}>
-        <Button size="$2" backgroundColor={brand.cardSoft} borderColor={brand.border} borderWidth={1} color={brand.dim} onPress={() => Linking.openURL(mapsUrl(order))}>
-          🗺 Navigate
+        <Button size="$2" backgroundColor={brand.cardSoft} borderColor={brand.border} borderWidth={1} color={brand.dim}
+          icon={<MaterialDesignIcons name="map-marker-path" size={16} color={brand.dim} />}
+          onPress={() => Linking.openURL(mapsUrl(order))}>
+          Navigate
         </Button>
         {phone ? (
-          <Button size="$2" backgroundColor={brand.cardSoft} borderColor={brand.border} borderWidth={1} color={brand.dim} onPress={() => Linking.openURL(`tel:${phone}`)}>
-            📞 Call
+          <Button size="$2" backgroundColor={brand.cardSoft} borderColor={brand.border} borderWidth={1} color={brand.dim}
+            icon={<MaterialDesignIcons name="phone" size={16} color={brand.dim} />}
+            onPress={() => Linking.openURL(`tel:${phone}`)}>
+            Call
           </Button>
         ) : null}
         {action ? (

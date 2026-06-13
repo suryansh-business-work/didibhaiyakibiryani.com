@@ -1,6 +1,7 @@
 import { Linking, ScrollView } from "react-native";
 import { useQuery } from "@apollo/client";
 import { YStack, Text, Button } from "tamagui";
+import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { SETTINGS_LITE } from "../../src/graphql";
 import { Loading, RiderHeader } from "../../src/ui";
 import { brand } from "../../src/theme";
@@ -30,13 +31,17 @@ export default function Support() {
             Contact {s?.brandName || "our"} support for any issues or questions.
           </Text>
           {s?.supportPhone ? (
-            <Button height={50} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" onPress={() => Linking.openURL(`tel:${s.supportPhone}`)}>
-              📞 Call support
+            <Button height={50} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800"
+              icon={<MaterialDesignIcons name="phone" size={18} color="#2a1a06" />}
+              onPress={() => Linking.openURL(`tel:${s.supportPhone}`)}>
+              Call support
             </Button>
           ) : null}
           {s?.supportEmail ? (
-            <Button height={50} backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} color={brand.text} onPress={() => Linking.openURL(`mailto:${s.supportEmail}`)}>
-              📧 Email support
+            <Button height={50} backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} color={brand.text}
+              icon={<MaterialDesignIcons name="email-outline" size={18} color={brand.text} />}
+              onPress={() => Linking.openURL(`mailto:${s.supportEmail}`)}>
+              Email support
             </Button>
           ) : null}
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "DDB Delivery Partner",
     "slug": "ddb-delivery",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "scheme": "ddbdelivery",
     "userInterfaceStyle": "dark",
@@ -20,6 +20,7 @@
     },
     "android": {
       "package": "com.didibhaiya.biryani.delivery",
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#0b0705"
       }
@@ -34,10 +35,13 @@
         "expo-build-properties",
         {
           "android": {
-            "targetSdkVersion": 35
+            "targetSdkVersion": 35,
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
           }
         }
-      ]
+      ],
+      "@react-native-vector-icons/material-design-icons"
     ],
     "experiments": {
       "typedRoutes": true
