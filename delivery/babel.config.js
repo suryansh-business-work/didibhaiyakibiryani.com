@@ -12,8 +12,8 @@ module.exports = function (api) {
           disableExtraction: process.env.NODE_ENV === "development",
         },
       ],
-      // react-native-reanimated/plugin MUST be listed last
-      "react-native-reanimated/plugin",
+      // react-native-worklets/plugin MUST be listed last (Reanimated 4 / SDK 54)
+      "react-native-worklets/plugin",
     ],
   };
 };
