@@ -15,4 +15,19 @@
     <changefreq>weekly</changefreq>
     <priority>0.3</priority>
   </url>
+  <url>
+    <loc>https://didibhaiyakibiryani.com/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://didibhaiyakibiryani.com/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://didibhaiyakibiryani.com/delete-account</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
 </urlset>

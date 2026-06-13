@@ -1,0 +1,49 @@
+---
+import LegalPage from "../components/LegalPage.astro";
+const updated = "14 June 2026";
+const supportEmail = "support@didibhaiyakibiryani.com";
+---
+
+<LegalPage
+  title="Account & Data Deletion"
+  description="How to delete your Didi Bhaiya ki Biryani account and personal data, what gets deleted, and what we must retain for legal reasons."
+  updated={updated}
+>
+  <p>
+    You can ask us to delete your <strong>Didi Bhaiya ki Biryani</strong> account and the personal
+    data associated with it at any time. This page explains how, and what happens to your data.
+  </p>
+
+  <h2>How to request deletion</h2>
+  <h3>Option 1 — In the app</h3>
+  <ul>
+    <li>Open the app and go to <strong>Profile</strong>.</li>
+    <li>Choose <strong>Delete my account</strong> and confirm.</li>
+  </ul>
+  <h3>Option 2 — By email</h3>
+  <p>
+    Email <a href={`mailto:${supportEmail}?subject=Account%20deletion%20request`}>{supportEmail}</a>
+    from your registered email address with the subject “Account deletion request”. We verify the
+    request and complete it within <strong>30 days</strong>.
+  </p>
+
+  <h2>What is deleted</h2>
+  <ul>
+    <li>Your profile (name, email, phone) and saved delivery addresses.</li>
+    <li>Your login credentials.</li>
+    <li>Support tickets and uploaded images linked to your account.</li>
+  </ul>
+
+  <h2>What we may retain</h2>
+  <p>
+    For legal, tax and accounting compliance we retain <strong>invoice and transaction records</strong>
+    (order amount, date, GST details) for the period required by Indian law. These records are kept
+    in a restricted form and are not used to contact you. Payment instrument details are held by our
+    payment processor (Razorpay), not by us.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Need help with deletion? Email <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
+  </p>
+</LegalPage>

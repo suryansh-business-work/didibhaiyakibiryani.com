@@ -29,6 +29,12 @@ delivery/android/
 delivery/ios/
 apk/
 *.apk
+*.aab
+
+# signing — release keystores & their passwords (NEVER commit)
+keystores/
+*.jks
+*.keystore.properties
 
 # logs
 *.log

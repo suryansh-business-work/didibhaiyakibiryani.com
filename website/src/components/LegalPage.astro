@@ -1,0 +1,45 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  updated: string;
+}
+const { title, description, updated } = Astro.props;
+---
+
+<Layout title={`${title} — Didi Bhaiya ki Biryani`} description={description}>
+  <section class="section">
+    <div class="container legal">
+      <p class="eyebrow">Didi Bhaiya ki Biryani</p>
+      <h1 class="legal__title">{title}</h1>
+      <p class="legal__updated">Last updated: {updated}</p>
+      <article class="legal__body">
+        <slot />
+      </article>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .legal { max-width: 820px; }
+  .legal__title { font-size: clamp(2rem, 5vw, 3rem); margin: 6px 0 4px; }
+  .legal__updated { color: var(--text-faint); font-size: 0.85rem; margin-bottom: 28px; }
+  .legal__body :global(h2) {
+    font-size: 1.25rem;
+    margin: 30px 0 10px;
+    color: var(--text);
+  }
+  .legal__body :global(h3) { font-size: 1.02rem; margin: 18px 0 6px; color: var(--gold); }
+  .legal__body :global(p),
+  .legal__body :global(li) {
+    color: var(--text-dim);
+    font-size: 0.96rem;
+    line-height: 1.7;
+  }
+  .legal__body :global(ul) { margin: 8px 0 8px 22px; }
+  .legal__body :global(li) { margin-bottom: 6px; }
+  .legal__body :global(a) { color: var(--gold); text-decoration: underline; }
+  .legal__body :global(strong) { color: var(--text); }
+</style>
