@@ -1,0 +1,10 @@
+node_modules
+.expo
+android
+ios
+dist
+.env
+.git
+Dockerfile
+.dockerignore
+npm-debug.log*

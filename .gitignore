@@ -24,7 +24,8 @@ mobile-app/android/
 mobile-app/ios/
 *.keystore
 
-# capacitor (delivery) — generated native project + built binaries
+# expo / capacitor (delivery) — generated native project + built binaries
+delivery/.expo/
 delivery/android/
 delivery/ios/
 apk/
@@ -57,3 +58,7 @@ Thumbs.db
 # playwright
 test-results/
 playwright-report/
+
+# coverage reports (generated)
+coverage/
+**/coverage/

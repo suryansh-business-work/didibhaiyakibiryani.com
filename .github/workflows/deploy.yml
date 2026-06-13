@@ -33,7 +33,7 @@ jobs:
           - app: delivery
             context: ./delivery
             image: ddb-delivery
-            build-args: VITE_API_URL=https://server.didibhaiyakibiryani.com/graphql
+            build-args: EXPO_PUBLIC_API_URL=https://server.didibhaiyakibiryani.com/graphql
     steps:
       - uses: actions/checkout@v4
 

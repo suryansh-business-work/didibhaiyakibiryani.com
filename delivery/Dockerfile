@@ -1,14 +1,18 @@
 # syntax=docker/dockerfile:1
 
-# ── Build the Vite SPA (API URL baked at build time) ─────────────
-FROM node:20-alpine AS build
+# ── Export the Expo app to a static web bundle ───────────────────
+# node:20 (glibc) is used so Expo's asset pipeline (sharp) works.
+FROM node:20-slim AS build
 WORKDIR /app
-ARG VITE_API_URL=https://server.didibhaiyakibiryani.com/graphql
-ENV VITE_API_URL=$VITE_API_URL
+ARG EXPO_PUBLIC_API_URL=https://server.didibhaiyakibiryani.com/graphql
+ENV EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL
+ENV CI=1
 COPY package*.json ./
-RUN npm ci
+# Install ALL deps incl. devDependencies — the Expo/Tamagui/Reanimated babel
+# plugins live in devDependencies and are required by `expo export`.
+RUN npm install --no-audit --no-fund --include=dev
 COPY . .
-RUN npm run build
+RUN NODE_ENV=production npx expo export --platform web --output-dir dist
 
 # ── Serve with nginx (SPA fallback) ──────────────────────────────
 FROM nginx:1.27-alpine

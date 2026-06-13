@@ -16,31 +16,11 @@ import { healthRouter } from "./routes/health.js";
 import { typeDefs } from "./graphql/typeDefs.js";
 import { resolvers } from "./graphql/resolvers/index.js";
 import { getUserFromAuthHeader, type Context } from "./utils/auth.js";
+import { makeCorsOrigin, parseOrigins } from "./utils/cors.js";
 
 const PORT = Number(process.env.PORT) || 3001;
-const ORIGINS = (process.env.CORS_ORIGINS || "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-
-// Capacitor/Cordova WebViews (the delivery & consumer APKs) send these origins.
-// They must be allowed regardless of CORS_ORIGINS, or on-device login fails.
-const NATIVE_APP_ORIGINS = new Set([
-  "capacitor://localhost",
-  "ionic://localhost",
-  "https://localhost",
-  "http://localhost",
-]);
-
-/** Allow configured web origins + native app WebViews + origin-less requests. */
-function corsOrigin(
-  origin: string | undefined,
-  cb: (err: Error | null, allow?: boolean) => void
-): void {
-  if (!origin || !ORIGINS.length) return cb(null, true);
-  if (ORIGINS.includes(origin) || NATIVE_APP_ORIGINS.has(origin)) return cb(null, true);
-  cb(new Error(`Origin ${origin} not allowed by CORS`));
-}
+// Allow configured web origins + native app WebViews (delivery/consumer apps).
+const corsOrigin = makeCorsOrigin(parseOrigins(process.env.CORS_ORIGINS));
 
 async function start() {
   // Non-fatal: HTTP (health/status) stays up while Mongo reconnects.

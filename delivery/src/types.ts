@@ -30,3 +30,10 @@ export interface DeliveredOrder {
   placedAt: string;
   address: { city: string; pincode: string };
 }
+
+export interface RiderUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}

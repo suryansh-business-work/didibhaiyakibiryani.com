@@ -4,24 +4,14 @@ export const LOGIN = gql`
   mutation Login($emailOrPhone: String!, $password: String!) {
     login(emailOrPhone: $emailOrPhone, password: $password) {
       token
-      user {
-        id
-        name
-        email
-        role
-      }
+      user { id name email role }
     }
   }
 `;
 
 export const ME = gql`
   query Me {
-    me {
-      id
-      name
-      email
-      role
-    }
+    me { id name email role }
   }
 `;
 
@@ -32,9 +22,7 @@ export const SETTINGS_LITE = gql`
       tagline
       supportPhone
       supportEmail
-      maintenance {
-        delivery
-      }
+      maintenance { delivery }
     }
   }
 `;
@@ -49,23 +37,9 @@ const ORDER_FIELDS = `
   paymentStatus
   placedAt
   notes
-  user {
-    name
-    phone
-  }
-  address {
-    line1
-    line2
-    city
-    pincode
-    phone
-    lat
-    lng
-  }
-  items {
-    name
-    qty
-  }
+  user { name phone }
+  address { line1 line2 city pincode phone lat lng }
+  items { name qty }
 `;
 
 export const DELIVERY_QUEUE = gql`
@@ -85,10 +59,7 @@ export const MY_DELIVERIES = gql`
       deliveryFee
       paymentMethod
       placedAt
-      address {
-        city
-        pincode
-      }
+      address { city pincode }
     }
   }
 `;

@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "DDB Delivery Partner",
+    "slug": "ddb-delivery",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "ddbdelivery",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0b0705",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.didibhaiya.biryani.delivery"
+    },
+    "android": {
+      "package": "com.didibhaiya.biryani.delivery",
+      "adaptiveIcon": {
+        "backgroundColor": "#0b0705"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.24",
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiUrl": "http://localhost:3001/graphql"
+    }
+  }
+}

@@ -1,24 +1,15 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const TOKEN_KEY = "ddb_delivery_token";
+export const TOKEN_KEY = "ddb_delivery_token";
 
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
-}
-export function setToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
-}
-export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
-}
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3001/graphql";
 
-const httpLink = createHttpLink({
-  uri: import.meta.env.VITE_API_URL || "http://localhost:3001/graphql",
-});
+const httpLink = createHttpLink({ uri: API_URL });
 
-const authLink = setContext((_, { headers }) => {
-  const token = getToken();
+const authLink = setContext(async (_, { headers }) => {
+  const token = await AsyncStorage.getItem(TOKEN_KEY);
   return {
     headers: {
       ...headers,
