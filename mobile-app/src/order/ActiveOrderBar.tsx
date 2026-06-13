@@ -44,9 +44,11 @@ export function ActiveOrderBar() {
 
   if (!user || isHiddenRoute(pathname)) return null;
 
-  const active = (data?.myOrders ?? [])
-    .filter((o) => ACTIVE.has(o.status))
-    .toSorted((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime())[0];
+  const activeOrders = (data?.myOrders ?? []).filter((o) => ACTIVE.has(o.status));
+  // Hermes (RN 0.76) lacks Array.prototype.toSorted — copy then sort.
+  const active = [...activeOrders].sort(
+    (a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime()
+  )[0];
   if (!active) return null;
 
   const meta = STATUS_META[active.status] ?? { label: active.status, color: brand.gold };
