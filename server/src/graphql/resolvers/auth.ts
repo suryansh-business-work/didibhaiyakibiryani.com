@@ -1,5 +1,5 @@
 import { GraphQLError } from "graphql";
-import { User } from "../../models/index.js";
+import { User, Otp } from "../../models/index.js";
 import {
   signToken,
   hashPassword,
@@ -7,11 +7,21 @@ import {
   requireAuth,
   type Context,
 } from "../../utils/auth.js";
-import { sendMailAsync } from "../../utils/mailer.js";
-import { signupEmail, loginAlertEmail } from "../../emails/auth.js";
+import { sendMail, sendMailAsync } from "../../utils/mailer.js";
+import { signupEmail, loginAlertEmail, verifyEmailOtp } from "../../emails/auth.js";
 import { loadEmailBrand } from "../../emails/marketing.js";
+import {
+  generateOtp,
+  hashOtp,
+  verifyOtpHash,
+  otpExpiry,
+  isExpired,
+  OTP_MAX_ATTEMPTS,
+} from "../../utils/otp.js";
+import { logger } from "../../utils/logger.js";
 
 const ORDER_URL = process.env.PUBLIC_ORDER_URL || "https://native.didibhaiyakibiryani.com";
+const SIGNUP_OTP = "EMAIL_VERIFY" as const;
 
 function notifySignup(email: string, name: string): void {
   loadEmailBrand()
@@ -28,8 +38,8 @@ function notifyLogin(email: string, name: string): void {
 interface RegisterInput {
   name: string;
   email: string;
-  phone?: string;
   password: string;
+  otp: string;
 }
 
 interface AddressInput {
@@ -52,26 +62,86 @@ export const authResolvers = {
   },
 
   Mutation: {
+    /**
+     * Step 1 of email-only signup: email a 6-digit verification code.
+     * Rejects emails that already have an account so people log in instead.
+     */
+    requestSignupOtp: async (
+      _: unknown,
+      { email, name }: { email: string; name: string }
+    ) => {
+      const id = email.toLowerCase().trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id)) {
+        throw new GraphQLError("Please enter a valid email address.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+      const existing = await User.findOne({ email: id }).exec();
+      if (existing) {
+        throw new GraphQLError("An account with this email already exists. Please log in.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+      const code = generateOtp();
+      await Otp.findOneAndUpdate(
+        { identifier: id, purpose: SIGNUP_OTP },
+        { codeHash: hashOtp(code, id), attempts: 0, expiresAt: otpExpiry() },
+        { upsert: true }
+      ).exec();
+
+      const brand = await loadEmailBrand();
+      const sent = await sendMail({ to: id, ...verifyEmailOtp(brand, code) });
+      if (!sent) {
+        throw new GraphQLError("Could not send the verification email. Please try again later.", {
+          extensions: { code: "MAIL_NOT_CONFIGURED" },
+        });
+      }
+      logger.info({ email: id, name }, "Signup OTP issued");
+      return true;
+    },
+
+    /** Step 2 of email-only signup: verify the OTP, then create the account. */
     register: async (_: unknown, { input }: { input: RegisterInput }) => {
       const email = input.email.toLowerCase().trim();
+      if (input.password.length < 6) {
+        throw new GraphQLError("Password must be at least 6 characters.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
       const existing = await User.findOne({ email });
       if (existing) {
         throw new GraphQLError("An account with this email already exists.", {
           extensions: { code: "BAD_USER_INPUT" },
         });
       }
-      if (input.password.length < 6) {
-        throw new GraphQLError("Password must be at least 6 characters.", {
-          extensions: { code: "BAD_USER_INPUT" },
+
+      const record = await Otp.findOne({ identifier: email, purpose: SIGNUP_OTP }).exec();
+      if (!record || isExpired(record.expiresAt)) {
+        throw new GraphQLError("Verification code expired. Please request a new one.", {
+          extensions: { code: "OTP_INVALID" },
         });
       }
+      if (record.attempts >= OTP_MAX_ATTEMPTS) {
+        await record.deleteOne();
+        throw new GraphQLError("Too many attempts. Please request a new code.", {
+          extensions: { code: "OTP_LOCKED" },
+        });
+      }
+      if (!verifyOtpHash(input.otp.trim(), email, record.codeHash)) {
+        record.attempts += 1;
+        await record.save();
+        throw new GraphQLError("Incorrect verification code.", {
+          extensions: { code: "OTP_INVALID" },
+        });
+      }
+
       const user = await User.create({
         name: input.name.trim(),
         email,
-        phone: input.phone,
         passwordHash: await hashPassword(input.password),
         role: "CUSTOMER",
       });
+      await record.deleteOne();
       const token = signToken({ id: user.id, role: user.role });
       notifySignup(user.email, user.name);
       return { token, user };

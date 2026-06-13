@@ -1,0 +1,25 @@
+# Didi Bhaiya ki Biryani
+
+> 100% vegetarian dum biryani, slow-cooked in sealed copper handis with hand-ground spice and delivered piping hot in about 35 minutes. Tagline: "Har bite, yaad rahe!"
+
+## About
+Didi Bhaiya ki Biryani (operated by D&B Foods) is a pure-vegetarian, FSSAI-certified cloud kitchen. Every biryani is dum-cooked to order in a dedicated 100% veg kitchen — no cross-contact with non-veg — and delivered hot in insulated packaging. Delivery only; no dine-in.
+
+## Order
+- Website: https://didibhaiyakibiryani.com
+- Order online / app: https://native.didibhaiyakibiryani.com
+
+## Menu highlights
+- Veg dum biryanis (paneer, kathal/jackfruit, veg, soya), combos, raita, sides and desserts.
+- Customisable spice levels and party/bulk orders.
+
+## Offers
+- First-order and threshold-based discount codes are listed at https://didibhaiyakibiryani.com/offers
+
+## Key pages
+- Home: https://didibhaiyakibiryani.com/
+- Offers: https://didibhaiyakibiryani.com/offers
+- Live platform status: https://didibhaiyakibiryani.com/status
+
+## Contact
+- Support and company details are published on the website footer (managed via the admin panel).

@@ -21,23 +21,24 @@ afterEach(() => {
 });
 
 describe("imagekitConfigured", () => {
-  it("reflects the private key presence", () => {
+  it("reflects the private key presence", async () => {
     delete process.env.IMAGEKIT_PRIVATE_KEY;
-    expect(imagekitConfigured()).toBe(false);
+    expect(await imagekitConfigured()).toBe(false);
     process.env.IMAGEKIT_PRIVATE_KEY = "private_test";
-    expect(imagekitConfigured()).toBe(true);
+    expect(await imagekitConfigured()).toBe(true);
   });
 });
 
 describe("imagekitUrlEndpoint", () => {
-  it("returns the first of a comma-separated list", () => {
+  it("returns the first of a comma-separated list", async () => {
+    process.env.IMAGEKIT_PRIVATE_KEY = "private_test";
     process.env.IMAGEKIT_URL_ENDPOINTS = " https://ik.imagekit.io/a , https://ik.imagekit.io/b ";
-    expect(imagekitUrlEndpoint()).toBe("https://ik.imagekit.io/a");
+    expect(await imagekitUrlEndpoint()).toBe("https://ik.imagekit.io/a");
   });
 
-  it("returns empty when unset", () => {
+  it("returns empty when unset", async () => {
     delete process.env.IMAGEKIT_URL_ENDPOINTS;
-    expect(imagekitUrlEndpoint()).toBe("");
+    expect(await imagekitUrlEndpoint()).toBe("");
   });
 });
 

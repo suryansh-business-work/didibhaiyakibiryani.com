@@ -11,6 +11,7 @@ import { AuthProvider } from "../src/auth";
 import { CartProvider } from "../src/cart";
 import { SettingsProvider } from "../src/settings";
 import { MaintenanceGate } from "../src/MaintenanceGate";
+import { ActiveOrderBar } from "../src/order/ActiveOrderBar";
 import { brand } from "../src/theme";
 
 export default function RootLayout() {
@@ -31,6 +32,7 @@ export default function RootLayout() {
                         animation: "slide_from_right",
                       }}
                     />
+                    <ActiveOrderBar />
                   </MaintenanceGate>
                 </SafeAreaProvider>
               </CartProvider>

@@ -19,6 +19,19 @@ export function otpEmail(brand: EmailBrand, name: string, code: string): EmailCo
   };
 }
 
+export function verifyEmailOtp(brand: EmailBrand, code: string): EmailContent {
+  const body = cardSection(`
+    <mj-text color="#f5ece0" font-size="18px" font-weight="700">Verify your email</mj-text>
+    <mj-text color="#cdbfb0">Enter this code in the ${brand.brandName} app to finish creating your account. It expires in ${OTP_TTL_MINUTES} minutes.</mj-text>
+    <mj-text align="center" color="${brand.primaryColor}" font-size="34px" font-weight="800" letter-spacing="10px" padding="18px 0">${code}</mj-text>
+    <mj-text color="#8d8073" font-size="12px">Didn't try to sign up? You can safely ignore this email.</mj-text>
+  `);
+  return {
+    subject: `${code} is your ${brand.brandName} verification code`,
+    mjml: emailShell(brand, body),
+  };
+}
+
 export function signupEmail(brand: EmailBrand, name: string, orderUrl: string): EmailContent {
   const body = cardSection(`
     <mj-text color="#f5ece0" font-size="18px" font-weight="700">Welcome to the family, ${name}! 🎉</mj-text>

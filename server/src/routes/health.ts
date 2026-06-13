@@ -54,7 +54,7 @@ async function checkApp(key: string, name: string): Promise<ServiceHealth> {
 
 async function checkSmtp(): Promise<ServiceHealth> {
   const base = { key: "smtp", name: "Email (SMTP)", category: "Email", url: null };
-  if (!mailConfigured()) {
+  if (!(await mailConfigured())) {
     return { ...base, ok: false, latencyMs: null, detail: "SMTP not configured" };
   }
   const started = Date.now();
@@ -79,13 +79,14 @@ function checkMongo(): ServiceHealth {
   };
 }
 
-function checkIntegrations(): ServiceHealth[] {
+async function checkIntegrations(): Promise<ServiceHealth[]> {
   const razorpayOk = Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
+  const imagekitOk = await imagekitConfigured();
   return [
     {
       key: "imagekit", name: "ImageKit (media CDN)", category: "Integrations",
-      ok: imagekitConfigured(), latencyMs: null, url: null,
-      detail: imagekitConfigured() ? "Keys configured" : "IMAGEKIT_PRIVATE_KEY missing",
+      ok: imagekitOk, latencyMs: null, url: null,
+      detail: imagekitOk ? "Keys configured" : "ImageKit private key missing",
     },
     {
       key: "razorpay", name: "Razorpay (payments)", category: "Integrations",
@@ -107,11 +108,12 @@ export async function buildHealthReport(): Promise<HealthReport> {
     key: "server", name: "Server (GraphQL API)", category: "Applications",
     ok: true, latencyMs: 0, url: `https://server.${DOMAIN}`, detail: "This API is responding",
   };
-  const [apps, smtp] = await Promise.all([
+  const [apps, smtp, integrations] = await Promise.all([
     Promise.all(APP_PROBES.map((p) => checkApp(p.key, p.name))),
     checkSmtp(),
+    checkIntegrations(),
   ]);
-  const services: ServiceHealth[] = [apiSelf, ...apps, checkMongo(), smtp, ...checkIntegrations()];
+  const services: ServiceHealth[] = [apiSelf, ...apps, checkMongo(), smtp, ...integrations];
   return {
     ok: services.every((s) => s.ok),
     checkedAt: new Date().toISOString(),

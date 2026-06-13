@@ -2,6 +2,15 @@ export interface SettingsData {
   brandName: string;
   tagline: string;
   logoUrl: string;
+  websiteHeaderLogoUrl: string;
+  websiteFooterLogoUrl: string;
+  faviconUrl: string;
+  consumerAppName: string;
+  consumerSplashUrl: string;
+  consumerIconUrl: string;
+  deliveryAppName: string;
+  deliverySplashUrl: string;
+  deliveryIconUrl: string;
   primaryColor: string;
   accentColor: string;
   companyName: string;
@@ -23,6 +32,15 @@ export const BLANK_FORM: SettingsForm = {
   brandName: "",
   tagline: "",
   logoUrl: "",
+  websiteHeaderLogoUrl: "",
+  websiteFooterLogoUrl: "",
+  faviconUrl: "",
+  consumerAppName: "",
+  consumerSplashUrl: "",
+  consumerIconUrl: "",
+  deliveryAppName: "",
+  deliverySplashUrl: "",
+  deliveryIconUrl: "",
   primaryColor: "#e4b65c",
   accentColor: "#5e2218",
   companyName: "",
@@ -54,6 +72,24 @@ export interface SectionDef {
   fields: FieldDef[];
 }
 
+/** Uploadable brand assets — each renders an ImageUpload that stores a CDN URL. */
+export interface AssetDef {
+  key: keyof SettingsForm;
+  label: string;
+  hint: string;
+}
+
+export const BRANDING_ASSETS: AssetDef[] = [
+  { key: "logoUrl", label: "Primary logo", hint: "Used across website, apps & emails" },
+  { key: "websiteHeaderLogoUrl", label: "Website header logo", hint: "Top navigation bar" },
+  { key: "websiteFooterLogoUrl", label: "Website footer logo", hint: "Site footer" },
+  { key: "faviconUrl", label: "Website favicon", hint: "Browser tab icon (square PNG)" },
+  { key: "consumerSplashUrl", label: "Consumer app splash", hint: "Customer app launch screen" },
+  { key: "consumerIconUrl", label: "Consumer app icon", hint: "Customer app launcher icon" },
+  { key: "deliverySplashUrl", label: "Delivery app splash", hint: "Rider app launch screen" },
+  { key: "deliveryIconUrl", label: "Delivery app icon", hint: "Rider app launcher icon" },
+];
+
 /** Form layout — one place to add new branding fields. */
 export const SECTIONS: SectionDef[] = [
   {
@@ -61,9 +97,15 @@ export const SECTIONS: SectionDef[] = [
     fields: [
       { key: "brandName", label: "Brand name" },
       { key: "tagline", label: "Tagline" },
-      { key: "logoUrl", label: "Logo URL", type: "url", placeholder: "https://…/logo.png" },
       { key: "primaryColor", label: "Primary color", type: "color" },
       { key: "accentColor", label: "Accent color", type: "color" },
+    ],
+  },
+  {
+    title: "App names",
+    fields: [
+      { key: "consumerAppName", label: "Consumer app name" },
+      { key: "deliveryAppName", label: "Delivery app name" },
     ],
   },
   {

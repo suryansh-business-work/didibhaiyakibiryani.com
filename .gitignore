@@ -24,6 +24,12 @@ mobile-app/android/
 mobile-app/ios/
 *.keystore
 
+# capacitor (delivery) — generated native project + built binaries
+delivery/android/
+delivery/ios/
+apk/
+*.apk
+
 # logs
 *.log
 npm-debug.log*

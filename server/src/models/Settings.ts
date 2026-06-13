@@ -19,6 +19,16 @@ export interface ISettings extends Document {
   brandName: string;
   tagline: string;
   logoUrl: string;
+  // Branding assets (managed from admin → Branding; served everywhere)
+  websiteHeaderLogoUrl: string;
+  websiteFooterLogoUrl: string;
+  faviconUrl: string;
+  consumerAppName: string;
+  consumerSplashUrl: string;
+  consumerIconUrl: string;
+  deliveryAppName: string;
+  deliverySplashUrl: string;
+  deliveryIconUrl: string;
   primaryColor: string;
   accentColor: string;
   companyName: string;
@@ -51,6 +61,17 @@ export interface ISettings extends Document {
   onlineEnabled: boolean;
   // Support — admin-managed subject lines for the order support box
   supportSubjects: string[];
+  // Integrations — secret credentials entered from admin → Integrations.
+  // Never exposed on the public `settings` query; admin-only & masked.
+  smtpHost: string;
+  smtpPort: string;
+  smtpUser: string;
+  smtpPass: string;
+  mailFrom: string;
+  mailFromName: string;
+  imagekitPrivateKey: string;
+  imagekitPublicKey: string;
+  imagekitUrlEndpoint: string;
   updatedAt: Date;
   createdAt: Date;
 }
@@ -74,6 +95,15 @@ const settingsSchema = new Schema<ISettings>(
     brandName: { type: String, default: "Didi Bhaiya ki Biryani" },
     tagline: { type: String, default: "Har bite, yaad rahe!" },
     logoUrl: { type: String, default: "" },
+    websiteHeaderLogoUrl: { type: String, default: "" },
+    websiteFooterLogoUrl: { type: String, default: "" },
+    faviconUrl: { type: String, default: "" },
+    consumerAppName: { type: String, default: "Didi Bhaiya ki Biryani" },
+    consumerSplashUrl: { type: String, default: "" },
+    consumerIconUrl: { type: String, default: "" },
+    deliveryAppName: { type: String, default: "DDB Delivery" },
+    deliverySplashUrl: { type: String, default: "" },
+    deliveryIconUrl: { type: String, default: "" },
     primaryColor: { type: String, default: "#e4b65c" },
     accentColor: { type: String, default: "#5e2218" },
     companyName: { type: String, default: "D&B Foods" },
@@ -110,6 +140,15 @@ const settingsSchema = new Schema<ISettings>(
         "App issue",
       ],
     },
+    smtpHost: { type: String, default: "" },
+    smtpPort: { type: String, default: "" },
+    smtpUser: { type: String, default: "" },
+    smtpPass: { type: String, default: "" },
+    mailFrom: { type: String, default: "" },
+    mailFromName: { type: String, default: "" },
+    imagekitPrivateKey: { type: String, default: "" },
+    imagekitPublicKey: { type: String, default: "" },
+    imagekitUrlEndpoint: { type: String, default: "" },
   },
   { timestamps: true }
 );

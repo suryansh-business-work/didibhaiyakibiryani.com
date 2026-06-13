@@ -52,40 +52,14 @@ import { ORDER_URL } from "../lib/api";
         </span>
 
         <div class="hero__plate">
-          <svg viewBox="0 0 320 280" aria-hidden="true" class="hero__plate-svg">
-            <defs>
-              <radialGradient id="plate" cx="50%" cy="40%" r="65%">
-                <stop offset="0%" stop-color="#8a2a18" />
-                <stop offset="100%" stop-color="#3a0f0c" />
-              </radialGradient>
-            </defs>
-            <ellipse cx="160" cy="180" rx="135" ry="70" fill="rgba(0,0,0,0.4)" />
-            <ellipse cx="160" cy="160" rx="135" ry="72" fill="#1c100b" />
-            <ellipse cx="160" cy="150" rx="118" ry="62" fill="url(#plate)" />
-            <g fill="#f1e4c9">
-              <!-- scattered rice grains -->
-              <ellipse cx="120" cy="135" rx="5" ry="2.2" transform="rotate(-22 120 135)" />
-              <ellipse cx="150" cy="125" rx="5" ry="2.2" transform="rotate(18 150 125)" />
-              <ellipse cx="185" cy="132" rx="5" ry="2.2" transform="rotate(-14 185 132)" />
-              <ellipse cx="135" cy="150" rx="5" ry="2.2" transform="rotate(30 135 150)" />
-              <ellipse cx="170" cy="148" rx="5" ry="2.2" transform="rotate(-28 170 148)" />
-              <ellipse cx="205" cy="145" rx="5" ry="2.2" transform="rotate(12 205 145)" />
-              <ellipse cx="110" cy="158" rx="5" ry="2.2" transform="rotate(8 110 158)" />
-              <ellipse cx="160" cy="165" rx="5" ry="2.2" transform="rotate(-18 160 165)" />
-              <ellipse cx="195" cy="162" rx="5" ry="2.2" transform="rotate(24 195 162)" />
-              <ellipse cx="142" cy="172" rx="5" ry="2.2" transform="rotate(-10 142 172)" />
-            </g>
-            <!-- saffron strands & mint & cashews -->
-            <circle cx="128" cy="140" r="3.4" fill="#e4b65c" />
-            <circle cx="178" cy="138" r="3.4" fill="#5fb45f" />
-            <circle cx="158" cy="155" r="3.4" fill="#e4b65c" />
-            <circle cx="198" cy="150" r="3" fill="#c9772f" />
-            <circle cx="118" cy="150" r="3" fill="#5fb45f" />
-            <!-- steam -->
-            <path class="steam s1" d="M120 95c-8-12 8-18 0-30" />
-            <path class="steam s2" d="M160 88c-8-12 8-18 0-30" />
-            <path class="steam s3" d="M200 95c-8-12 8-18 0-30" />
-          </svg>
+          <img
+            class="hero__photo"
+            src="/biryani-4.jpg"
+            alt="100% vegetarian dum biryani served in a copper handi, garnished with saffron and mint"
+            width="440"
+            height="360"
+            fetchpriority="high"
+          />
         </div>
 
         <div class="hero__wordmark">
@@ -232,6 +206,15 @@ import { ORDER_URL } from "../lib/api";
   }
   .hero__plate { width: 92%; }
   .hero__plate-svg { width: 100%; height: auto; }
+  .hero__photo {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius, 16px);
+    box-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.7);
+    display: block;
+  }
   .steam {
     fill: none;
     stroke: rgba(255, 240, 220, 0.4);

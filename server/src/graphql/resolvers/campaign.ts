@@ -15,8 +15,8 @@ interface CampaignInput {
   ctaUrl?: string;
 }
 
-function requireChannelConfigured(channel: CampaignInput["channel"]): void {
-  if (channel === "EMAIL" && !mailConfigured()) {
+async function requireChannelConfigured(channel: CampaignInput["channel"]): Promise<void> {
+  if (channel === "EMAIL" && !(await mailConfigured())) {
     throw new GraphQLError("SMTP is not configured.", {
       extensions: { code: "MAIL_NOT_CONFIGURED" },
     });
@@ -86,7 +86,7 @@ export const campaignResolvers = {
           extensions: { code: "BAD_USER_INPUT" },
         });
       }
-      requireChannelConfigured(input.channel);
+      await requireChannelConfigured(input.channel);
 
       const campaign = await Campaign.create({
         ...input,

@@ -17,6 +17,7 @@ import {
   IHeadset,
   ISend,
   IPalette,
+  IPlug,
   ILogout,
 } from "./icons";
 
@@ -34,6 +35,7 @@ const NAV = [
   { to: "/campaigns", label: "Campaigns", icon: ISend },
   { to: "/store", label: "Store", icon: IClock },
   { to: "/branding", label: "Branding", icon: IPalette },
+  { to: "/integrations", label: "Integrations", icon: IPlug },
 ];
 
 export default function Layout({ title, children }: Readonly<{ title: string; children: ReactNode }>) {

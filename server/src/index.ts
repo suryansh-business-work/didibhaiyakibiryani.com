@@ -23,6 +23,25 @@ const ORIGINS = (process.env.CORS_ORIGINS || "")
   .map((s) => s.trim())
   .filter(Boolean);
 
+// Capacitor/Cordova WebViews (the delivery & consumer APKs) send these origins.
+// They must be allowed regardless of CORS_ORIGINS, or on-device login fails.
+const NATIVE_APP_ORIGINS = new Set([
+  "capacitor://localhost",
+  "ionic://localhost",
+  "https://localhost",
+  "http://localhost",
+]);
+
+/** Allow configured web origins + native app WebViews + origin-less requests. */
+function corsOrigin(
+  origin: string | undefined,
+  cb: (err: Error | null, allow?: boolean) => void
+): void {
+  if (!origin || !ORIGINS.length) return cb(null, true);
+  if (ORIGINS.includes(origin) || NATIVE_APP_ORIGINS.has(origin)) return cb(null, true);
+  cb(new Error(`Origin ${origin} not allowed by CORS`));
+}
+
 async function start() {
   // Non-fatal: HTTP (health/status) stays up while Mongo reconnects.
   connectDBWithRetry(process.env.MONGODB_URI || "");
@@ -66,7 +85,7 @@ async function start() {
   app.use(
     "/graphql",
     cors<cors.CorsRequest>({
-      origin: ORIGINS.length ? ORIGINS : true,
+      origin: corsOrigin,
       credentials: true,
     }),
     // 12mb: admin image uploads travel as base64 through the uploadImage mutation.

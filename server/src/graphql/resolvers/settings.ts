@@ -11,6 +11,9 @@ export interface SettingsInput {
 
 const STRING_FIELDS = new Set([
   "brandName", "tagline", "logoUrl", "primaryColor", "accentColor",
+  "websiteHeaderLogoUrl", "websiteFooterLogoUrl", "faviconUrl",
+  "consumerAppName", "consumerSplashUrl", "consumerIconUrl",
+  "deliveryAppName", "deliverySplashUrl", "deliveryIconUrl",
   "companyName", "companyAddress", "companyPhone", "companyEmail",
   "supportPhone", "supportEmail", "fssaiLicense",
   "instagramUrl", "facebookUrl", "youtubeUrl",

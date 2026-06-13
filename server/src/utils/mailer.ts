@@ -1,24 +1,57 @@
+import mongoose from "mongoose";
 import nodemailer from "nodemailer";
 import mjml2html from "mjml";
 import { logger } from "./logger.js";
+import { getOrCreateSettings } from "../models/Settings.js";
+import type { ISettings } from "../models/Settings.js";
 
-export function mailConfigured(): boolean {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+/** Read the settings doc only when Mongo is connected; otherwise env-only. */
+async function settingsOrNull(): Promise<ISettings | null> {
+  if (mongoose.connection.readyState !== 1) return null;
+  try {
+    return await getOrCreateSettings();
+  } catch {
+    return null;
+  }
 }
 
-let transport: nodemailer.Transporter | null = null;
+export interface MailConfig {
+  host: string;
+  port: number;
+  user: string;
+  pass: string;
+  fromAddr: string;
+  fromName: string;
+}
 
-function getTransport(): nodemailer.Transporter {
-  if (!transport) {
-    const port = Number(process.env.SMTP_PORT) || 587;
-    transport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port,
-      secure: port === 465,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
-  }
-  return transport;
+/**
+ * Resolve SMTP credentials: admin-entered values (Settings doc) win, with the
+ * server environment as a fallback. Keeps secrets out of source — they live in
+ * the DB or the host env, never the repo.
+ */
+export async function resolveMailConfig(): Promise<MailConfig | null> {
+  const s = await settingsOrNull();
+  const host = s?.smtpHost || process.env.SMTP_HOST || "";
+  const user = s?.smtpUser || process.env.SMTP_USER || "";
+  const pass = s?.smtpPass || process.env.SMTP_PASS || "";
+  if (!host || !user || !pass) return null;
+  const port = Number(s?.smtpPort || process.env.SMTP_PORT) || 587;
+  const fromName = s?.mailFromName || process.env.MAIL_FROM_NAME || "Didi Bhaiya ki Biryani";
+  const fromAddr = s?.mailFrom || process.env.MAIL_FROM || user;
+  return { host, port, user, pass, fromAddr, fromName };
+}
+
+export async function mailConfigured(): Promise<boolean> {
+  return (await resolveMailConfig()) !== null;
+}
+
+function transportFor(cfg: MailConfig): nodemailer.Transporter {
+  return nodemailer.createTransport({
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.port === 465,
+    auth: { user: cfg.user, pass: cfg.pass },
+  });
 }
 
 export interface MailAttachment {
@@ -36,12 +69,15 @@ export interface MailJob {
 
 /** Verify the SMTP login (used by the platform health report). */
 export async function verifySmtp(): Promise<void> {
-  await getTransport().verify();
+  const cfg = await resolveMailConfig();
+  if (!cfg) throw new Error("SMTP is not configured.");
+  await transportFor(cfg).verify();
 }
 
 /** Compile MJML → HTML and send. Returns false when SMTP isn't configured. */
 export async function sendMail(job: MailJob): Promise<boolean> {
-  if (!mailConfigured()) {
+  const cfg = await resolveMailConfig();
+  if (!cfg) {
     logger.warn({ to: job.to, subject: job.subject }, "Email skipped: SMTP not configured");
     return false;
   }
@@ -53,10 +89,8 @@ export async function sendMail(job: MailJob): Promise<boolean> {
       "MJML warnings"
     );
   }
-  const fromName = process.env.MAIL_FROM_NAME || "Didi Bhaiya ki Biryani";
-  const fromAddr = process.env.MAIL_FROM || process.env.SMTP_USER;
-  await getTransport().sendMail({
-    from: `"${fromName}" <${fromAddr}>`,
+  await transportFor(cfg).sendMail({
+    from: `"${cfg.fromName}" <${cfg.fromAddr}>`,
     to: job.to,
     subject: job.subject,
     html,

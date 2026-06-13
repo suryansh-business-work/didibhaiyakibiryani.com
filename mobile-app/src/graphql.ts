@@ -103,6 +103,12 @@ export const ME = gql`
   }
 `;
 
+export const REQUEST_SIGNUP_OTP = gql`
+  mutation RequestSignupOtp($email: String!, $name: String!) {
+    requestSignupOtp(email: $email, name: $name)
+  }
+`;
+
 export const REGISTER = gql`
   mutation Register($input: RegisterInput!) {
     register(input: $input) {

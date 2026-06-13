@@ -7,13 +7,55 @@ interface Props {
   title?: string;
   description?: string;
   active?: string;
+  ogImage?: string;
 }
 
 const {
   title = "Didi Bhaiya ki Biryani — 100% Veg Dum Biryani",
   description = "100% vegetarian dum biryani, slow-cooked in copper handis with hand-ground spice and delivered piping hot in 35 minutes. Har bite, yaad rahe.",
   active = "",
+  ogImage = "/biryani-1.jpg",
 } = Astro.props;
+
+const site = Astro.site ?? new URL("https://didibhaiyakibiryani.com");
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImageUrl = new URL(ogImage, site).href;
+
+// Structured data for rich results + Generative Engine Optimization (GEO):
+// Restaurant + Organization + WebSite so AI search and Google understand the brand.
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Restaurant",
+      "@id": `${site.href}#restaurant`,
+      name: "Didi Bhaiya ki Biryani",
+      description,
+      url: site.href,
+      image: ogImageUrl,
+      servesCuisine: ["Indian", "Biryani", "Vegetarian"],
+      priceRange: "₹₹",
+      acceptsReservations: false,
+      hasMenu: `${site.href}#menu`,
+      areaServed: "India",
+      slogan: "Har bite, yaad rahe!",
+    },
+    {
+      "@type": "Organization",
+      "@id": `${site.href}#org`,
+      name: "Didi Bhaiya ki Biryani",
+      url: site.href,
+      logo: new URL("/didibhaiyakibiryani-logo.png", site).href,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${site.href}#website`,
+      url: site.href,
+      name: "Didi Bhaiya ki Biryani",
+      inLanguage: "en-IN",
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -24,11 +66,24 @@ const {
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="Didi Bhaiya ki Biryani" />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:locale" content="en_IN" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
     <meta name="theme-color" content="#0b0705" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/didibhaiyakibiryani-logo.png" />
+    <link id="dynamic-favicon" rel="icon" href="/didibhaiyakibiryani-logo.png" />
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -126,7 +181,7 @@ const {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query:
-            "query { settings { brandName tagline primaryColor companyAddress companyPhone companyEmail supportPhone supportEmail } }",
+            "query { settings { brandName tagline primaryColor logoUrl websiteHeaderLogoUrl websiteFooterLogoUrl faviconUrl companyAddress companyPhone companyEmail supportPhone supportEmail } }",
         }),
       })
         .then((r) => r.json())
@@ -136,6 +191,20 @@ const {
           if (s.primaryColor) {
             document.documentElement.style.setProperty("--gold", s.primaryColor);
           }
+          // ImageKit size transform helper (no-op for non-ImageKit URLs).
+          const sized = (url: string, w: number) =>
+            url && url.includes("imagekit.io") ? `${url}?tr=w-${w}` : url;
+          const favicon = s.faviconUrl || s.logoUrl;
+          if (favicon) {
+            const link = document.getElementById("dynamic-favicon") as HTMLLinkElement | null;
+            if (link) link.href = sized(favicon, 64);
+          }
+          document.querySelectorAll<HTMLImageElement>("img[data-logo]").forEach((img) => {
+            const slot = img.getAttribute("data-logo");
+            const url =
+              (slot === "footer" ? s.websiteFooterLogoUrl : s.websiteHeaderLogoUrl) || s.logoUrl;
+            if (url) img.src = sized(url, slot === "footer" ? 200 : 120);
+          });
           document.querySelectorAll<HTMLElement>("[data-setting]").forEach((el) => {
             const key = el.getAttribute("data-setting") || "";
             const value = (s as Record<string, string>)[key];

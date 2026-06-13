@@ -1,36 +1,68 @@
-import { Modal } from "../../components/ui";
-import { orderMapEmbedUrl, type Order } from "./types";
+import { useEffect, useState } from "react";
+import { Modal, Spinner } from "../../components/ui";
+import {
+  addressText,
+  geocodeAddress,
+  googleMapsLink,
+  osmEmbedUrl,
+  type LatLng,
+  type Order,
+} from "./types";
 
 interface OrderMapProps {
   order: Order;
   onClose: () => void;
 }
 
-/** Google Map of where the order came from (customer's drop location). */
+/** OpenStreetMap view of where the order should be delivered (drop location). */
 export default function OrderMap({ order, onClose }: Readonly<OrderMapProps>) {
   const a = order.address;
+  const [coords, setCoords] = useState<LatLng | null>(
+    a.lat && a.lng ? { lat: a.lat, lng: a.lng } : null
+  );
+  const [loading, setLoading] = useState(!coords);
+
+  useEffect(() => {
+    if (coords) return;
+    let cancelled = false;
+    geocodeAddress(a)
+      .then((c) => {
+        if (!cancelled) setCoords(c);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [a, coords]);
+
   return (
     <Modal title={`Order ${order.orderNumber} — location`} onClose={onClose}>
       <p className="muted" style={{ marginBottom: 12 }}>
-        {a.line1}
-        {a.line2 ? `, ${a.line2}` : ""} · {a.city} — {a.pincode}
+        {addressText(a)}
       </p>
-      <iframe
-        className="map-frame"
-        title={`Map for order ${order.orderNumber}`}
-        src={orderMapEmbedUrl(a)}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-      />
+
+      {loading && <Spinner />}
+
+      {!loading && coords && (
+        <iframe
+          className="map-frame"
+          title={`Map for order ${order.orderNumber}`}
+          src={osmEmbedUrl(coords)}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      )}
+
+      {!loading && !coords && (
+        <p className="muted">
+          Couldn’t pin this address on the map — open it in Google Maps below.
+        </p>
+      )}
+
       <div style={{ marginTop: 12 }}>
-        <a
-          className="btn btn-ghost btn-sm"
-          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            a.lat && a.lng ? `${a.lat},${a.lng}` : `${a.line1}, ${a.city} ${a.pincode}`
-          )}`}
-          target="_blank"
-          rel="noreferrer"
-        >
+        <a className="btn btn-ghost btn-sm" href={googleMapsLink(a)} target="_blank" rel="noreferrer">
           Open in Google Maps ↗
         </a>
       </div>

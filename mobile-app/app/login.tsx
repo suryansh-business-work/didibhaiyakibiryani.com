@@ -10,7 +10,7 @@ export default function Login() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login } = useAuth();
-  const [emailOrPhone, setEmailOrPhone] = useState("ananya@example.com");
+  const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -62,8 +62,6 @@ export default function Login() {
             <Text color={brand.gold} fontWeight="800">Create an account</Text>
           </Link>
         </XStack>
-
-        <Text fontSize={12} color={brand.faint} textAlign="center">Demo: ananya@example.com / Test@123</Text>
       </YStack>
     </YStack>
   );

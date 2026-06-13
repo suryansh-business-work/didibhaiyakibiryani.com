@@ -221,8 +221,8 @@ export const typeDefs = /* GraphQL */ `
   input RegisterInput {
     name: String!
     email: String!
-    phone: String
     password: String!
+    otp: String!
   }
 
   input AddressInput {
@@ -310,6 +310,15 @@ export const typeDefs = /* GraphQL */ `
     brandName: String!
     tagline: String!
     logoUrl: String!
+    websiteHeaderLogoUrl: String!
+    websiteFooterLogoUrl: String!
+    faviconUrl: String!
+    consumerAppName: String!
+    consumerSplashUrl: String!
+    consumerIconUrl: String!
+    deliveryAppName: String!
+    deliverySplashUrl: String!
+    deliveryIconUrl: String!
     primaryColor: String!
     accentColor: String!
     companyName: String!
@@ -344,6 +353,15 @@ export const typeDefs = /* GraphQL */ `
     brandName: String
     tagline: String
     logoUrl: String
+    websiteHeaderLogoUrl: String
+    websiteFooterLogoUrl: String
+    faviconUrl: String
+    consumerAppName: String
+    consumerSplashUrl: String
+    consumerIconUrl: String
+    deliveryAppName: String
+    deliverySplashUrl: String
+    deliveryIconUrl: String
     primaryColor: String
     accentColor: String
     companyName: String
@@ -370,6 +388,34 @@ export const typeDefs = /* GraphQL */ `
     codEnabled: Boolean
     onlineEnabled: Boolean
     supportSubjects: [String!]
+  }
+
+  # Admin-only integration credentials. Secrets are never returned — only a
+  # boolean flag tells the UI whether each one is currently set.
+  type IntegrationSettings {
+    smtpHost: String!
+    smtpPort: String!
+    smtpUser: String!
+    mailFrom: String!
+    mailFromName: String!
+    smtpPassSet: Boolean!
+    smtpConfigured: Boolean!
+    imagekitUrlEndpoint: String!
+    imagekitPublicKey: String!
+    imagekitPrivateKeySet: Boolean!
+    imagekitConfigured: Boolean!
+  }
+
+  input IntegrationSettingsInput {
+    smtpHost: String
+    smtpPort: String
+    smtpUser: String
+    smtpPass: String
+    mailFrom: String
+    mailFromName: String
+    imagekitUrlEndpoint: String
+    imagekitPublicKey: String
+    imagekitPrivateKey: String
   }
 
   type UploadedImage {
@@ -527,10 +573,13 @@ export const typeDefs = /* GraphQL */ `
 
     customers(search: String): [User!]! # admin
     dashboardStats: DashboardStats! # admin
+
+    integrationSettings: IntegrationSettings! # admin: SMTP / ImageKit config (secrets masked)
   }
 
   # ─────────────── Mutations ───────────────
   type Mutation {
+    requestSignupOtp(email: String!, name: String!): Boolean!
     register(input: RegisterInput!): AuthPayload!
     login(emailOrPhone: String!, password: String!): AuthPayload!
     updateProfile(name: String, phone: String): User!
@@ -576,6 +625,9 @@ export const typeDefs = /* GraphQL */ `
 
     # Branding & company settings (admin)
     updateSettings(input: SettingsInput!): Settings!
+
+    # Integration credentials — SMTP & ImageKit (admin); secrets write-only
+    updateIntegrationSettings(input: IntegrationSettingsInput!): IntegrationSettings!
 
     # Payments (Razorpay)
     createRazorpayOrder(orderId: ID!): RazorpayOrderPayload!

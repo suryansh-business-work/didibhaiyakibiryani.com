@@ -12,7 +12,7 @@ interface UploadArgs {
 const MAX_BASE64_LENGTH = 10 * 1024 * 1024;
 
 async function doUpload(args: UploadArgs): Promise<{ url: string; fileId: string }> {
-  if (!imagekitConfigured()) {
+  if (!(await imagekitConfigured())) {
     throw new GraphQLError("Image upload is not configured on the server.", {
       extensions: { code: "FAILED_PRECONDITION" },
     });

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useApolloClient } from "@apollo/client";
 import { TOKEN_KEY } from "./apollo";
-import { ME, LOGIN, REGISTER } from "./graphql";
+import { ME, LOGIN, REGISTER, REQUEST_SIGNUP_OTP } from "./graphql";
 
 export interface User {
   id: string;
@@ -25,7 +25,8 @@ interface AuthCtx {
   user: User | null;
   loading: boolean;
   login: (emailOrPhone: string, password: string) => Promise<void>;
-  register: (name: string, email: string, phone: string, password: string) => Promise<void>;
+  requestSignupOtp: (name: string, email: string) => Promise<void>;
+  register: (name: string, email: string, password: string, otp: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -67,10 +68,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await load();
   }
 
-  async function register(name: string, email: string, phone: string, password: string) {
+  async function requestSignupOtp(name: string, email: string) {
+    await apollo.mutate({
+      mutation: REQUEST_SIGNUP_OTP,
+      variables: { name, email },
+    });
+  }
+
+  async function register(name: string, email: string, password: string, otp: string) {
     const { data } = await apollo.mutate({
       mutation: REGISTER,
-      variables: { input: { name, email, phone, password } },
+      variables: { input: { name, email, password, otp } },
     });
     await AsyncStorage.setItem(TOKEN_KEY, data.register.token);
     await load();
@@ -83,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <Ctx.Provider value={{ user, loading, login, register, logout, refresh: load }}>
+    <Ctx.Provider value={{ user, loading, login, requestSignupOtp, register, logout, refresh: load }}>
       {children}
     </Ctx.Provider>
   );

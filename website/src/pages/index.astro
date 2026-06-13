@@ -134,7 +134,12 @@ const partyPerks = [
     (function () {
       const grid = document.getElementById("menu-grid");
       const QUERY =
-        "query { menuItems { name description price spiceLevel serves badge isAvailable } }";
+        "query { menuItems { name description price spiceLevel serves badge isAvailable image } }";
+      const PHOTOS = ["/biryani-1.jpg", "/biryani-2.jpg", "/biryani-3.jpg", "/biryani-4.jpg"];
+      const photoFor = (m, i) => {
+        const raw = m.image || PHOTOS[i % PHOTOS.length];
+        return raw.includes("imagekit.io") ? raw + "?tr=w-520,h-330,fo-auto" : raw;
+      };
       const esc = (v) =>
         String(v == null ? "" : v).replace(/[&<>"]/g, (c) =>
           ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
@@ -166,15 +171,13 @@ const partyPerks = [
           '<article class="product' + (soldOut ? " is-out" : "") + '">' +
           '<div class="product__img" style="--h:' +
           hue +
-          '">' +
+          ';position:relative;overflow:hidden;aspect-ratio:16/10">' +
           badgeHtml +
-          '<svg class="product__bowl" viewBox="0 0 120 90" aria-hidden="true">' +
-          '<ellipse cx="60" cy="62" rx="42" ry="20" fill="rgba(0,0,0,0.35)"/>' +
-          '<path d="M22 50a38 16 0 0 0 76 0Z" fill="#3a1410"/>' +
-          '<ellipse cx="60" cy="50" rx="38" ry="15" fill="#5e2218"/>' +
-          '<circle cx="52" cy="46" r="2" fill="#e4b65c"/>' +
-          '<circle cx="68" cy="44" r="2" fill="#5fb45f"/>' +
-          '<circle cx="60" cy="50" r="2" fill="#e4b65c"/></svg></div>' +
+          '<img class="product__photo" src="' +
+          esc(photoFor(m, i)) +
+          '" alt="' +
+          esc(m.name) +
+          '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" /></div>' +
           '<div class="product__body"><div class="product__head">' +
           '<h3 class="product__name">' +
           esc(m.name) +
@@ -281,15 +284,13 @@ const partyPerks = [
     <div class="container story__inner">
       <div class="story__visual reveal">
         <div class="story__photo">
-          <svg viewBox="0 0 220 150" aria-hidden="true">
-            <rect width="220" height="150" rx="14" fill="#3a1410" />
-            <circle cx="78" cy="60" r="26" fill="#7a2a1c" />
-            <circle cx="142" cy="60" r="26" fill="#9a4a2c" />
-            <path d="M40 150c0-26 17-46 38-46s38 20 38 46Z" fill="#6e2418" />
-            <path d="M104 150c0-26 17-46 38-46s38 20 38 46Z" fill="#8a3a24" />
-            <circle cx="78" cy="56" r="9" fill="#e9c9a0" />
-            <circle cx="142" cy="56" r="9" fill="#e9c9a0" />
-          </svg>
+          <img
+            src="/biryani-3.jpg"
+            alt="Steaming veg dum biryani fresh from the handi, layered with rice and spices"
+            width="220"
+            height="150"
+            loading="lazy"
+          />
           <span class="story__photo-tag">Didi &amp; Bhaiya</span>
         </div>
       </div>
@@ -548,7 +549,8 @@ const partyPerks = [
     box-shadow: 0 30px 60px -25px rgba(60, 30, 10, 0.5);
     background: #3a1410;
   }
-  .story__photo svg { width: 100%; height: auto; display: block; }
+  .story__photo svg,
+  .story__photo img { width: 100%; height: auto; display: block; object-fit: cover; }
   .story__photo-tag {
     position: absolute;
     bottom: 12px;

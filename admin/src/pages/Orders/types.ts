@@ -69,10 +69,46 @@ export const LABEL: Record<string, string> = {
   CANCELLED: "Cancel",
 };
 
-/** Google-Maps embed URL for an order's drop point (coords beat the text address). */
-export function orderMapEmbedUrl(address: OrderAddress): string {
-  const query = address.lat && address.lng
-    ? `${address.lat},${address.lng}`
-    : [address.line1, address.line2, address.city, address.pincode].filter(Boolean).join(", ");
-  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=15&output=embed`;
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
+/** Single-line text form of an order's drop address. */
+export function addressText(a: OrderAddress): string {
+  return [a.line1, a.line2, a.city, a.pincode].filter(Boolean).join(", ");
+}
+
+/** Keyless OpenStreetMap embed centred on a point, with a marker. */
+export function osmEmbedUrl({ lat, lng }: LatLng): string {
+  const d = 0.008;
+  const bbox = [lng - d, lat - d, lng + d, lat + d].join("%2C");
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat}%2C${lng}`;
+}
+
+/** Deep link to open the drop point in Google Maps (coords beat text). */
+export function googleMapsLink(a: OrderAddress): string {
+  const q = a.lat && a.lng ? `${a.lat},${a.lng}` : addressText(a);
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+
+/**
+ * Resolve an address to coordinates. Stored coords win; otherwise geocode the
+ * text address via OpenStreetMap's keyless Nominatim service.
+ */
+export async function geocodeAddress(a: OrderAddress): Promise<LatLng | null> {
+  if (a.lat && a.lng) return { lat: a.lat, lng: a.lng };
+  try {
+    const q = encodeURIComponent(addressText(a));
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${q}`,
+      { headers: { "Accept-Language": "en" } }
+    );
+    const data = (await res.json()) as { lat?: string; lon?: string }[];
+    const hit = Array.isArray(data) ? data[0] : undefined;
+    if (hit?.lat && hit?.lon) return { lat: Number(hit.lat), lng: Number(hit.lon) };
+  } catch {
+    /* geocoding is best-effort; the UI falls back to the address text */
+  }
+  return null;
 }

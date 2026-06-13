@@ -5,6 +5,7 @@ import { couponResolvers } from "./coupon.js";
 import { orderResolvers } from "./order.js";
 import { dashboardResolvers } from "./dashboard.js";
 import { settingsResolvers } from "./settings.js";
+import { integrationResolvers } from "./integrations.js";
 import { paymentResolvers } from "./payment.js";
 import { passwordResetResolvers } from "./passwordReset.js";
 import { campaignResolvers } from "./campaign.js";
@@ -23,6 +24,7 @@ export const resolvers = {
     ...orderResolvers.Query,
     ...dashboardResolvers.Query,
     ...settingsResolvers.Query,
+    ...integrationResolvers.Query,
     ...paymentResolvers.Query,
     ...campaignResolvers.Query,
     ...deliveryResolvers.Query,
@@ -36,6 +38,7 @@ export const resolvers = {
     ...couponResolvers.Mutation,
     ...orderResolvers.Mutation,
     ...settingsResolvers.Mutation,
+    ...integrationResolvers.Mutation,
     ...paymentResolvers.Mutation,
     ...passwordResetResolvers.Mutation,
     ...campaignResolvers.Mutation,

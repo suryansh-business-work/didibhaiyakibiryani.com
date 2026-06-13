@@ -191,6 +191,15 @@ export const SETTINGS_CORE_FIELDS = `
   brandName
   tagline
   logoUrl
+  websiteHeaderLogoUrl
+  websiteFooterLogoUrl
+  faviconUrl
+  consumerAppName
+  consumerSplashUrl
+  consumerIconUrl
+  deliveryAppName
+  deliverySplashUrl
+  deliveryIconUrl
   primaryColor
   accentColor
   companyName
@@ -268,6 +277,28 @@ export const SETTINGS = gql`
   query Settings {
     settings {
       ${SETTINGS_CORE_FIELDS}
+    }
+  }
+`;
+
+export const INTEGRATION_SETTINGS_FIELDS = `
+  smtpHost
+  smtpPort
+  smtpUser
+  mailFrom
+  mailFromName
+  smtpPassSet
+  smtpConfigured
+  imagekitUrlEndpoint
+  imagekitPublicKey
+  imagekitPrivateKeySet
+  imagekitConfigured
+`;
+
+export const INTEGRATION_SETTINGS = gql`
+  query IntegrationSettings {
+    integrationSettings {
+      ${INTEGRATION_SETTINGS_FIELDS}
     }
   }
 `;

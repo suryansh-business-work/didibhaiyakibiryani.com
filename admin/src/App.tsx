@@ -9,6 +9,7 @@ import Categories from "./pages/Categories";
 import Coupons from "./pages/Coupons";
 import Customers from "./pages/Customers";
 import Branding from "./pages/Branding";
+import Integrations from "./pages/Integrations";
 import Payments from "./pages/Payments";
 import Campaigns from "./pages/Campaigns";
 import Finance from "./pages/Finance";
@@ -36,6 +37,7 @@ export default function App() {
       <Route path="/coupons" element={<Protected><Coupons /></Protected>} />
       <Route path="/customers" element={<Protected><Customers /></Protected>} />
       <Route path="/branding" element={<Protected><Branding /></Protected>} />
+      <Route path="/integrations" element={<Protected><Integrations /></Protected>} />
       <Route path="/payments" element={<Protected><Payments /></Protected>} />
       <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
       <Route path="/finance" element={<Protected><Finance /></Protected>} />

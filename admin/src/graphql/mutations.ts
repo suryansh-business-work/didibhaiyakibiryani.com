@@ -1,5 +1,5 @@
 import { gql } from "@apollo/client";
-import { SETTINGS_CORE_FIELDS } from "./queries";
+import { SETTINGS_CORE_FIELDS, INTEGRATION_SETTINGS_FIELDS } from "./queries";
 
 export const LOGIN = gql`
   mutation Login($emailOrPhone: String!, $password: String!) {
@@ -101,6 +101,14 @@ export const UPDATE_SETTINGS = gql`
   mutation UpdateSettings($input: SettingsInput!) {
     updateSettings(input: $input) {
       ${SETTINGS_CORE_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_INTEGRATION_SETTINGS = gql`
+  mutation UpdateIntegrationSettings($input: IntegrationSettingsInput!) {
+    updateIntegrationSettings(input: $input) {
+      ${INTEGRATION_SETTINGS_FIELDS}
     }
   }
 `;

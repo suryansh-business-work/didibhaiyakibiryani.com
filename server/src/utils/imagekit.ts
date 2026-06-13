@@ -1,20 +1,52 @@
+import mongoose from "mongoose";
 import { logger } from "./logger.js";
+import { getOrCreateSettings } from "../models/Settings.js";
+import type { ISettings } from "../models/Settings.js";
 
 const UPLOAD_API = "https://upload.imagekit.io/api/v1/files/upload";
+
+/** Read the settings doc only when Mongo is connected; otherwise env-only. */
+async function settingsOrNull(): Promise<ISettings | null> {
+  if (mongoose.connection.readyState !== 1) return null;
+  try {
+    return await getOrCreateSettings();
+  } catch {
+    return null;
+  }
+}
 
 export interface UploadedImage {
   url: string;
   fileId: string;
 }
 
-export function imagekitConfigured(): boolean {
-  return Boolean(process.env.IMAGEKIT_PRIVATE_KEY);
+export interface ImageKitConfig {
+  privateKey: string;
+  urlEndpoint: string;
 }
 
-/** First configured URL endpoint (env holds a comma-separated list). */
-export function imagekitUrlEndpoint(): string {
-  const raw = process.env.IMAGEKIT_URL_ENDPOINTS || "";
-  return raw.split(",").map((s) => s.trim()).filter(Boolean)[0] ?? "";
+/**
+ * Resolve ImageKit credentials: admin-entered values (Settings doc) win, with
+ * the server environment as a fallback. The private key is a secret — it lives
+ * in the DB or host env, never in source.
+ */
+export async function resolveImageKitConfig(): Promise<ImageKitConfig | null> {
+  const s = await settingsOrNull();
+  const privateKey = s?.imagekitPrivateKey || process.env.IMAGEKIT_PRIVATE_KEY || "";
+  if (!privateKey) return null;
+  const endpoints = s?.imagekitUrlEndpoint || process.env.IMAGEKIT_URL_ENDPOINTS || "";
+  const urlEndpoint = endpoints.split(",").map((x) => x.trim()).filter(Boolean)[0] ?? "";
+  return { privateKey, urlEndpoint };
+}
+
+export async function imagekitConfigured(): Promise<boolean> {
+  return (await resolveImageKitConfig()) !== null;
+}
+
+/** First configured URL endpoint (admin setting or env list). */
+export async function imagekitUrlEndpoint(): Promise<string> {
+  const cfg = await resolveImageKitConfig();
+  return cfg?.urlEndpoint ?? "";
 }
 
 export interface UploadImageArgs {
@@ -38,8 +70,9 @@ export function toBareBase64(file: string): string {
  * Returns the CDN URL to store on menu items / branding.
  */
 export async function uploadToImageKit(args: UploadImageArgs): Promise<UploadedImage> {
-  if (!imagekitConfigured()) {
-    throw new Error("Image upload is not configured (IMAGEKIT_PRIVATE_KEY missing).");
+  const cfg = await resolveImageKitConfig();
+  if (!cfg) {
+    throw new Error("Image upload is not configured (ImageKit private key missing).");
   }
   const form = new FormData();
   form.set("file", toBareBase64(args.file));
@@ -47,7 +80,7 @@ export async function uploadToImageKit(args: UploadImageArgs): Promise<UploadedI
   form.set("folder", args.folder || "/ddb");
   form.set("useUniqueFileName", "true");
 
-  const auth = Buffer.from(`${process.env.IMAGEKIT_PRIVATE_KEY}:`).toString("base64");
+  const auth = Buffer.from(`${cfg.privateKey}:`).toString("base64");
   const res = await fetch(UPLOAD_API, {
     method: "POST",
     headers: { Authorization: `Basic ${auth}` },

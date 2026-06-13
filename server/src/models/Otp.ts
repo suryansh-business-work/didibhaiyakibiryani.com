@@ -1,6 +1,6 @@
 import { Schema, model, Document } from "mongoose";
 
-export type OtpPurpose = "PASSWORD_RESET" | "CAPTCHA";
+export type OtpPurpose = "PASSWORD_RESET" | "CAPTCHA" | "EMAIL_VERIFY";
 
 export interface IOtp extends Document {
   identifier: string; // lowercased email
@@ -14,7 +14,7 @@ export interface IOtp extends Document {
 const otpSchema = new Schema<IOtp>(
   {
     identifier: { type: String, required: true, lowercase: true, index: true },
-    purpose: { type: String, enum: ["PASSWORD_RESET", "CAPTCHA"], required: true },
+    purpose: { type: String, enum: ["PASSWORD_RESET", "CAPTCHA", "EMAIL_VERIFY"], required: true },
     codeHash: { type: String, required: true },
     attempts: { type: Number, default: 0 },
     expiresAt: { type: Date, required: true },
