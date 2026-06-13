@@ -6,6 +6,22 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ── Server test suite + coverage gate (in-memory Mongo) ──────────
+  test:
+    name: server-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install server deps
+        run: npm --prefix server ci
+      - name: Typecheck
+        run: npm --prefix server run typecheck
+      - name: Unit + integration tests with coverage gate
+        run: npm --prefix server run test:coverage
+
   # ── Build each app as its own parallel job (website/server/admin/native/delivery) ──
   build:
     name: build-${{ matrix.app }}
@@ -60,7 +76,7 @@ jobs:
 
   # ── Ship to the host, run the stack, get SSL, verify 200s ───────
   deploy:
-    needs: build
+    needs: [build, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

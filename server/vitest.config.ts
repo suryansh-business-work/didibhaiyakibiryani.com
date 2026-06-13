@@ -6,8 +6,8 @@ export default defineConfig({
     environment: "node",
     // In-memory Mongo (mongodb-memory-server) downloads a mongod binary on first
     // run and resolver suites spin one up per file — give hooks room.
-    testTimeout: 20000,
-    hookTimeout: 60000,
+    testTimeout: 30000,
+    hookTimeout: 120000,
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary"],
