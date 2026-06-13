@@ -62,3 +62,6 @@ playwright-report/
 # coverage reports (generated)
 coverage/
 **/coverage/
+
+# tamagui generated cache
+**/.tamagui/
