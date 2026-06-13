@@ -10,7 +10,7 @@ ENV CI=1
 COPY package*.json ./
 # Install ALL deps incl. devDependencies — the Expo/Tamagui/Reanimated babel
 # plugins live in devDependencies and are required by `expo export`.
-RUN npm install --no-audit --no-fund --include=dev
+RUN npm install --legacy-peer-deps --no-audit --no-fund --include=dev
 COPY . .
 # Build a production web bundle (NODE_ENV only set for the export itself so
 # Tamagui style extraction runs, without omitting devDeps during install above).
