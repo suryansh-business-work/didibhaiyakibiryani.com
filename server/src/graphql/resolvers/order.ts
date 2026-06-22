@@ -255,6 +255,20 @@ export const orderResolvers = {
       }
       return saveOrderRating(order, args.food, args.delivery, args.comment);
     },
+
+    deleteOrder: async (_: unknown, { id }: { id: string }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      const deleted = await Order.findByIdAndDelete(id).exec();
+      if (!deleted) throw new GraphQLError("Order not found.");
+      return true;
+    },
+
+    deleteOrders: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      if (!ids.length) return 0;
+      const res = await Order.deleteMany({ _id: { $in: ids } }).exec();
+      return res.deletedCount ?? 0;
+    },
   },
 
   Order: {

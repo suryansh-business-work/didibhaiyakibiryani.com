@@ -152,4 +152,4 @@ Send `Authorization: Bearer <token>` for authenticated operations.
 
 ---
 
-© 2026 Didi Bhaiya ki Biryani (D&B Foods). 100% Pure Veg Kitchen · FSSAI Certified.
+© 2026 Didi Bhaiya ki Biryani (D&B Foods). 100% Pure Veg Kitchen

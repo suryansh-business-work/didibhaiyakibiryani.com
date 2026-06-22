@@ -8,23 +8,26 @@ import { useCart } from "../../src/cart";
 import { brand } from "../../src/theme";
 import {
   HomeHeader,
+  HomeSlider,
   CategoryChips,
   HomeList,
   CartBar,
   StoreClosedBanner,
   type Cat,
   type Item,
+  type Banner,
 } from "../../src/home";
 
 export default function Home() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { add, count, subtotal } = useCart();
-  const { data, loading, error } = useQuery<{ categories: Cat[]; menuItems: Item[] }>(HOME_DATA);
+  const { data, loading, error } = useQuery<{ banners: Banner[]; categories: Cat[]; menuItems: Item[] }>(HOME_DATA);
   const [activeCat, setActiveCat] = useState<string>("ALL");
 
   const items = data?.menuItems ?? [];
   const cats = data?.categories ?? [];
+  const banners = data?.banners ?? [];
 
   const filtered = useMemo(
     () => (activeCat === "ALL" ? items : items.filter((it) => it.category?.id === activeCat)),
@@ -40,6 +43,7 @@ export default function Home() {
     <YStack flex={1} backgroundColor={brand.bg}>
       <HomeHeader count={count} paddingTop={insets.top + 8} onOpenCart={openCart} />
       <StoreClosedBanner />
+      <HomeSlider banners={banners} />
       <CategoryChips cats={cats} activeCat={activeCat} onSelect={setActiveCat} />
       <HomeList
         loading={loading && !data}

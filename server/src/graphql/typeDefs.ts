@@ -103,6 +103,46 @@ export const typeDefs = /* GraphQL */ `
     createdAt: DateTime!
   }
 
+  type Banner {
+    id: ID!
+    imageUrl: String!
+    title: String
+    subtitle: String
+    linkUrl: String
+    sortOrder: Int!
+    isActive: Boolean!
+    createdAt: DateTime!
+  }
+
+  type Society {
+    id: ID!
+    name: String!
+    area: String
+    pincode: String
+    sortOrder: Int!
+    isActive: Boolean!
+    createdAt: DateTime!
+  }
+
+  enum PartyOrderStatus {
+    NEW
+    CONTACTED
+    CLOSED
+  }
+
+  type PartyOrder {
+    id: ID!
+    name: String!
+    phone: String!
+    email: String!
+    eventDate: String
+    guests: Int
+    location: String
+    message: String
+    status: PartyOrderStatus!
+    createdAt: DateTime!
+  }
+
   type Coupon {
     id: ID!
     code: String!
@@ -256,6 +296,33 @@ export const typeDefs = /* GraphQL */ `
     badge: Badge
     tags: [String!]
     isAvailable: Boolean
+  }
+
+  input BannerInput {
+    imageUrl: String!
+    title: String
+    subtitle: String
+    linkUrl: String
+    sortOrder: Int
+    isActive: Boolean
+  }
+
+  input SocietyInput {
+    name: String!
+    area: String
+    pincode: String
+    sortOrder: Int
+    isActive: Boolean
+  }
+
+  input PartyOrderInput {
+    name: String!
+    phone: String!
+    email: String!
+    eventDate: String
+    guests: Int
+    location: String
+    message: String
   }
 
   input CouponInput {
@@ -548,6 +615,10 @@ export const typeDefs = /* GraphQL */ `
     payments(status: PaymentRecordStatus): [Payment!]! # admin
     campaigns: [Campaign!]! # admin
 
+    banners(activeOnly: Boolean): [Banner!]!
+    societies(activeOnly: Boolean): [Society!]!
+    partyOrders(status: PartyOrderStatus): [PartyOrder!]! # admin/staff
+
     categories(activeOnly: Boolean): [Category!]!
     menuItems(categoryId: ID, search: String, availableOnly: Boolean): [MenuItem!]!
     menuItem(id: ID, slug: String): MenuItem
@@ -591,6 +662,20 @@ export const typeDefs = /* GraphQL */ `
     updateCategory(id: ID!, input: CategoryInput!): Category!
     deleteCategory(id: ID!): Boolean!
 
+    # Home slider (admin)
+    createBanner(input: BannerInput!): Banner!
+    updateBanner(id: ID!, input: BannerInput!): Banner!
+    deleteBanner(id: ID!): Boolean!
+
+    # Societies / delivery areas (admin)
+    createSociety(input: SocietyInput!): Society!
+    updateSociety(id: ID!, input: SocietyInput!): Society!
+    deleteSociety(id: ID!): Boolean!
+
+    # Party order enquiries
+    submitPartyOrder(input: PartyOrderInput!, captchaId: String!, captchaAnswer: String!): Boolean! # public, captcha-gated
+    updatePartyOrderStatus(id: ID!, status: PartyOrderStatus!): PartyOrder! # admin/staff
+
     createMenuItem(input: MenuItemInput!): MenuItem!
     updateMenuItem(id: ID!, input: MenuItemInput!): MenuItem!
     deleteMenuItem(id: ID!): Boolean!
@@ -606,10 +691,14 @@ export const typeDefs = /* GraphQL */ `
     cancelOrder(id: ID!): Order!
     updateOrderStatus(id: ID!, status: OrderStatus!, note: String): Order! # admin/staff
     rateOrder(orderId: ID!, food: Int!, delivery: Int!, comment: String): Order!
+    deleteOrder(id: ID!): Boolean! # admin
+    deleteOrders(ids: [ID!]!): Int! # admin — bulk delete, returns count removed
 
     # Delivery management
     assignDeliveryPartner(orderId: ID!, riderId: ID!): Order! # admin/staff
     createStaffUser(name: String!, email: String!, phone: String, password: String!, role: Role!): User! # admin
+    updateStaffUser(id: ID!, name: String, phone: String, password: String, isActive: Boolean): User! # admin
+    deleteStaffUser(id: ID!): Boolean! # admin
 
     # Media (ImageKit)
     uploadImage(file: String!, fileName: String!, folder: String): UploadedImage! # admin
@@ -619,6 +708,7 @@ export const typeDefs = /* GraphQL */ `
     createSupportTicket(orderId: ID!, subject: String!, body: String!, imageUrl: String): SupportTicket!
     replySupportTicket(ticketId: ID!, text: String!): SupportTicket! # owner or admin
     updateSupportTicketStatus(ticketId: ID!, status: TicketStatus!): SupportTicket! # admin
+    deleteSupportTicket(ticketId: ID!): Boolean! # admin
 
     # Admin access recovery: emails fresh credentials to the admin's own inbox
     emailAdminCredentials(email: String!, captchaId: String!, captchaAnswer: String!): Boolean!
@@ -628,6 +718,11 @@ export const typeDefs = /* GraphQL */ `
 
     # Integration credentials — SMTP & ImageKit (admin); secrets write-only
     updateIntegrationSettings(input: IntegrationSettingsInput!): IntegrationSettings!
+    sendTestEmail(to: String): Boolean! # admin — verify SMTP config
+
+    # Customers (admin)
+    updateCustomer(id: ID!, name: String, phone: String): User!
+    deleteCustomer(id: ID!): Boolean!
 
     # Payments (Razorpay)
     createRazorpayOrder(orderId: ID!): RazorpayOrderPayload!

@@ -119,3 +119,22 @@ export const IPlug = ({ size }: P) => (
     <path d="M12 16v6" />
   </svg>
 );
+export const IImage = ({ size }: P) => (
+  <svg {...s(size)}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="8.5" cy="9.5" r="1.5" />
+    <path d="m21 16-5-5L5 20" />
+  </svg>
+);
+export const IBuilding = ({ size }: P) => (
+  <svg {...s(size)}>
+    <rect x="4" y="3" width="16" height="18" rx="1.5" />
+    <path d="M9 7h0M15 7h0M9 11h0M15 11h0M9 15h0M15 15h0M10 21v-3h4v3" />
+  </svg>
+);
+export const IParty = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M3 21l5.5-14 9 9L3 21Z" />
+    <path d="M14 3v0M19 5v0M21 10v0M16 8l1-1M19.5 13.5l1-1" />
+  </svg>
+);

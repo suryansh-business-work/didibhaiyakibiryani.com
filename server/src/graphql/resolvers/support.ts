@@ -96,6 +96,13 @@ export const supportResolvers = {
       if (!ticket) throw bad("Ticket not found.");
       return ticket;
     },
+
+    deleteSupportTicket: async (_: unknown, { ticketId }: { ticketId: string }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      const deleted = await SupportTicket.findByIdAndDelete(ticketId).exec();
+      if (!deleted) throw bad("Ticket not found.");
+      return true;
+    },
   },
 
   SupportTicket: {

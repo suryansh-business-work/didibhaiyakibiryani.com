@@ -9,6 +9,9 @@ export { Payment } from "./Payment.js";
 export { Otp } from "./Otp.js";
 export { Campaign } from "./Campaign.js";
 export { SupportTicket } from "./SupportTicket.js";
+export { Banner } from "./Banner.js";
+export { Society } from "./Society.js";
+export { PartyOrder } from "./PartyOrder.js";
 
 export type { IUser, IAddress, Role } from "./User.js";
 export type { ICategory } from "./Category.js";
@@ -28,3 +31,6 @@ export type { IPayment, PaymentRecordStatus } from "./Payment.js";
 export type { IOtp, OtpPurpose } from "./Otp.js";
 export type { ICampaign, CampaignChannel, CampaignStatus } from "./Campaign.js";
 export type { ISupportTicket, ISupportMessage, TicketStatus } from "./SupportTicket.js";
+export type { IBanner } from "./Banner.js";
+export type { ISociety } from "./Society.js";
+export type { IPartyOrder, PartyOrderStatus } from "./PartyOrder.js";

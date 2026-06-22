@@ -32,7 +32,7 @@ const addressSchema = new Schema<IAddress>(
     line1: { type: String, required: true },
     line2: { type: String },
     city: { type: String, required: true },
-    pincode: { type: String, required: true },
+    pincode: { type: String },
     lat: Number,
     lng: Number,
     isDefault: { type: Boolean, default: false },

@@ -1,8 +1,11 @@
+import { GraphQLError } from "graphql";
 import { Settings, SETTINGS_KEY, getOrCreateSettings } from "../../models/Settings.js";
 import type { ISettings } from "../../models/Settings.js";
 import { requireRole, type Context } from "../../utils/auth.js";
-import { resolveMailConfig } from "../../utils/mailer.js";
+import { resolveMailConfig, sendMail } from "../../utils/mailer.js";
 import { resolveImageKitConfig } from "../../utils/imagekit.js";
+import { loadEmailBrand } from "../../emails/marketing.js";
+import { marketingEmail } from "../../emails/marketing.js";
 import { logger } from "../../utils/logger.js";
 
 interface IntegrationInput {
@@ -74,6 +77,33 @@ export const integrationResolvers = {
         { new: true }
       ).exec();
       return toIntegrationView(saved ?? (await getOrCreateSettings()));
+    },
+
+    /** Sends a one-off test email using the saved SMTP settings to verify they work. */
+    sendTestEmail: async (_: unknown, { to }: { to?: string }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      const settings = await getOrCreateSettings();
+      const recipient = (to || settings.supportEmail || settings.mailFrom || settings.smtpUser || "").trim();
+      if (!recipient) {
+        throw new GraphQLError("Enter a recipient email address for the test.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+      const brand = await loadEmailBrand();
+      const content = marketingEmail(
+        brand,
+        "SMTP test email ✅",
+        "This is a test email from your admin panel.\n\nIf you're reading this, your SMTP settings are working correctly."
+      );
+      const ok = await sendMail({ to: recipient, ...content });
+      if (!ok) {
+        throw new GraphQLError(
+          "Couldn't send — SMTP isn't configured or the credentials are wrong. Check Integrations → Email.",
+          { extensions: { code: "MAIL_NOT_CONFIGURED" } }
+        );
+      }
+      logger.info({ to: recipient }, "Test email sent");
+      return true;
     },
   },
 };

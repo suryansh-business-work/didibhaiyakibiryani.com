@@ -1,36 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-
-const cards = [
-  {
-    big: "₹50 OFF",
-    title: "Flat fifty, any order",
-    text: "Get ₹50 off on orders above ₹299. Stack it with a combo and thank us later.",
-    code: "BIRYANI50",
-    action: "copy" as const,
-  },
-  {
-    big: "₹75 OFF",
-    title: "Feast a little harder",
-    text: "Ordering big? Take ₹75 off on orders above ₹499. Perfect for a duo or family combo.",
-    code: "HARBITE",
-    action: "copy" as const,
-  },
-  {
-    big: "icon-phone",
-    title: "App-only: free dessert",
-    text: "Order from the app and add a free Gulab Jamun (2 pc) to any biryani. Sweeten the deal.",
-    note: "Auto-applied in app",
-    action: "app" as const,
-  },
-  {
-    big: "FREE",
-    title: "Free delivery over ₹399",
-    text: "No code needed — every order above ₹399 ships free, all day, every day.",
-    note: "No code needed",
-    action: "order" as const,
-  },
-];
+import { API_URL } from "../lib/api";
 ---
 
 <Layout active="offers" title="Offers — Didi Bhaiya ki Biryani" description="Today's deals: 20% off your first biryani, flat ₹50 & ₹75 off, free dessert in the app and free delivery over ₹399.">
@@ -77,64 +47,9 @@ const cards = [
       </div>
     </div>
 
-    <!-- ===== GRID ===== -->
-    <div class="offers-grid">
-      {
-        cards.map((c) => (
-          <article class="offer-card reveal">
-            <div class="offer-card__top">
-              {c.big === "icon-phone" ? (
-                <span class="offer-card__icon">
-                  <svg class="icon" viewBox="0 0 24 24" width="26" height="26">
-                    <rect x="6" y="2" width="12" height="20" rx="3" />
-                    <path d="M10 19h4" />
-                  </svg>
-                </span>
-              ) : (
-                <span class={`offer-card__big ${c.big === "FREE" ? "is-word" : ""}`}>{c.big}</span>
-              )}
-              <h3 class="offer-card__title">{c.title}</h3>
-              <p class="offer-card__text">{c.text}</p>
-            </div>
-
-            <div class="offer-card__foot">
-              {c.code ? (
-                <span class="offer-card__code">{c.code}</span>
-              ) : (
-                <span class="offer-card__note">{c.note}</span>
-              )}
-
-              {c.action === "copy" && (
-                <button class="offer-card__btn" data-copy={c.code}>
-                  <svg class="icon" viewBox="0 0 24 24" width="15" height="15">
-                    <rect x="9" y="9" width="11" height="11" rx="2" />
-                    <path d="M5 15V5a2 2 0 0 1 2-2h10" />
-                  </svg>
-                  Copy
-                </button>
-              )}
-              {c.action === "app" && (
-                <a href="/#app" class="offer-card__btn">
-                  <svg class="icon" viewBox="0 0 24 24" width="15" height="15">
-                    <path d="M12 3v12M8 11l4 4 4-4" />
-                    <path d="M5 21h14" />
-                  </svg>
-                  Get app
-                </a>
-              )}
-              {c.action === "order" && (
-                <a href="/offers" class="offer-card__btn">
-                  <svg class="icon" viewBox="0 0 24 24" width="15" height="15">
-                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-                    <path d="M3 6h18M16 10a4 4 0 0 1-8 0" />
-                  </svg>
-                  Order
-                </a>
-              )}
-            </div>
-          </article>
-        ))
-      }
+    <!-- ===== GRID (live from admin-managed coupons) ===== -->
+    <div class="offers-grid" id="offers-grid">
+      <p class="offers-empty" id="offers-status">Loading today's offers…</p>
     </div>
 
     <p class="fine-print reveal">
@@ -155,6 +70,77 @@ const cards = [
       </a>
     </div>
   </div>
+
+  <script is:inline define:vars={{ apiUrl: API_URL }}>
+    (function () {
+      const grid = document.getElementById("offers-grid");
+      const status = document.getElementById("offers-status");
+      if (!grid) return;
+      const esc = (v) =>
+        String(v == null ? "" : v).replace(/[&<>"]/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
+        );
+      function bigFor(c) {
+        if (c.type === "PERCENT") return c.value + "% OFF";
+        if (c.type === "FLAT") return "₹" + c.value + " OFF";
+        return "FREE";
+      }
+      function card(c) {
+        const big = bigFor(c);
+        const isWord = big === "FREE";
+        const foot = c.appOnly
+          ? '<span class="offer-card__note">App only</span>' +
+            '<a href="/#app" class="offer-card__btn">Get app</a>'
+          : '<span class="offer-card__code">' + esc(c.code) + "</span>" +
+            '<button class="offer-card__btn" data-copy="' + esc(c.code) + '">Copy</button>';
+        return (
+          '<article class="offer-card">' +
+          '<div class="offer-card__top">' +
+          '<span class="offer-card__big ' + (isWord ? "is-word" : "") + '">' + esc(big) + "</span>" +
+          '<h3 class="offer-card__title">' + esc(c.title) + "</h3>" +
+          '<p class="offer-card__text">' + esc(c.description || "") + "</p>" +
+          "</div>" +
+          '<div class="offer-card__foot">' + foot + "</div>" +
+          "</article>"
+        );
+      }
+      grid.addEventListener("click", async (e) => {
+        const btn = e.target.closest("[data-copy]");
+        if (!btn) return;
+        const code = btn.getAttribute("data-copy") || "";
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch (err) {
+          console.warn("Clipboard blocked:", err);
+        }
+        const original = btn.textContent;
+        btn.textContent = "Copied!";
+        window.setTimeout(() => {
+          btn.textContent = original;
+        }, 1600);
+      });
+      fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query:
+            "query { coupons(activeOnly: true) { code title description type value appOnly } }",
+        }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          const list = (res && res.data && res.data.coupons) || [];
+          if (!list.length) {
+            if (status) status.textContent = "No active offers right now — check back soon.";
+            return;
+          }
+          grid.innerHTML = list.map(card).join("");
+        })
+        .catch(() => {
+          if (status) status.textContent = "Couldn't load offers — please refresh.";
+        });
+    })();
+  </script>
 </Layout>
 
 <style>
@@ -254,6 +240,12 @@ const cards = [
     grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-top: 22px;
+  }
+  .offers-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--text-muted);
+    padding: 30px 0;
   }
   .offer-card {
     display: flex;

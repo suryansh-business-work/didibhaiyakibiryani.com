@@ -63,8 +63,4 @@ interface TextFieldDef {
   placeholder?: string;
 }
 
-export const COMPLIANCE_FIELDS: TextFieldDef[] = [
-  { key: "gstLegalName", label: "GST legal (registered) name", placeholder: "As on GST certificate" },
-  { key: "gstNumber", label: "GSTIN", placeholder: "e.g. 29ABCDE1234F1Z5" },
-  { key: "fssaiLicense", label: "FSSAI certification / license no." },
-];
+export const COMPLIANCE_FIELDS: TextFieldDef[] = [];

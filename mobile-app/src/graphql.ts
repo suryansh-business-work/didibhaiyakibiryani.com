@@ -147,6 +147,13 @@ export const REMOVE_ADDRESS = gql`
 
 export const HOME_DATA = gql`
   query HomeData {
+    banners(activeOnly: true) {
+      id
+      imageUrl
+      title
+      subtitle
+      linkUrl
+    }
     categories(activeOnly: true) {
       id
       name
@@ -156,6 +163,7 @@ export const HOME_DATA = gql`
       name
       description
       price
+      image
       spiceLevel
       serves
       badge
@@ -175,6 +183,7 @@ export const MENU_ITEM = gql`
       name
       description
       price
+      image
       spiceLevel
       serves
       badge
@@ -184,6 +193,32 @@ export const MENU_ITEM = gql`
       ratingCount
       category { id name }
     }
+  }
+`;
+
+export const SOCIETIES = gql`
+  query Societies {
+    societies(activeOnly: true) {
+      id
+      name
+      area
+      pincode
+    }
+  }
+`;
+
+export const CAPTCHA = gql`
+  query Captcha {
+    captcha {
+      id
+      question
+    }
+  }
+`;
+
+export const SUBMIT_PARTY_ORDER = gql`
+  mutation SubmitPartyOrder($input: PartyOrderInput!, $captchaId: String!, $captchaAnswer: String!) {
+    submitPartyOrder(input: $input, captchaId: $captchaId, captchaAnswer: $captchaAnswer)
   }
 `;
 

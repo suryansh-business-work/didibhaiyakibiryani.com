@@ -50,9 +50,11 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
 }>) {
+  // Intentionally no backdrop click-to-close: dialogs dismiss only via the ×
+  // button (or an explicit footer action) to avoid accidental data loss.
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <div className="modal">
         <div className="modal__head">
           <h3>{title}</h3>
           <button className="modal__close" onClick={onClose} aria-label="Close">

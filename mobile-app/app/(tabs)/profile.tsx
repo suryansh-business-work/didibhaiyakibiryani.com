@@ -3,12 +3,27 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button, Spinner, Separator } from "tamagui";
 import { useAuth } from "../../src/auth";
+import { useSettings } from "../../src/settings";
 import { brand } from "../../src/theme";
+
+/** Format an "HH:mm" 24h time as a friendly 12-hour label, e.g. "7 PM". */
+function to12h(hhmm: string): string {
+  const [hStr, mStr] = hhmm.split(":");
+  const h = Number.parseInt(hStr ?? "", 10);
+  const m = Number.parseInt(mStr ?? "", 10);
+  if (Number.isNaN(h)) return hhmm;
+  const period = h < 12 ? "AM" : "PM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  const mm = m ? `:${String(m).padStart(2, "0")}` : "";
+  return `${h12}${mm} ${period}`;
+}
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, loading, logout } = useAuth();
+  const settings = useSettings();
+  const deliveryHours = `${to12h(settings.storeOpenTime)} – ${to12h(settings.storeCloseTime)}`;
 
   if (loading) {
     return <YStack flex={1} backgroundColor={brand.bg} alignItems="center" justifyContent="center"><Spinner color={brand.gold} /></YStack>;
@@ -48,12 +63,12 @@ export default function Profile() {
           <Row label="My orders" onPress={() => router.push("/orders")} chevron />
           <Separator borderColor={brand.border} />
           <Row label="Offers & coupons" onPress={() => router.push("/offers")} chevron />
+          <Separator borderColor={brand.border} />
+          <Row label="🎉 Plan a party order" onPress={() => router.push("/party")} chevron />
         </YStack>
 
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} overflow="hidden">
-          <Row label="Delivery hours" value="11 am – 11 pm" />
-          <Separator borderColor={brand.border} />
-          <Row label="100% Pure Veg · FSSAI" value="✓" valueColor={brand.green} />
+          <Row label="Delivery hours" value={deliveryHours} />
         </YStack>
 
         <Button

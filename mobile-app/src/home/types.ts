@@ -3,6 +3,7 @@ export interface Item {
   name: string;
   description?: string;
   price: number;
+  image?: string;
   spiceLevel: number;
   serves: string;
   badge: string;
@@ -15,4 +16,12 @@ export interface Item {
 export interface Cat {
   id: string;
   name: string;
+}
+
+export interface Banner {
+  id: string;
+  imageUrl: string;
+  title?: string;
+  subtitle?: string;
+  linkUrl?: string;
 }

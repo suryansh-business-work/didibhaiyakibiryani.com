@@ -13,6 +13,9 @@ import { deliveryResolvers } from "./delivery.js";
 import { uploadResolvers } from "./upload.js";
 import { supportResolvers } from "./support.js";
 import { adminAccessResolvers } from "./adminAccess.js";
+import { bannerResolvers } from "./banner.js";
+import { societyResolvers } from "./society.js";
+import { partyResolvers } from "./party.js";
 
 export const resolvers = {
   DateTime,
@@ -30,6 +33,9 @@ export const resolvers = {
     ...deliveryResolvers.Query,
     ...supportResolvers.Query,
     ...adminAccessResolvers.Query,
+    ...bannerResolvers.Query,
+    ...societyResolvers.Query,
+    ...partyResolvers.Query,
   },
 
   Mutation: {
@@ -37,6 +43,7 @@ export const resolvers = {
     ...menuResolvers.Mutation,
     ...couponResolvers.Mutation,
     ...orderResolvers.Mutation,
+    ...dashboardResolvers.Mutation,
     ...settingsResolvers.Mutation,
     ...integrationResolvers.Mutation,
     ...paymentResolvers.Mutation,
@@ -46,6 +53,9 @@ export const resolvers = {
     ...uploadResolvers.Mutation,
     ...supportResolvers.Mutation,
     ...adminAccessResolvers.Mutation,
+    ...bannerResolvers.Mutation,
+    ...societyResolvers.Mutation,
+    ...partyResolvers.Mutation,
   },
 
   // Field resolvers

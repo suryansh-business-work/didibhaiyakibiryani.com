@@ -56,7 +56,7 @@ function footerSection(brand: EmailBrand): string {
         ${contact}
         ${address}
         <mj-text align="center" color="#6b6157" font-size="11px">
-          © ${new Date().getFullYear()} ${brand.brandName} (${brand.companyName}) · 100% Pure Veg · FSSAI certified
+          © ${new Date().getFullYear()} ${brand.brandName} (${brand.companyName}) · 100% Pure Veg
         </mj-text>
       </mj-column>
     </mj-section>`;

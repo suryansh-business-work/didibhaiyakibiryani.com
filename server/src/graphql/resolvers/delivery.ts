@@ -99,5 +99,44 @@ export const deliveryResolvers = {
       logger.info({ userId: user.id, role: args.role }, "Staff user created");
       return user;
     },
+
+    /** Admin edits a staff / delivery account (password optional — only changed when supplied). */
+    updateStaffUser: async (
+      _: unknown,
+      args: { id: string; name?: string; phone?: string; password?: string; isActive?: boolean },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN");
+      const user = await User.findById(args.id).exec();
+      if (!user || !["STAFF", "DELIVERY"].includes(user.role)) {
+        throw new GraphQLError("Staff user not found.", { extensions: { code: "BAD_USER_INPUT" } });
+      }
+      if (args.name !== undefined) user.name = args.name.trim();
+      if (args.phone !== undefined) user.phone = args.phone.trim();
+      if (args.isActive !== undefined) user.isActive = args.isActive;
+      if (args.password) {
+        if (args.password.length < 6) {
+          throw new GraphQLError("Password must be at least 6 characters.", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
+        user.passwordHash = await hashPassword(args.password);
+      }
+      await user.save();
+      logger.info({ userId: user.id }, "Staff user updated");
+      return user;
+    },
+
+    /** Admin removes a staff / delivery account. */
+    deleteStaffUser: async (_: unknown, { id }: { id: string }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      const user = await User.findById(id).exec();
+      if (!user || !["STAFF", "DELIVERY"].includes(user.role)) {
+        throw new GraphQLError("Staff user not found.", { extensions: { code: "BAD_USER_INPUT" } });
+      }
+      await User.findByIdAndDelete(id).exec();
+      logger.info({ userId: id }, "Staff user deleted");
+      return true;
+    },
   },
 };

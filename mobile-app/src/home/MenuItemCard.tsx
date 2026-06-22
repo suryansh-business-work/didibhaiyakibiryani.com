@@ -41,7 +41,7 @@ export function MenuItemCard({ item, hue, onAdd }: Readonly<MenuItemCardProps>) 
         opacity={soldOut ? 0.65 : 1}
       >
         <XStack gap={12}>
-          <FoodThumb size={92} hue={hue} />
+          <FoodThumb size={92} hue={hue} uri={item.image} />
           <YStack flex={1} justifyContent="space-between">
             <YStack gap={4}>
               <TopBadge item={item} />

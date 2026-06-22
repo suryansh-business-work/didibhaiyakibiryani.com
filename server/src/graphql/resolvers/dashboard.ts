@@ -1,5 +1,10 @@
+import { GraphQLError } from "graphql";
 import { Order, User, MenuItem, Review } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
+
+function customerNotFound(): GraphQLError {
+  return new GraphQLError("Customer not found.", { extensions: { code: "BAD_USER_INPUT" } });
+}
 
 const REVENUE_STATUSES = ["CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"];
 
@@ -115,6 +120,30 @@ export const dashboardResolvers = {
         })),
         recentOrders,
       };
+    },
+  },
+
+  Mutation: {
+    updateCustomer: async (
+      _: unknown,
+      { id, name, phone }: { id: string; name?: string; phone?: string },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN");
+      const user = await User.findById(id).exec();
+      if (!user || user.role !== "CUSTOMER") throw customerNotFound();
+      if (name !== undefined) user.name = name.trim();
+      if (phone !== undefined) user.phone = phone.trim();
+      await user.save();
+      return user;
+    },
+
+    deleteCustomer: async (_: unknown, { id }: { id: string }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      const user = await User.findById(id).exec();
+      if (!user || user.role !== "CUSTOMER") throw customerNotFound();
+      await User.findByIdAndDelete(id).exec();
+      return true;
     },
   },
 

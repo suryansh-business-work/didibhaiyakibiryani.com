@@ -6,6 +6,9 @@ import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Menu from "./pages/Menu";
 import Categories from "./pages/Categories";
+import Slider from "./pages/Slider";
+import Societies from "./pages/Societies";
+import PartyOrders from "./pages/PartyOrders";
 import Coupons from "./pages/Coupons";
 import Customers from "./pages/Customers";
 import Branding from "./pages/Branding";
@@ -34,6 +37,9 @@ export default function App() {
       <Route path="/orders" element={<Protected><Orders /></Protected>} />
       <Route path="/menu" element={<Protected><Menu /></Protected>} />
       <Route path="/categories" element={<Protected><Categories /></Protected>} />
+      <Route path="/slider" element={<Protected><Slider /></Protected>} />
+      <Route path="/societies" element={<Protected><Societies /></Protected>} />
+      <Route path="/party-orders" element={<Protected><PartyOrders /></Protected>} />
       <Route path="/coupons" element={<Protected><Coupons /></Protected>} />
       <Route path="/customers" element={<Protected><Customers /></Protected>} />
       <Route path="/branding" element={<Protected><Branding /></Protected>} />

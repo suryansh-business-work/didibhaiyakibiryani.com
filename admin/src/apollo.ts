@@ -1,5 +1,6 @@
-import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
+import { ApolloClient, InMemoryCache, createHttpLink, from } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
+import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename";
 
 const TOKEN_KEY = "ddb_admin_token";
 
@@ -27,8 +28,12 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
+// Strip the `__typename` Apollo adds to query results so forms that echo a
+// fetched object back into a mutation input don't fail server-side validation.
+const removeTypename = removeTypenameFromVariables();
+
 export const client = new ApolloClient({
-  link: authLink.concat(httpLink),
+  link: from([removeTypename, authLink, httpLink]),
   cache: new InMemoryCache(),
   defaultOptions: {
     watchQuery: { fetchPolicy: "cache-and-network" },

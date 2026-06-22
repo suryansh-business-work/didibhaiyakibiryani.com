@@ -55,9 +55,21 @@ export const BLANK_FORM: SettingsForm = {
   youtubeUrl: "",
 };
 
+/**
+ * Build the branding form from a settings document, copying ONLY the branding
+ * fields. The `settings` query returns the whole document (store hours,
+ * maintenance, the computed `storeOpenNow`, plus Apollo's `__typename`); spreading
+ * all of that into the mutation input fails server-side validation, so we pick
+ * by key instead.
+ */
 export function settingsToForm(s: SettingsData): SettingsForm {
-  const { updatedAt: _updatedAt, ...form } = s;
-  return { ...BLANK_FORM, ...form };
+  const src = s as Partial<Record<keyof SettingsForm, string>>;
+  const form = { ...BLANK_FORM };
+  for (const key of Object.keys(BLANK_FORM) as (keyof SettingsForm)[]) {
+    const value = src[key];
+    if (typeof value === "string") form[key] = value;
+  }
+  return form;
 }
 
 interface FieldDef {
@@ -114,8 +126,7 @@ export const SECTIONS: SectionDef[] = [
       { key: "companyName", label: "Company name" },
       { key: "companyAddress", label: "Address" },
       { key: "companyPhone", label: "Phone", type: "tel" },
-      { key: "companyEmail", label: "Email", type: "email" },
-      { key: "fssaiLicense", label: "FSSAI license no." },
+      { key: "companyEmail", label: "Email", type: "email" }
     ],
   },
   {

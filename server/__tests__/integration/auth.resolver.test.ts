@@ -65,14 +65,16 @@ describe("auth resolver", () => {
     await expect(M.register(null, { input: { name: "x", email, password: "secret1", otp: "000000" } })).rejects.toThrow(/too many/i);
   });
 
-  it("login succeeds, rejects bad password, admins, and disabled accounts", async () => {
+  it("login (no OTP) works by email or phone for customers and admins; rejects bad password and disabled accounts", async () => {
     await makeCustomer("login@b.com", "secret1");
     const res = await M.login(null, { emailOrPhone: "login@b.com", password: "secret1" });
     expect(res.token).toBeTruthy();
     await expect(M.login(null, { emailOrPhone: "login@b.com", password: "nope" })).rejects.toThrow(/incorrect/i);
 
-    await User.create({ name: "Admin", email: "admin@b.com", passwordHash: await hashPassword("secret1"), role: "ADMIN" });
-    await expect(M.login(null, { emailOrPhone: "admin@b.com", password: "secret1" })).rejects.toThrow(/admin portal/i);
+    // Admins sign in through the same mutation (the admin portal) — by email or phone.
+    await User.create({ name: "Admin", email: "admin@b.com", phone: "9000000001", passwordHash: await hashPassword("secret1"), role: "ADMIN" });
+    expect((await M.login(null, { emailOrPhone: "admin@b.com", password: "secret1" })).token).toBeTruthy();
+    expect((await M.login(null, { emailOrPhone: "9000000001", password: "secret1" })).token).toBeTruthy();
 
     await User.create({ name: "Off", email: "off@b.com", passwordHash: await hashPassword("secret1"), role: "CUSTOMER", isActive: false });
     await expect(M.login(null, { emailOrPhone: "off@b.com", password: "secret1" })).rejects.toThrow(/disabled/i);

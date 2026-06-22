@@ -10,7 +10,7 @@ import { brand, inr } from "../../src/theme";
 import { FoodThumb, Badge, Stars } from "../../src/components";
 
 interface Item {
-  id: string; name: string; description?: string; price: number; spiceLevel: number;
+  id: string; name: string; description?: string; price: number; image?: string; spiceLevel: number;
   serves: string; badge: string; isAvailable: boolean; rating: number; ratingCount: number;
   category?: { name: string } | null;
 }
@@ -42,7 +42,7 @@ export default function ItemDetail() {
 
       <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 30, gap: 16 }}>
         <YStack alignItems="center" paddingVertical={10}>
-          <FoodThumb size={200} hue={18} />
+          <FoodThumb size={200} hue={18} uri={it.image} />
         </YStack>
 
         <YStack gap={8}>

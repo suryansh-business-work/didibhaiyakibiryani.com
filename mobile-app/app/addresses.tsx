@@ -7,7 +7,8 @@ import { YStack, XStack, Text, Button, Spinner, Input } from "tamagui";
 import { ME, ADD_ADDRESS, REMOVE_ADDRESS } from "../src/graphql";
 import { useAuth } from "../src/auth";
 import { brand } from "../src/theme";
-import { Section, Field } from "../src/checkout/fields";
+import { Field } from "../src/checkout/fields";
+import { SocietyPicker, type Society } from "../src/checkout/SocietyPicker";
 
 interface Address {
   id: string;
@@ -15,7 +16,7 @@ interface Address {
   line1: string;
   line2?: string;
   city: string;
-  pincode: string;
+  pincode?: string;
   isDefault: boolean;
 }
 
@@ -29,10 +30,8 @@ export default function Addresses() {
 
   const [showForm, setShowForm] = useState(false);
   const [label, setLabel] = useState("");
-  const [line1, setLine1] = useState("");
-  const [line2, setLine2] = useState("");
-  const [city, setCity] = useState("");
-  const [pincode, setPincode] = useState("");
+  const [society, setSociety] = useState<Society | null>(null);
+  const [flatBlock, setFlatBlock] = useState("");
   const [isDefault, setIsDefault] = useState(false);
   const [error, setError] = useState("");
 
@@ -47,20 +46,33 @@ export default function Addresses() {
 
   const addresses = data?.me?.addresses ?? [];
 
+  function resetForm() {
+    setLabel("");
+    setSociety(null);
+    setFlatBlock("");
+    setIsDefault(false);
+  }
+
   async function submit() {
     setError("");
-    if (!label.trim() || !line1.trim() || !city.trim() || !pincode.trim()) {
-      setError("All fields are required.");
+    if (!society || !flatBlock.trim()) {
+      setError("Please pick a society and enter your flat number & block.");
       return;
     }
     try {
-      await addAddr({ variables: { input: { label: label.trim(), line1: line1.trim(), line2: line2.trim() || undefined, city: city.trim(), pincode: pincode.trim(), isDefault } } });
-      setLabel("");
-      setLine1("");
-      setLine2("");
-      setCity("");
-      setPincode("");
-      setIsDefault(false);
+      await addAddr({
+        variables: {
+          input: {
+            label: label.trim() || "Home",
+            line1: flatBlock.trim(),
+            line2: society.area || undefined,
+            city: society.name,
+            pincode: society.pincode || "",
+            isDefault,
+          },
+        },
+      });
+      resetForm();
       setShowForm(false);
       await refetch();
     } catch (e: unknown) {
@@ -108,8 +120,7 @@ export default function Addresses() {
                       {a.isDefault && <Text fontSize={11} fontWeight="800" color={brand.gold} backgroundColor="rgba(228,182,92,0.2)" paddingHorizontal={6} paddingVertical={2} borderRadius={4}>Default</Text>}
                     </XStack>
                     <Text fontSize={13} color={brand.dim}>{a.line1}</Text>
-                    {a.line2 && <Text fontSize={12} color={brand.muted}>{a.line2}</Text>}
-                    <Text fontSize={12} color={brand.muted}>{a.city} — {a.pincode}</Text>
+                    <Text fontSize={12} color={brand.muted}>{a.city}{a.pincode ? ` — ${a.pincode}` : ""}</Text>
                   </YStack>
                   <Button
                     size="$2"
@@ -143,13 +154,12 @@ export default function Addresses() {
               <Input value={label} onChangeText={setLabel} placeholder="e.g. Home, Office" backgroundColor={brand.bgSoft} borderColor={brand.borderStrong} color={brand.text} placeholderTextColor={brand.faint} />
             </YStack>
 
-            <Field label="Street / House" value={line1} onChange={setLine1} />
-            <Field label="Landmark (optional)" value={line2} onChange={setLine2} />
+            <YStack gap={5}>
+              <Text fontSize={12} color={brand.muted} fontWeight="700">Society</Text>
+              <SocietyPicker selectedId={society?.id ?? null} onSelect={setSociety} />
+            </YStack>
 
-            <XStack gap={10}>
-              <YStack flex={1}><Field label="City" value={city} onChange={setCity} /></YStack>
-              <YStack flex={1}><Field label="Pincode" value={pincode} onChange={setPincode} keyboard="number-pad" /></YStack>
-            </XStack>
+            <Field label="Flat no. & Block" value={flatBlock} onChange={setFlatBlock} />
 
             <XStack gap={10} alignItems="center" paddingVertical={8}>
               <Button

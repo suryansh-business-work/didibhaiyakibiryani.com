@@ -57,11 +57,6 @@ export default function Finance() {
 
   return (
     <Layout title="Finance">
-      <p className="muted" style={{ marginBottom: 16 }}>
-        Delivery pricing, invoice compliance (GST / FSSAI shown on every invoice PDF) and
-        payment method availability.
-      </p>
-
       <div className="card" style={{ padding: 18, marginBottom: 16 }}>
         <h3 style={{ marginBottom: 12 }}>Delivery cost</h3>
         <div className="field-row">

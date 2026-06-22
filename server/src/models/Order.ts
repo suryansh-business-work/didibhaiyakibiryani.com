@@ -86,7 +86,7 @@ const orderAddressSchema = new Schema<IOrderAddress>(
     line1: { type: String, required: true },
     line2: String,
     city: { type: String, required: true },
-    pincode: { type: String, required: true },
+    pincode: { type: String },
     phone: String,
     lat: Number,
     lng: Number,

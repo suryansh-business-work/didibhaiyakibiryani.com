@@ -16,6 +16,7 @@
     "build:delivery": "npm --prefix delivery run build",
     "seed": "npm --prefix server run seed",
     "cleanup:dummy": "npm --prefix server run cleanup:dummy",
+    "apply:updates": "npm --prefix server run apply:updates",
     "install:server": "npm --prefix server install",
     "install:admin": "npm --prefix admin install",
     "install:mobile": "npm --prefix mobile-app install",

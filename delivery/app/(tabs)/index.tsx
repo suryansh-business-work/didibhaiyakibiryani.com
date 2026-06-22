@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Linking, ScrollView } from "react-native";
 import { useMutation, useQuery } from "@apollo/client";
-import { YStack, XStack, Text, Button } from "tamagui";
+import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { DELIVERY_QUEUE, UPDATE_ORDER_STATUS } from "../../src/graphql";
 import { Loading, Empty, StatusBadge, RiderHeader } from "../../src/ui";
@@ -69,7 +69,7 @@ function OrderCard({ order, saving, onMove }: Readonly<CardProps>) {
         ) : null}
         {action ? (
           <Button size="$2" backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" disabled={saving} onPress={() => onMove(order, action.to)}>
-            {action.label}
+            {saving ? <Spinner color="#2a1a06" /> : action.label}
           </Button>
         ) : (
           <Text color={brand.muted} fontSize={12} alignSelf="center">Waiting for the kitchen…</Text>
@@ -83,15 +83,19 @@ export default function Queue() {
   const { data, loading, refetch } = useQuery<{ deliveryQueue: QueueOrder[] }>(DELIVERY_QUEUE, {
     pollInterval: 20000,
   });
-  const [updateStatus, { loading: saving }] = useMutation(UPDATE_ORDER_STATUS);
+  const [updateStatus] = useMutation(UPDATE_ORDER_STATUS);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const orders = data?.deliveryQueue ?? [];
 
   async function move(o: QueueOrder, status: string) {
+    setSavingId(o.id);
     try {
       await updateStatus({ variables: { id: o.id, status } });
       await refetch();
     } catch {
       /* surfaced via Apollo error UI on next render; keep the queue responsive */
+    } finally {
+      setSavingId(null);
     }
   }
 
@@ -105,7 +109,7 @@ export default function Queue() {
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 30 }}>
           {orders.map((o) => (
-            <OrderCard key={o.id} order={o} saving={saving} onMove={move} />
+            <OrderCard key={o.id} order={o} saving={savingId === o.id} onMove={move} />
           ))}
         </ScrollView>
       )}

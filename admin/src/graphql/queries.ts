@@ -126,6 +126,50 @@ export const CATEGORIES = gql`
   }
 `;
 
+export const SLIDERS = gql`
+  query Sliders {
+    banners {
+      id
+      imageUrl
+      title
+      subtitle
+      linkUrl
+      sortOrder
+      isActive
+    }
+  }
+`;
+
+export const SOCIETIES = gql`
+  query Societies {
+    societies {
+      id
+      name
+      area
+      pincode
+      sortOrder
+      isActive
+    }
+  }
+`;
+
+export const PARTY_ORDERS = gql`
+  query PartyOrders($status: PartyOrderStatus) {
+    partyOrders(status: $status) {
+      id
+      name
+      phone
+      email
+      eventDate
+      guests
+      location
+      message
+      status
+      createdAt
+    }
+  }
+`;
+
 export const MENU_ITEMS = gql`
   query MenuItems($categoryId: ID, $search: String) {
     menuItems(categoryId: $categoryId, search: $search) {

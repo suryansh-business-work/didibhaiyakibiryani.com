@@ -1,9 +1,26 @@
+import { Image } from "react-native";
 import { Text, XStack, YStack } from "tamagui";
 import Svg, { Ellipse, Circle, Path, G, Defs, RadialGradient, Stop } from "react-native-svg";
 import { brand } from "./theme";
 
-/** A stylised biryani-bowl thumbnail used in place of food photography. */
-export function FoodThumb({ size = 96, hue = 16 }: Readonly<{ size?: number; hue?: number }>) {
+/**
+ * Food thumbnail. Shows the item's real photo when `uri` is set, otherwise
+ * falls back to the stylised biryani-bowl illustration.
+ */
+export function FoodThumb({
+  size = 96,
+  hue = 16,
+  uri,
+}: Readonly<{ size?: number; hue?: number; uri?: string }>) {
+  if (uri) {
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: size, height: size, borderRadius: 14, backgroundColor: brand.cardSoft }}
+        resizeMode="cover"
+      />
+    );
+  }
   return (
     <YStack
       width={size}

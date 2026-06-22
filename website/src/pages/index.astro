@@ -10,7 +10,7 @@ const features = [
   {
     icon: "leaf",
     title: "100% Pure Veg",
-    text: "A dedicated vegetarian kitchen. No cross-contact, ever. FSSAI certified and proud of it.",
+    text: "A dedicated vegetarian kitchen. No cross-contact, ever.",
   },
   {
     icon: "pot",
@@ -325,10 +325,30 @@ const partyPerks = [
             Birthdays, office lunches, pujas and big fat dawats — order in bulk
             with dedicated catering support and special per-plate pricing.
           </p>
-          <a href="/#party" class="btn btn-gold">
+          <button type="button" class="btn btn-gold" id="party-open" aria-expanded="false" aria-controls="party-form">
             <svg class="icon" viewBox="0 0 24 24" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
             Plan a Party Order
-          </a>
+          </button>
+
+          <form class="party-form" id="party-form" hidden>
+            <div class="party-form__row">
+              <input id="po-name" type="text" placeholder="Your name*" autocomplete="name" />
+              <input id="po-phone" type="tel" placeholder="Phone*" autocomplete="tel" />
+            </div>
+            <input id="po-email" type="email" placeholder="Email*" autocomplete="email" />
+            <div class="party-form__row">
+              <input id="po-date" type="text" placeholder="Event date (e.g. 15 Aug)" />
+              <input id="po-guests" type="number" min="1" placeholder="Guests" />
+            </div>
+            <input id="po-location" type="text" placeholder="Location / society" />
+            <textarea id="po-message" rows="2" placeholder="Menu, budget, timing — tell us about your party"></textarea>
+            <div class="party-form__captcha">
+              <label id="po-captcha-q" for="po-captcha-a">Captcha: …</label>
+              <input id="po-captcha-a" inputmode="numeric" placeholder="Answer*" />
+            </div>
+            <p class="party-form__msg" id="po-msg" hidden></p>
+            <button type="submit" class="btn btn-gold" id="po-submit">Send request</button>
+          </form>
         </div>
         <ul class="party__perks">
           {
@@ -347,13 +367,113 @@ const partyPerks = [
     </div>
   </section>
 
+  <script is:inline define:vars={{ apiUrl: API_URL }}>
+    (function () {
+      const openBtn = document.getElementById("party-open");
+      const form = document.getElementById("party-form");
+      if (!openBtn || !form) return;
+      const qEl = document.getElementById("po-captcha-q");
+      const answerEl = document.getElementById("po-captcha-a");
+      const msg = document.getElementById("po-msg");
+      const submitBtn = document.getElementById("po-submit");
+      let captchaId = null;
+
+      function gql(query, variables) {
+        return fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, variables }),
+        }).then((r) => r.json());
+      }
+      function loadCaptcha() {
+        captchaId = null;
+        qEl.textContent = "Captcha: …";
+        gql("query { captcha { id question } }")
+          .then((res) => {
+            const c = res && res.data && res.data.captcha;
+            if (c) {
+              captchaId = c.id;
+              qEl.textContent = "Captcha: " + c.question;
+            } else {
+              qEl.textContent = "Captcha unavailable — please refresh.";
+            }
+          })
+          .catch(() => {
+            qEl.textContent = "Captcha unavailable — please refresh.";
+          });
+      }
+      function showMsg(text, ok) {
+        msg.hidden = false;
+        msg.textContent = text;
+        msg.style.color = ok ? "#5fb45f" : "#e0584b";
+      }
+      function val(id) {
+        return document.getElementById(id).value.trim();
+      }
+
+      openBtn.addEventListener("click", function () {
+        const willShow = form.hidden;
+        form.hidden = !willShow;
+        openBtn.setAttribute("aria-expanded", String(willShow));
+        if (willShow && !captchaId) loadCaptcha();
+      });
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const name = val("po-name");
+        const phone = val("po-phone");
+        const email = val("po-email");
+        const answer = val("po-captcha-a");
+        if (!name || !phone || !email) {
+          showMsg("Name, phone and email are required.", false);
+          return;
+        }
+        if (!captchaId || !answer) {
+          showMsg("Please solve the captcha.", false);
+          return;
+        }
+        const guestsRaw = val("po-guests");
+        const input = {
+          name: name,
+          phone: phone,
+          email: email,
+          eventDate: val("po-date") || null,
+          guests: guestsRaw ? Number.parseInt(guestsRaw, 10) : null,
+          location: val("po-location") || null,
+          message: val("po-message") || null,
+        };
+        submitBtn.disabled = true;
+        showMsg("Sending…", true);
+        const MUT =
+          "mutation($input: PartyOrderInput!, $id: String!, $a: String!) { submitPartyOrder(input: $input, captchaId: $id, captchaAnswer: $a) }";
+        gql(MUT, { input: input, id: captchaId, a: answer })
+          .then((res) => {
+            submitBtn.disabled = false;
+            if (res.errors && res.errors.length) {
+              showMsg(res.errors[0].message, false);
+              answerEl.value = "";
+              loadCaptcha();
+              return;
+            }
+            form.reset();
+            loadCaptcha();
+            showMsg("Thanks! Our catering team will reach out shortly. 🎉", true);
+          })
+          .catch(() => {
+            submitBtn.disabled = false;
+            showMsg("Couldn't send — please try again.", false);
+          });
+      });
+    })();
+  </script>
+
   <!-- ============ TESTIMONIALS ============ -->
   <section class="section section--alt">
     <div class="container">
       <div class="center reveal">
         <p class="eyebrow">Loved by the city</p>
         <h2 class="section-title">
-          12,400 ratings can't be <span class="italic-accent">wrong.</span>
+          500 ratings can't be <span class="italic-accent">wrong.</span>
         </h2>
       </div>
 
@@ -622,6 +742,43 @@ const partyPerks = [
   .party__perk-icon :global(svg) { width: 20px; height: 20px; }
   .party__perk strong { display: block; font-size: 0.98rem; }
   .party__perk small { color: #d8bcae; font-size: 0.82rem; }
+
+  /* Party order form */
+  .party-form {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 440px;
+  }
+  .party-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .party-form input,
+  .party-form textarea {
+    width: 100%;
+    padding: 11px 13px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #f5ece0;
+    font: inherit;
+    font-size: 0.92rem;
+    outline: none;
+  }
+  .party-form input::placeholder,
+  .party-form textarea::placeholder { color: #9b8a7c; }
+  .party-form input:focus,
+  .party-form textarea:focus { border-color: var(--gold, #e4b65c); }
+  .party-form textarea { resize: vertical; min-height: 56px; }
+  .party-form__captcha {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .party-form__captcha label { color: #e7cdbf; font-weight: 700; font-size: 0.9rem; }
+  .party-form__captcha input { max-width: 150px; }
+  .party-form__msg { font-size: 0.86rem; font-weight: 700; margin: 2px 0; }
+  .party-form .btn { align-self: flex-start; }
 
   /* Reviews */
   .reviews-grid {

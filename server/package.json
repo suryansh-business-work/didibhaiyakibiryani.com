@@ -11,6 +11,7 @@
     "start": "node dist/index.js",
     "seed": "tsx src/seed.ts",
     "cleanup:dummy": "tsx src/scripts/cleanup-dummy-data.ts",
+    "apply:updates": "tsx src/scripts/apply-updates.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run __tests__/unit",

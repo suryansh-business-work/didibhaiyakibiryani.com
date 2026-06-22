@@ -9,6 +9,7 @@ import { useCart } from "../src/cart";
 import { useAuth } from "../src/auth";
 import { useSettings, previewDeliveryFee } from "../src/settings";
 import { Section, Field, PayOption, Row, Notice } from "../src/checkout/fields";
+import { SocietyPicker, type Society } from "../src/checkout/SocietyPicker";
 import { brand, inr } from "../src/theme";
 
 export default function Checkout() {
@@ -19,10 +20,9 @@ export default function Checkout() {
   const settings = useSettings();
 
   const def = user?.addresses?.find((a) => a.isDefault) ?? user?.addresses?.[0];
-  const [line1, setLine1] = useState(def?.line1 ?? "");
-  const [line2, setLine2] = useState(def?.line2 ?? "");
-  const [city, setCity] = useState(def?.city ?? "");
-  const [pincode, setPincode] = useState(def?.pincode ?? "");
+  const [selectedSavedId, setSelectedSavedId] = useState<string | null>(def?.id ?? null);
+  const [society, setSociety] = useState<Society | null>(null);
+  const [flatBlock, setFlatBlock] = useState("");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const defaultPayment = settings.codEnabled ? "COD" : "ONLINE";
   const [payment, setPayment] = useState<"COD" | "ONLINE">(defaultPayment);
@@ -48,7 +48,6 @@ export default function Checkout() {
     );
   }
 
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(def?.id ?? null);
   const baseDelivery = previewDeliveryFee(subtotal, settings);
   const effDelivery = freeDelivery ? 0 : baseDelivery;
   const total = Math.max(0, subtotal - discount) + effDelivery;
@@ -73,10 +72,24 @@ export default function Checkout() {
     }
   }
 
+  function buildAddress() {
+    if (selectedSavedId) {
+      const a = user?.addresses?.find((x) => x.id === selectedSavedId);
+      if (a) {
+        return { label: a.label, line1: a.line1, line2: a.line2, city: a.city, pincode: a.pincode || "", phone };
+      }
+    }
+    if (society && flatBlock.trim()) {
+      return { label: "Home", line1: flatBlock.trim(), line2: society.area, city: society.name, pincode: society.pincode || "", phone };
+    }
+    return null;
+  }
+
   async function submit() {
     setFormError("");
-    if (!line1 || !city || !pincode) {
-      setFormError("Address line, city and pincode are required.");
+    const address = buildAddress();
+    if (!address) {
+      setFormError("Please choose a society and enter your flat number & block.");
       return;
     }
     try {
@@ -84,7 +97,7 @@ export default function Checkout() {
         variables: {
           input: {
             items: lines.map((l) => ({ menuItemId: l.id, qty: l.qty, spiceLevel: l.spiceLevel })),
-            address: { label: "Home", line1, line2, city, pincode, phone },
+            address,
             couponCode: appliedCode || null,
             paymentMethod: payment,
             notes,
@@ -122,36 +135,42 @@ export default function Checkout() {
                     height="auto"
                     paddingVertical={12}
                     paddingHorizontal={14}
-                    backgroundColor={selectedAddressId === a.id ? "rgba(228,182,92,0.16)" : brand.card}
-                    borderColor={selectedAddressId === a.id ? brand.goldDeep : brand.border}
+                    backgroundColor={selectedSavedId === a.id ? "rgba(228,182,92,0.16)" : brand.card}
+                    borderColor={selectedSavedId === a.id ? brand.goldDeep : brand.border}
                     borderWidth={1}
                     pressStyle={{ scale: 0.98 }}
                     onPress={() => {
-                      setSelectedAddressId(a.id);
-                      setLine1(a.line1);
-                      setLine2(a.line2 || "");
-                      setCity(a.city);
-                      setPincode(a.pincode);
+                      setSelectedSavedId(a.id);
+                      setSociety(null);
+                      setFlatBlock("");
                     }}
                   >
                     <YStack gap={4} width="100%">
-                      <Text color={selectedAddressId === a.id ? brand.gold : brand.text} fontWeight="700" fontSize={13}>{a.label}</Text>
-                      <Text color={selectedAddressId === a.id ? brand.dim : brand.muted} fontSize={12}>{a.line1}</Text>
-                      {a.line2 && <Text color={brand.muted} fontSize={11}>{a.line2}</Text>}
-                      <Text color={brand.muted} fontSize={11}>{a.city} — {a.pincode}</Text>
+                      <Text color={selectedSavedId === a.id ? brand.gold : brand.text} fontWeight="700" fontSize={13}>{a.label}</Text>
+                      <Text color={selectedSavedId === a.id ? brand.dim : brand.muted} fontSize={12}>{a.line1}</Text>
+                      <Text color={brand.muted} fontSize={11}>{a.city}{a.pincode ? ` — ${a.pincode}` : ""}</Text>
                     </YStack>
                   </Button>
                 ))}
               </YStack>
-              <Text color={brand.muted} fontSize={12} marginVertical={8}>Or enter a different address:</Text>
+              <Text color={brand.muted} fontSize={12} marginVertical={8}>Or deliver to another society:</Text>
             </>
           )}
-          <Field label="Flat / House / Street" value={line1} onChange={setLine1} />
-          <Field label="Landmark (optional)" value={line2} onChange={setLine2} />
-          <XStack gap={10}>
-            <YStack flex={1}><Field label="City" value={city} onChange={setCity} /></YStack>
-            <YStack flex={1}><Field label="Pincode" value={pincode} onChange={setPincode} keyboard="number-pad" /></YStack>
-          </XStack>
+          <SocietyPicker
+            selectedId={selectedSavedId ? null : society?.id ?? null}
+            onSelect={(s) => {
+              setSociety(s);
+              setSelectedSavedId(null);
+            }}
+          />
+          <Field
+            label="Flat no. & Block"
+            value={flatBlock}
+            onChange={(t) => {
+              setFlatBlock(t);
+              if (t) setSelectedSavedId(null);
+            }}
+          />
           <Field label="Phone" value={phone} onChange={setPhone} keyboard="phone-pad" />
           <Button
             borderColor={brand.border}

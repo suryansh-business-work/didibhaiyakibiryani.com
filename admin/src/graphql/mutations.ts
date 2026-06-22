@@ -49,6 +49,109 @@ export const DELETE_CATEGORY = gql`
   }
 `;
 
+export const CREATE_SLIDER = gql`
+  mutation CreateBanner($input: BannerInput!) {
+    createBanner(input: $input) {
+      id
+    }
+  }
+`;
+export const UPDATE_SLIDER = gql`
+  mutation UpdateBanner($id: ID!, $input: BannerInput!) {
+    updateBanner(id: $id, input: $input) {
+      id
+    }
+  }
+`;
+export const DELETE_SLIDER = gql`
+  mutation DeleteBanner($id: ID!) {
+    deleteBanner(id: $id)
+  }
+`;
+
+export const CREATE_SOCIETY = gql`
+  mutation CreateSociety($input: SocietyInput!) {
+    createSociety(input: $input) {
+      id
+    }
+  }
+`;
+export const UPDATE_SOCIETY = gql`
+  mutation UpdateSociety($id: ID!, $input: SocietyInput!) {
+    updateSociety(id: $id, input: $input) {
+      id
+    }
+  }
+`;
+export const DELETE_SOCIETY = gql`
+  mutation DeleteSociety($id: ID!) {
+    deleteSociety(id: $id)
+  }
+`;
+
+export const DELETE_ORDER = gql`
+  mutation DeleteOrder($id: ID!) {
+    deleteOrder(id: $id)
+  }
+`;
+export const DELETE_ORDERS = gql`
+  mutation DeleteOrders($ids: [ID!]!) {
+    deleteOrders(ids: $ids)
+  }
+`;
+
+export const UPDATE_STAFF_USER = gql`
+  mutation UpdateStaffUser($id: ID!, $name: String, $phone: String, $password: String, $isActive: Boolean) {
+    updateStaffUser(id: $id, name: $name, phone: $phone, password: $password, isActive: $isActive) {
+      id
+      name
+      phone
+      isActive
+    }
+  }
+`;
+export const DELETE_STAFF_USER = gql`
+  mutation DeleteStaffUser($id: ID!) {
+    deleteStaffUser(id: $id)
+  }
+`;
+
+export const SEND_TEST_EMAIL = gql`
+  mutation SendTestEmail($to: String) {
+    sendTestEmail(to: $to)
+  }
+`;
+
+export const DELETE_SUPPORT_TICKET = gql`
+  mutation DeleteSupportTicket($ticketId: ID!) {
+    deleteSupportTicket(ticketId: $ticketId)
+  }
+`;
+
+export const UPDATE_CUSTOMER = gql`
+  mutation UpdateCustomer($id: ID!, $name: String, $phone: String) {
+    updateCustomer(id: $id, name: $name, phone: $phone) {
+      id
+      name
+      phone
+    }
+  }
+`;
+export const DELETE_CUSTOMER = gql`
+  mutation DeleteCustomer($id: ID!) {
+    deleteCustomer(id: $id)
+  }
+`;
+
+export const UPDATE_PARTY_ORDER_STATUS = gql`
+  mutation UpdatePartyOrderStatus($id: ID!, $status: PartyOrderStatus!) {
+    updatePartyOrderStatus(id: $id, status: $status) {
+      id
+      status
+    }
+  }
+`;
+
 export const CREATE_ITEM = gql`
   mutation CreateMenuItem($input: MenuItemInput!) {
     createMenuItem(input: $input) {

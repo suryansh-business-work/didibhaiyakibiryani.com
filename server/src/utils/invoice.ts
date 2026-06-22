@@ -16,7 +16,7 @@ function header(doc: PDFKit.PDFDocument, s: ISettings): void {
   else if (s.companyName) doc.text(s.companyName);
   if (s.companyAddress) doc.text(s.companyAddress);
   if (s.gstNumber) doc.text(`GSTIN: ${s.gstNumber}`);
-  if (s.fssaiLicense) doc.text(`FSSAI Lic. No.: ${s.fssaiLicense}`);
+  // if (s.fssaiLicense) doc.text(`FSSAI Lic. No.: ${s.fssaiLicense}`);
   if (s.supportEmail || s.supportPhone) {
     doc.text([s.supportEmail, s.supportPhone].filter(Boolean).join(" · "));
   }

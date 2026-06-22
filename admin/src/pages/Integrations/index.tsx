@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { INTEGRATION_SETTINGS } from "../../graphql/queries";
-import { UPDATE_INTEGRATION_SETTINGS } from "../../graphql/mutations";
+import { UPDATE_INTEGRATION_SETTINGS, SEND_TEST_EMAIL } from "../../graphql/mutations";
 import Layout from "../../components/Layout";
 import { Spinner } from "../../components/ui";
 import { useAlert } from "../../components/dialog";
@@ -36,10 +36,27 @@ export default function Integrations() {
   const [save, { loading: saving }] = useMutation(UPDATE_INTEGRATION_SETTINGS, {
     refetchQueries: [{ query: INTEGRATION_SETTINGS }],
   });
+  const [sendTest, { loading: testing }] = useMutation(SEND_TEST_EMAIL);
   const notify = useAlert();
   const [form, setForm] = useState<IntegrationForm>({ ...BLANK_INTEGRATION });
   const [dirty, setDirty] = useState(false);
+  const [testTo, setTestTo] = useState("");
   const d = data?.integrationSettings;
+
+  async function sendTestEmail() {
+    try {
+      await sendTest({ variables: { to: testTo.trim() || null } });
+      await notify({
+        title: "Test email sent",
+        message: `Check the inbox${testTo.trim() ? ` for ${testTo.trim()}` : ""} — it may take a moment to arrive.`,
+      });
+    } catch (e: unknown) {
+      await notify({
+        title: "Couldn't send test email",
+        message: e instanceof Error ? e.message : "Please check your SMTP settings.",
+      });
+    }
+  }
 
   useEffect(() => {
     if (d && !dirty) setForm(toIntegrationForm(d));
@@ -93,6 +110,24 @@ export default function Integrations() {
           <Field label="From address" value={form.mailFrom} onChange={(v) => patch({ mailFrom: v })} placeholder="no-reply@didibhaiyakibiryani.com" />
           <Field label="From name" value={form.mailFromName} onChange={(v) => patch({ mailFromName: v })} placeholder="Didi Bhaiya ki Biryani" />
         </div>
+        <div className="row-between" style={{ marginTop: 12, gap: 10, flexWrap: "wrap" }}>
+          <input
+            className="search-input"
+            type="email"
+            placeholder="Send a test to… (blank = support email)"
+            value={testTo}
+            onChange={(e) => setTestTo(e.target.value)}
+            style={{ flex: 1, minWidth: 220 }}
+          />
+          <button className="btn btn-ghost" disabled={testing || dirty} onClick={sendTestEmail}>
+            {testing ? "Sending…" : "Send test email"}
+          </button>
+        </div>
+        {dirty && (
+          <p className="muted" style={{ fontSize: "0.78rem", marginTop: 6 }}>
+            Save your credentials first — the test uses the saved SMTP settings.
+          </p>
+        )}
       </div>
 
       <div className="card" style={{ padding: 20, marginBottom: 16 }}>

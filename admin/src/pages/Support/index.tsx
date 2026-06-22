@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { SUPPORT_TICKETS } from "../../graphql/queries";
-import { REPLY_TICKET, UPDATE_TICKET_STATUS } from "../../graphql/mutations";
+import { REPLY_TICKET, UPDATE_TICKET_STATUS, DELETE_SUPPORT_TICKET } from "../../graphql/mutations";
 import Layout from "../../components/Layout";
 import { AsyncList, fmtDate } from "../../components/ui";
-import { useAlert } from "../../components/dialog";
+import { useAlert, useConfirm } from "../../components/dialog";
 import SubjectsManager from "./SubjectsManager";
 import TicketDetail from "./TicketDetail";
 import { TICKET_BADGE, TICKET_FILTERS, type Ticket } from "./types";
@@ -18,10 +18,36 @@ export default function Support() {
   });
   const [replyMutation, { loading: replying }] = useMutation(REPLY_TICKET);
   const [statusMutation, { loading: updating }] = useMutation(UPDATE_TICKET_STATUS);
+  const [deleteTicket] = useMutation(DELETE_SUPPORT_TICKET);
   const notify = useAlert();
+  const confirm = useConfirm();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const tickets = data?.supportTickets ?? [];
   const busy = replying || updating;
+
+  async function remove(ticket: Ticket) {
+    const ok = await confirm({
+      title: "Delete ticket",
+      message: `Delete this support ticket${ticket.order?.orderNumber ? ` for ${ticket.order.orderNumber}` : ""}? This cannot be undone.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
+    setDeletingId(ticket.id);
+    try {
+      await deleteTicket({ variables: { ticketId: ticket.id } });
+      if (active?.id === ticket.id) setActive(null);
+      await refetch();
+    } catch (e: unknown) {
+      await notify({
+        title: "Could not delete",
+        message: e instanceof Error ? e.message : "Please try again.",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function reply(ticket: Ticket, text: string) {
     try {
@@ -85,6 +111,7 @@ export default function Support() {
                   <th>Customer</th>
                   <th>Status</th>
                   <th>Updated</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -103,6 +130,18 @@ export default function Support() {
                       </span>
                     </td>
                     <td className="muted">{fmtDate(t.updatedAt)}</td>
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        disabled={deletingId === t.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          remove(t);
+                        }}
+                      >
+                        {deletingId === t.id ? "…" : "Delete"}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
