@@ -22,6 +22,7 @@ interface Props {
   isDelivery: boolean;
   orderType: OrderType;
   setOrderType: (v: OrderType) => void;
+  baseStatus: string;
   onQty: (index: number, delta: number) => void;
   onRemove: (index: number) => void;
   onCreate: () => void;
@@ -43,7 +44,7 @@ function Row({ k, v, strong }: Readonly<{ k: string; v: string; strong?: boolean
 export function OrderPanel(props: Readonly<Props>) {
   const {
     control, errors, watch, setValue, customers, leads, fields, totals,
-    isDelivery, orderType, setOrderType, onQty, onRemove, onCreate, isSubmitting, rootError,
+    isDelivery, orderType, setOrderType, baseStatus, onQty, onRemove, onCreate, isSubmitting, rootError,
     submitLabel = "Create order",
   } = props;
   return (
@@ -55,7 +56,7 @@ export function OrderPanel(props: Readonly<Props>) {
       <Divider sx={{ my: 1.5 }} />
       <Box sx={{ flex: 1, overflowY: "auto", pr: 0.5 }}>
         <OrderLines fields={fields} watch={watch} onQty={onQty} onRemove={onRemove} />
-        <OrderOptions control={control} />
+        <OrderOptions control={control} baseStatus={baseStatus} />
       </Box>
       <Divider sx={{ my: 1.5 }} />
       <Stack spacing={0.5}>

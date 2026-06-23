@@ -37,6 +37,7 @@ interface OrdersTableProps {
   onEditPos: (order: Order) => void;
   onChangeStatus: (order: Order) => void;
   onGenerateMessage: (order: Order) => void;
+  onViewTimeline: (order: Order) => void;
   onDelete: (order: Order) => void;
   onShowMap: (order: Order) => void;
   deletingId: string | null;
@@ -82,6 +83,7 @@ export default function OrdersTable({
   onEditPos,
   onChangeStatus,
   onGenerateMessage,
+  onViewTimeline,
   onDelete,
   onShowMap,
   deletingId,
@@ -215,6 +217,14 @@ export default function OrdersTable({
       </Menu>
 
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+        <MenuItem
+          onClick={() => {
+            if (menuOrder) onViewTimeline(menuOrder);
+            closeMenu();
+          }}
+        >
+          View status timeline
+        </MenuItem>
         <MenuItem
           onClick={() => {
             if (menuOrder) onChangeStatus(menuOrder);

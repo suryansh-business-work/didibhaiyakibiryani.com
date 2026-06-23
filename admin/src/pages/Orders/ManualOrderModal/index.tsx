@@ -111,6 +111,7 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
           isDelivery={isDelivery}
           orderType={form.orderType}
           setOrderType={(v) => setValue("orderType", v)}
+          baseStatus={editOrder?.status ?? "PLACED"}
           onQty={changeQty}
           onRemove={remove}
           onCreate={handleSubmit(onSave)}

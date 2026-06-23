@@ -45,7 +45,7 @@ export const BLANK_MANUAL_ORDER: ManualOrderForm = {
   deliveryFee: 0,
   paymentMethod: "COD",
   paymentStatus: "PAID",
-  status: "DELIVERED",
+  status: "PLACED",
   placedAt: "",
   surveyUrl: "",
   notes: "",
