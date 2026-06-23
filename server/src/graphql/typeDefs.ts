@@ -129,6 +129,9 @@ export const typeDefs = /* GraphQL */ `
     id: ID!
     name: String!
     area: String
+    line1: String
+    city: String
+    state: String
     pincode: String
     sortOrder: Int!
     isActive: Boolean!
@@ -365,6 +368,9 @@ export const typeDefs = /* GraphQL */ `
   input SocietyInput {
     name: String!
     area: String
+    line1: String
+    city: String
+    state: String
     pincode: String
     sortOrder: Int
     isActive: Boolean
@@ -497,6 +503,7 @@ export const typeDefs = /* GraphQL */ `
     gstLegalName: String!
     gstNumber: String!
     surveyUrl: String!
+    surveyMessageTemplate: String!
     codEnabled: Boolean!
     onlineEnabled: Boolean!
     supportSubjects: [String!]!
@@ -542,6 +549,7 @@ export const typeDefs = /* GraphQL */ `
     gstLegalName: String
     gstNumber: String
     surveyUrl: String
+    surveyMessageTemplate: String
     codEnabled: Boolean
     onlineEnabled: Boolean
     supportSubjects: [String!]
@@ -735,9 +743,24 @@ export const typeDefs = /* GraphQL */ `
     reviews(limit: Int): [Review!]!
 
     customers(search: String): [User!]! # admin
+    leads(search: String): [Lead!]! # admin — non-signup contacts
     dashboardStats: DashboardStats! # admin
 
     integrationSettings: IntegrationSettings! # admin: SMTP / ImageKit config (secrets masked)
+  }
+
+  # A non-signup contact (lead), managed from admin → Contacts.
+  type Lead {
+    id: ID!
+    name: String!
+    phone: String!
+    email: String
+    note: String
+    address: String
+    society: String
+    block: String
+    flat: String
+    createdAt: DateTime!
   }
 
   # ─────────────── Mutations ───────────────
@@ -819,10 +842,42 @@ export const typeDefs = /* GraphQL */ `
     updateCustomer(id: ID!, name: String, phone: String): User!
     deleteCustomer(id: ID!): Boolean!
 
+    # Contacts / non-signup leads (admin)
+    createLead(
+      name: String!
+      phone: String!
+      email: String
+      note: String
+      address: String
+      society: String
+      block: String
+      flat: String
+    ): Lead!
+    updateLead(
+      id: ID!
+      name: String
+      phone: String
+      email: String
+      note: String
+      address: String
+      society: String
+      block: String
+      flat: String
+    ): Lead!
+    deleteLead(id: ID!): Boolean!
+
     # Payments (Razorpay)
     createRazorpayOrder(orderId: ID!): RazorpayOrderPayload!
     verifyRazorpayPayment(input: VerifyPaymentInput!): Order!
     refundPayment(paymentId: ID!, amount: Float, reason: String): Payment! # admin
+    createManualPayment(
+      orderId: ID!
+      amount: Float!
+      method: String
+      status: PaymentRecordStatus
+      reference: String
+      note: String
+    ): Payment! # admin — record an offline / manual payment
 
     # Password reset (OTP over email)
     requestPasswordReset(email: String!): Boolean!

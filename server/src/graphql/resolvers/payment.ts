@@ -26,6 +26,39 @@ export const paymentResolvers = {
   },
 
   Mutation: {
+    createManualPayment: async (
+      _: unknown,
+      args: { orderId: string; amount: number; method?: string; status?: string; reference?: string; note?: string },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN");
+      if (!(args.amount > 0)) {
+        throw new GraphQLError("Amount must be greater than zero.", { extensions: { code: "BAD_USER_INPUT" } });
+      }
+      const order = await Order.findById(args.orderId).exec();
+      if (!order) throw new GraphQLError("Order not found.", { extensions: { code: "BAD_USER_INPUT" } });
+
+      const recordStatus = args.status ?? "CAPTURED";
+      const payment = await Payment.create({
+        order: order._id,
+        user: order.user,
+        provider: "MANUAL",
+        providerOrderId: `MANUAL-${order.orderNumber}-${Date.now()}`,
+        providerPaymentId: args.reference?.trim() || undefined,
+        amount: args.amount,
+        status: recordStatus,
+        method: args.method?.trim() || undefined,
+        events: [{ type: "MANUAL_CREATED", at: new Date(), data: args.note?.trim() || undefined }],
+      });
+
+      if (recordStatus === "CAPTURED") {
+        order.paymentStatus = "PAID";
+        await order.save();
+      }
+      logger.info({ order: order.orderNumber, payment: String(payment._id) }, "Manual payment recorded");
+      return payment;
+    },
+
     createRazorpayOrder: async (_: unknown, { orderId }: { orderId: string }, ctx: Context) => {
       const u = requireAuth(ctx);
       const order = await Order.findById(orderId).exec();

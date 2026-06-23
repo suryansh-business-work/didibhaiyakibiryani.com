@@ -167,6 +167,72 @@ export const DELETE_CUSTOMER = gql`
   }
 `;
 
+export const CREATE_MANUAL_PAYMENT = gql`
+  mutation CreateManualPayment(
+    $orderId: ID!
+    $amount: Float!
+    $method: String
+    $status: PaymentRecordStatus
+    $reference: String
+    $note: String
+  ) {
+    createManualPayment(orderId: $orderId, amount: $amount, method: $method, status: $status, reference: $reference, note: $note) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_PROFILE = gql`
+  mutation UpdateProfile($name: String, $phone: String) {
+    updateProfile(name: $name, phone: $phone) {
+      id
+      name
+      email
+      phone
+      role
+    }
+  }
+`;
+
+export const CREATE_LEAD = gql`
+  mutation CreateLead(
+    $name: String!
+    $phone: String!
+    $email: String
+    $note: String
+    $address: String
+    $society: String
+    $block: String
+    $flat: String
+  ) {
+    createLead(name: $name, phone: $phone, email: $email, note: $note, address: $address, society: $society, block: $block, flat: $flat) {
+      id
+    }
+  }
+`;
+export const UPDATE_LEAD = gql`
+  mutation UpdateLead(
+    $id: ID!
+    $name: String
+    $phone: String
+    $email: String
+    $note: String
+    $address: String
+    $society: String
+    $block: String
+    $flat: String
+  ) {
+    updateLead(id: $id, name: $name, phone: $phone, email: $email, note: $note, address: $address, society: $society, block: $block, flat: $flat) {
+      id
+    }
+  }
+`;
+export const DELETE_LEAD = gql`
+  mutation DeleteLead($id: ID!) {
+    deleteLead(id: $id)
+  }
+`;
+
 export const UPDATE_PARTY_ORDER_STATUS = gql`
   mutation UpdatePartyOrderStatus($id: ID!, $status: PartyOrderStatus!) {
     updatePartyOrderStatus(id: $id, status: $status) {

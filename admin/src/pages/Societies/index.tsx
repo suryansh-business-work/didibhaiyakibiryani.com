@@ -9,13 +9,15 @@ import Layout from "../../components/Layout";
 import { AsyncList, FormActions, Modal, OnOffChip } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
-import { RHFField, RHFCheckbox, societySchema, type SocietyForm } from "../../form";
+import { RHFField, RHFSelect, RHFCheckbox, societySchema, type SocietyForm } from "../../form";
+import { STATE_OPTIONS } from "../../constants/india";
 
 interface Society {
-  id: string; name: string; area?: string; pincode?: string;
+  id: string; name: string; area?: string;
+  line1?: string; city?: string; state?: string; pincode?: string;
   sortOrder: number; isActive: boolean;
 }
-const BLANK: SocietyForm = { name: "", area: "", pincode: "", sortOrder: 0, isActive: true };
+const BLANK: SocietyForm = { name: "", area: "", line1: "", city: "", state: "", pincode: "", sortOrder: 0, isActive: true };
 
 export default function Societies() {
   const { data, loading, refetch } = useQuery<{ societies: Society[] }>(SOCIETIES);
@@ -45,7 +47,7 @@ export default function Societies() {
   }
   function openEdit(s: Society) {
     setEditing(s);
-    reset({ name: s.name, area: s.area ?? "", pincode: s.pincode ?? "", sortOrder: s.sortOrder, isActive: s.isActive });
+    reset({ name: s.name, area: s.area ?? "", line1: s.line1 ?? "", city: s.city ?? "", state: s.state ?? "", pincode: s.pincode ?? "", sortOrder: s.sortOrder, isActive: s.isActive });
     setOpen(true);
   }
 
@@ -53,6 +55,9 @@ export default function Societies() {
     const input = {
       name: form.name.trim(),
       area: form.area?.trim(),
+      line1: form.line1?.trim(),
+      city: form.city?.trim(),
+      state: form.state?.trim(),
       pincode: form.pincode?.trim(),
       sortOrder: form.sortOrder,
       isActive: form.isActive,
@@ -127,6 +132,9 @@ export default function Societies() {
         >
           <RHFField control={control} name="name" label="Name" placeholder="e.g. Prestige Lakeside" error={errors.name?.message} />
           <RHFField control={control} name="area" label="Area (optional)" placeholder="e.g. Whitefield" error={errors.area?.message} />
+          <RHFField control={control} name="line1" label="Address line (optional)" placeholder="Street / landmark" error={errors.line1?.message} />
+          <RHFField control={control} name="city" label="City (optional)" error={errors.city?.message} />
+          <RHFSelect control={control} name="state" label="State (optional)" options={STATE_OPTIONS} error={errors.state?.message} />
           <RHFField control={control} name="pincode" label="Pincode (optional)" error={errors.pincode?.message} />
           <RHFField control={control} name="sortOrder" label="Sort order" type="number" error={errors.sortOrder?.message} />
           <RHFCheckbox control={control} name="isActive" label="Active" />

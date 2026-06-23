@@ -23,7 +23,7 @@ export interface IPaymentRefund {
 export interface IPayment extends Document {
   order: Types.ObjectId;
   user?: Types.ObjectId;
-  provider: "RAZORPAY";
+  provider: "RAZORPAY" | "MANUAL";
   providerOrderId: string;
   providerPaymentId?: string;
   amount: number; // rupees
@@ -59,7 +59,7 @@ const paymentSchema = new Schema<IPayment>(
   {
     order: { type: Schema.Types.ObjectId, ref: "Order", required: true, index: true },
     user: { type: Schema.Types.ObjectId, ref: "User", index: true },
-    provider: { type: String, enum: ["RAZORPAY"], default: "RAZORPAY" },
+    provider: { type: String, enum: ["RAZORPAY", "MANUAL"], default: "RAZORPAY" },
     providerOrderId: { type: String, required: true, unique: true, index: true },
     providerPaymentId: { type: String, index: true },
     amount: { type: Number, required: true },

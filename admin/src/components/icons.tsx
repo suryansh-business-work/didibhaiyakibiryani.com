@@ -138,3 +138,16 @@ export const IParty = ({ size }: P) => (
     <path d="M14 3v0M19 5v0M21 10v0M16 8l1-1M19.5 13.5l1-1" />
   </svg>
 );
+export const IContact = ({ size }: P) => (
+  <svg {...s(size)}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="9" cy="11" r="2.2" />
+    <path d="M5.5 17a3.5 3.5 0 0 1 7 0M15 9.5h4M15 14h4" />
+  </svg>
+);
+export const IMessage = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+    <path d="M8 9.5h8M8 13h5" />
+  </svg>
+);

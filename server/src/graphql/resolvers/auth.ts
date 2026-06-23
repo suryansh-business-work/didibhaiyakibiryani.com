@@ -1,5 +1,5 @@
 import { GraphQLError } from "graphql";
-import { User, Otp } from "../../models/index.js";
+import { User, Otp, Lead } from "../../models/index.js";
 import {
   signToken,
   hashPassword,
@@ -142,6 +142,8 @@ export const authResolvers = {
         role: "CUSTOMER",
       });
       await record.deleteOne();
+      // Once they have an account, drop any matching non-signup contact.
+      await Lead.deleteMany({ email });
       const token = signToken({ id: user.id, role: user.role });
       notifySignup(user.email, user.name);
       return { token, user };

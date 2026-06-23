@@ -6,6 +6,7 @@ export const ME = gql`
       id
       name
       email
+      phone
       role
     }
   }
@@ -165,9 +166,29 @@ export const SOCIETIES = gql`
       id
       name
       area
+      line1
+      city
+      state
       pincode
       sortOrder
       isActive
+    }
+  }
+`;
+
+export const LEADS = gql`
+  query Leads($search: String) {
+    leads(search: $search) {
+      id
+      name
+      phone
+      email
+      note
+      address
+      society
+      block
+      flat
+      createdAt
     }
   }
 `;
@@ -335,6 +356,7 @@ export const SETTINGS_CORE_FIELDS = `
   gstLegalName
   gstNumber
   surveyUrl
+  surveyMessageTemplate
   codEnabled
   onlineEnabled
   supportSubjects

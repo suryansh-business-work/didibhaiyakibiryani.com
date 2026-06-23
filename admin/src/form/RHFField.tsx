@@ -1,5 +1,5 @@
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
-import { Checkbox, FormControlLabel, TextField } from "@mui/material";
+import { Checkbox, FormControlLabel, MenuItem, TextField } from "@mui/material";
 
 interface RHFFieldProps<T extends FieldValues> {
   control: Control<T>;
@@ -48,6 +48,45 @@ export function RHFField<T extends FieldValues>({
           size="small"
           margin="dense"
         />
+      )}
+    />
+  );
+}
+
+interface RHFSelectProps<T extends FieldValues> {
+  control: Control<T>;
+  name: Path<T>;
+  label: string;
+  options: ReadonlyArray<{ value: string; label: string }>;
+  error?: string;
+  disabled?: boolean;
+  emptyLabel?: string;
+}
+
+/** A react-hook-form-bound MUI select with an inline error. */
+export function RHFSelect<T extends FieldValues>({ control, name, label, options, error, disabled, emptyLabel = "—" }: Readonly<RHFSelectProps<T>>) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <TextField
+          {...field}
+          value={field.value ?? ""}
+          select
+          label={label}
+          error={Boolean(error)}
+          helperText={error}
+          disabled={disabled}
+          fullWidth
+          size="small"
+          margin="dense"
+        >
+          <MenuItem value="">{emptyLabel}</MenuItem>
+          {options.map((o) => (
+            <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+          ))}
+        </TextField>
       )}
     />
   );

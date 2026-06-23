@@ -5,6 +5,9 @@ import { requireRole, type Context } from "../../utils/auth.js";
 interface SocietyInput {
   name: string;
   area?: string;
+  line1?: string;
+  city?: string;
+  state?: string;
   pincode?: string;
   sortOrder?: number;
   isActive?: boolean;

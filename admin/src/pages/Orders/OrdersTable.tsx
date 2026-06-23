@@ -224,6 +224,7 @@ export default function OrdersTable({
           Change delivery status
         </MenuItem>
         <MenuItem
+          disabled={!menuDelivered}
           onClick={() => {
             if (menuOrder) onGenerateMessage(menuOrder);
             closeMenu();

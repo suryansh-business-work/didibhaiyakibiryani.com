@@ -12,6 +12,7 @@ export { SupportTicket } from "./SupportTicket.js";
 export { Banner } from "./Banner.js";
 export { Society } from "./Society.js";
 export { PartyOrder } from "./PartyOrder.js";
+export { Lead } from "./Lead.js";
 
 export type { IUser, IAddress, Role } from "./User.js";
 export type { ICategory } from "./Category.js";
@@ -37,3 +38,4 @@ export type { ISupportTicket, ISupportMessage, TicketStatus } from "./SupportTic
 export type { IBanner } from "./Banner.js";
 export type { ISociety } from "./Society.js";
 export type { IPartyOrder, PartyOrderStatus } from "./PartyOrder.js";
+export type { ILead } from "./Lead.js";

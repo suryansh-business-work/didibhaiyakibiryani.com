@@ -23,10 +23,18 @@ export const categorySchema = z.object({
   isActive: z.boolean(),
 });
 
+const optionalPincode = z
+  .string()
+  .optional()
+  .refine((v) => !v || /^\d{6}$/.test(v), "Enter a 6-digit pincode");
+
 export const societySchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   area: z.string().optional(),
-  pincode: z.string().optional(),
+  line1: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  pincode: optionalPincode,
   sortOrder,
   isActive: z.boolean(),
 });
@@ -43,6 +51,32 @@ export const sliderSchema = z.object({
 export const customerSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   phone: z.string().optional(),
+});
+
+export const paymentSchema = z.object({
+  orderId: z.string().min(1, "Select an order"),
+  amount: z.coerce.number().positive("Enter an amount"),
+  method: z.string().optional(),
+  status: z.enum(["CAPTURED", "CREATED", "FAILED"]),
+  reference: z.string().optional(),
+  note: z.string().optional(),
+});
+
+export const profileSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  phone: z.string().optional(),
+});
+
+export const leadSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  phone: z.string().trim().min(1, "Phone is required"),
+  email: z.string().trim().optional().refine((v) => !v || EMAIL_RE.test(v), "Enter a valid email"),
+  note: z.string().optional(),
+  addressMode: z.enum(["ADDRESS", "SOCIETY"]),
+  address: z.string().optional(),
+  society: z.string().optional(),
+  block: z.string().optional(),
+  flat: z.string().optional(),
 });
 
 export const riderSchema = z.object({
@@ -161,4 +195,7 @@ export type CategoryForm = z.infer<typeof categorySchema>;
 export type SocietyForm = z.infer<typeof societySchema>;
 export type SliderForm = z.infer<typeof sliderSchema>;
 export type CustomerForm = z.infer<typeof customerSchema>;
+export type ProfileForm = z.infer<typeof profileSchema>;
+export type PaymentForm = z.infer<typeof paymentSchema>;
+export type LeadForm = z.infer<typeof leadSchema>;
 export type RiderForm = z.infer<typeof riderSchema>;

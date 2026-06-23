@@ -8,6 +8,9 @@ import { Schema, model, Document } from "mongoose";
 export interface ISociety extends Document {
   name: string;
   area?: string;
+  line1?: string;
+  city?: string;
+  state?: string;
   pincode?: string;
   sortOrder: number;
   isActive: boolean;
@@ -19,6 +22,9 @@ const societySchema = new Schema<ISociety>(
   {
     name: { type: String, required: true, trim: true },
     area: { type: String, trim: true },
+    line1: { type: String, trim: true },
+    city: { type: String, trim: true },
+    state: { type: String, trim: true },
     pincode: { type: String, trim: true },
     sortOrder: { type: Number, default: 0, index: true },
     isActive: { type: Boolean, default: true, index: true },

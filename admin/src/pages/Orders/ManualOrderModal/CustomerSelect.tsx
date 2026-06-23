@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Controller,
   type Control,
@@ -7,7 +8,9 @@ import {
 } from "react-hook-form";
 import { Autocomplete, Stack, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import type { ManualOrderForm } from "../../../form";
-import type { CustomerOption } from "./types";
+import type { CustomerOption, LeadOption } from "./types";
+
+type Source = "WALKIN" | "EXISTING" | "CONTACT";
 
 interface Props {
   control: Control<ManualOrderForm>;
@@ -15,27 +18,76 @@ interface Props {
   watch: UseFormWatch<ManualOrderForm>;
   setValue: UseFormSetValue<ManualOrderForm>;
   customers: CustomerOption[];
+  leads: LeadOption[];
 }
 
-/** Counter walk-in (name/phone) or an existing account (searchable). */
-export function CustomerSelect({ control, errors, watch, setValue, customers }: Readonly<Props>) {
-  const isWalkin = watch("customerMode") === "WALKIN";
+/** Counter walk-in (name/phone), a signed-up account, or a saved non-signup
+ * contact (which fills the name/phone snapshot). */
+export function CustomerSelect({ control, errors, watch, setValue, customers, leads }: Readonly<Props>) {
+  const isExisting = watch("customerMode") === "EXISTING";
+  const [source, setSource] = useState<Source>(isExisting ? "EXISTING" : "WALKIN");
+
+  function changeSource(next: Source) {
+    setSource(next);
+    if (next === "EXISTING") {
+      setValue("customerMode", "EXISTING");
+    } else {
+      setValue("customerMode", "WALKIN");
+      setValue("userId", "");
+    }
+  }
+
+  function pickContact(l: LeadOption | null) {
+    setValue("customerName", l?.name ?? "", { shouldValidate: true });
+    setValue("customerPhone", l?.phone ?? "");
+  }
+
   return (
     <Stack spacing={1.5}>
       <ToggleButtonGroup
         size="small"
         exclusive
         fullWidth
-        value={isWalkin ? "WALKIN" : "EXISTING"}
+        value={source}
         onChange={(_, v) => {
-          if (v) setValue("customerMode", v);
+          if (v) changeSource(v);
         }}
       >
         <ToggleButton value="WALKIN">Walk-in</ToggleButton>
-        <ToggleButton value="EXISTING">Existing</ToggleButton>
+        <ToggleButton value="EXISTING">Signed-up</ToggleButton>
+        <ToggleButton value="CONTACT">Contacts</ToggleButton>
       </ToggleButtonGroup>
 
-      {isWalkin ? (
+      {source === "EXISTING" && (
+        <Controller
+          control={control}
+          name="userId"
+          render={() => (
+            <Autocomplete
+              options={customers}
+              getOptionLabel={(o) => (o.phone ? `${o.name} · ${o.phone}` : o.name)}
+              isOptionEqualToValue={(o, val) => o.id === val.id}
+              value={customers.find((c) => c.id === watch("userId")) ?? null}
+              onChange={(_, val) => setValue("userId", val?.id ?? "", { shouldValidate: true })}
+              renderInput={(params) => (
+                <TextField {...params} label="Select customer" size="small" error={Boolean(errors.userId)} helperText={errors.userId?.message} />
+              )}
+            />
+          )}
+        />
+      )}
+
+      {source === "CONTACT" && (
+        <Autocomplete
+          options={leads}
+          getOptionLabel={(o) => (o.phone ? `${o.name} · ${o.phone}` : o.name)}
+          isOptionEqualToValue={(o, val) => o.id === val.id}
+          onChange={(_, val) => pickContact(val)}
+          renderInput={(params) => <TextField {...params} label="Pick a contact" size="small" />}
+        />
+      )}
+
+      {source !== "EXISTING" && (
         <Stack direction="row" spacing={1}>
           <Controller
             control={control}
@@ -58,29 +110,6 @@ export function CustomerSelect({ control, errors, watch, setValue, customers }: 
             render={({ field }) => <TextField {...field} value={field.value ?? ""} label="Phone" size="small" fullWidth />}
           />
         </Stack>
-      ) : (
-        <Controller
-          control={control}
-          name="userId"
-          render={({ field }) => (
-            <Autocomplete
-              options={customers}
-              getOptionLabel={(o) => (o.phone ? `${o.name} · ${o.phone}` : o.name)}
-              isOptionEqualToValue={(o, val) => o.id === val.id}
-              value={customers.find((c) => c.id === field.value) ?? null}
-              onChange={(_, val) => setValue("userId", val?.id ?? "", { shouldValidate: true })}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select customer"
-                  size="small"
-                  error={Boolean(errors.userId)}
-                  helperText={errors.userId?.message}
-                />
-              )}
-            />
-          )}
-        />
       )}
     </Stack>
   );

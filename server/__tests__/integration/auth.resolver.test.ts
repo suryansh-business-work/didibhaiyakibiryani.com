@@ -7,7 +7,7 @@ vi.mock("../../src/utils/mailer.js", () => ({
 }));
 
 import { authResolvers } from "../../src/graphql/resolvers/auth";
-import { User, Otp } from "../../src/models/index.js";
+import { User, Otp, Lead } from "../../src/models/index.js";
 import { hashOtp } from "../../src/utils/otp.js";
 import { hashPassword } from "../../src/utils/auth.js";
 
@@ -40,10 +40,13 @@ describe("auth resolver", () => {
     const email = "reg@b.com";
     const code = "123456";
     await Otp.create({ identifier: email, purpose: "EMAIL_VERIFY", codeHash: hashOtp(code, email), expiresAt: new Date(Date.now() + 60000) });
+    await Lead.create({ name: "Reg", phone: "999", email });
     const res = await M.register(null, { input: { name: "Reg", email, password: "secret1", otp: code } });
     expect(res.token).toBeTruthy();
     expect(res.user.email).toBe(email);
     expect(await Otp.findOne({ identifier: email })).toBeNull();
+    // Signing up removes the matching non-signup contact.
+    expect(await Lead.findOne({ email })).toBeNull();
   });
 
   it("register rejects short password, missing/expired/wrong otp, and duplicates", async () => {

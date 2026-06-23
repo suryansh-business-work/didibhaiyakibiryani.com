@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { PAYMENTS } from "../../graphql/queries";
 import { REFUND_PAYMENT } from "../../graphql/mutations";
-import { Box, Chip, type ChipProps, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Box, Button, Chip, type ChipProps, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
 import { AsyncList, inr, fmtDate } from "../../components/ui";
+import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
 import PaymentDetail from "./PaymentDetail";
+import ManualPaymentModal from "./ManualPaymentModal";
 import {
   STATUS_FILTERS,
   refundableAmount,
@@ -30,6 +32,7 @@ export default function Payments() {
   const confirm = useConfirm();
   const notify = useAlert();
   const [active, setActive] = useState<PaymentRow | null>(null);
+  const [recording, setRecording] = useState(false);
 
   const payments = data?.payments ?? [];
 
@@ -57,17 +60,21 @@ export default function Payments() {
 
   return (
     <Layout title="Payments">
-      <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap" }}>
-        {STATUS_FILTERS.map((f) => (
-          <Chip
-            key={f}
-            label={f === "ALL" ? "All" : f.replaceAll("_", " ").toLowerCase()}
-            color={filter === f ? "primary" : "default"}
-            variant={filter === f ? "filled" : "outlined"}
-            onClick={() => setFilter(f)}
-          />
-        ))}
-      </Stack>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+          {STATUS_FILTERS.map((f) => (
+            <Chip
+              key={f}
+              label={f === "ALL" ? "All" : f.replaceAll("_", " ").toLowerCase()}
+              color={filter === f ? "primary" : "default"}
+              variant={filter === f ? "filled" : "outlined"}
+              onClick={() => setFilter(f)}
+            />
+          ))}
+        </Stack>
+        <Box sx={{ flexGrow: 1 }} />
+        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={() => setRecording(true)}>Record payment</Button>
+      </Box>
 
       <div className="card">
         <AsyncList loading={loading && !data} empty={payments.length === 0} emptyLabel="No payments yet.">
@@ -107,6 +114,14 @@ export default function Payments() {
           refunding={refunding}
           onRefund={doRefund}
           onClose={() => setActive(null)}
+        />
+      )}
+      {recording && (
+        <ManualPaymentModal
+          onClose={() => setRecording(false)}
+          onCreated={() => {
+            refetch().catch(() => undefined);
+          }}
         />
       )}
     </Layout>

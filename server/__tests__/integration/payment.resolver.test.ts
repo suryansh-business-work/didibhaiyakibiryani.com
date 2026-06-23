@@ -77,4 +77,34 @@ describe("payment resolver", () => {
     expect((await paymentResolvers.Payment.order({ order: order.id }))?.id).toBe(order.id);
     expect(paymentResolvers.Payment.order({ order: { orderNumber: "X" } })).toEqual({ orderNumber: "X" });
   });
+
+  it("createManualPayment: guards + captured (marks order paid) + non-captured", async () => {
+    const user = await makeUser();
+    const order = await makeOrder(user.id, { paymentMethod: "COD" });
+    const adminCtx = ctxFor("admin", "ADMIN");
+    const M = paymentResolvers.Mutation;
+
+    await expect(M.createManualPayment(null, { orderId: order.id, amount: 0 }, adminCtx)).rejects.toThrow(/greater than zero/i);
+    await expect(M.createManualPayment(null, { orderId: new Types.ObjectId().toString(), amount: 100 }, adminCtx)).rejects.toThrow(/not found/i);
+
+    // Captured (default status) records details and marks the order paid.
+    const captured = await M.createManualPayment(
+      null,
+      { orderId: order.id, amount: 250, method: "Cash", reference: "RCPT-1", note: "Counter cash" },
+      adminCtx
+    );
+    expect(captured.provider).toBe("MANUAL");
+    expect(captured.status).toBe("CAPTURED");
+    expect(captured.method).toBe("Cash");
+    expect(captured.providerPaymentId).toBe("RCPT-1");
+    expect((await Order.findById(order.id))?.paymentStatus).toBe("PAID");
+
+    // Non-captured status, no optional details — order stays unpaid.
+    const other = await makeOrder(user.id, { paymentMethod: "COD" });
+    const pending = await M.createManualPayment(null, { orderId: other.id, amount: 150, status: "CREATED" }, adminCtx);
+    expect(pending.status).toBe("CREATED");
+    expect(pending.method).toBeUndefined();
+    expect(pending.providerPaymentId).toBeUndefined();
+    expect((await Order.findById(other.id))?.paymentStatus).not.toBe("PAID");
+  });
 });

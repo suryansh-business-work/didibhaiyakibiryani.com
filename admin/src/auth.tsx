@@ -8,6 +8,7 @@ export interface AdminUser {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   role: "ADMIN" | "STAFF" | "DELIVERY" | "CUSTOMER";
 }
 
@@ -16,6 +17,7 @@ interface AuthCtx {
   loading: boolean;
   login: (emailOrPhone: string, password: string) => Promise<void>;
   logout: () => void;
+  refresh: () => Promise<void>;
 }
 
 const Ctx = createContext<AuthCtx>(null as unknown as AuthCtx);
@@ -65,7 +67,12 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     apollo.clearStore();
   }
 
-  return <Ctx.Provider value={{ user, loading, login, logout }}>{children}</Ctx.Provider>;
+  async function refresh() {
+    const { data } = await fetchMe();
+    if (data?.me) setUser(data.me);
+  }
+
+  return <Ctx.Provider value={{ user, loading, login, logout, refresh }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth() {

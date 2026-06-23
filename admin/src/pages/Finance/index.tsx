@@ -8,7 +8,6 @@ import Switch from "../../components/Switch";
 import { useAlert } from "../../components/dialog";
 import {
   BLANK_FINANCE,
-  COMPLIANCE_FIELDS,
   DELIVERY_COST_FIELDS,
   settingsToFinanceForm,
   type FinanceForm,
@@ -74,20 +73,6 @@ export default function Finance() {
           Fee charged = min delivery cost + per-km charge × distance (store → customer).
           Orders above the free-delivery threshold ship free.
         </p>
-      </div>
-
-      <div className="card" style={{ padding: 18, marginBottom: 16 }}>
-        <h3 style={{ marginBottom: 12 }}>Invoice & compliance</h3>
-        {COMPLIANCE_FIELDS.map((f) => (
-          <div className="field" key={f.key}>
-            <label>{f.label}</label>
-            <input
-              value={form[f.key]}
-              placeholder={f.placeholder}
-              onChange={(e) => patch({ [f.key]: e.target.value } as Partial<FinanceForm>)}
-            />
-          </div>
-        ))}
       </div>
 
       <div className="card" style={{ padding: "6px 18px", marginBottom: 16 }}>

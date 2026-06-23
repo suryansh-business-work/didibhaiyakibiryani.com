@@ -6,7 +6,7 @@ import { Fulfilment } from "./Fulfilment";
 import { OrderLines } from "./OrderLines";
 import { OrderOptions } from "./OrderOptions";
 import type { ManualOrderForm } from "../../../form";
-import type { CustomerOption, Totals } from "./types";
+import type { CustomerOption, LeadOption, Totals } from "./types";
 
 type OrderType = "DELIVERY" | "TAKEAWAY";
 
@@ -16,6 +16,7 @@ interface Props {
   watch: UseFormWatch<ManualOrderForm>;
   setValue: UseFormSetValue<ManualOrderForm>;
   customers: CustomerOption[];
+  leads: LeadOption[];
   fields: ReadonlyArray<{ id: string }>;
   totals: Totals;
   isDelivery: boolean;
@@ -41,14 +42,14 @@ function Row({ k, v, strong }: Readonly<{ k: string; v: string; strong?: boolean
 /** The "Current order" panel: customer, line items, options and totals. */
 export function OrderPanel(props: Readonly<Props>) {
   const {
-    control, errors, watch, setValue, customers, fields, totals,
+    control, errors, watch, setValue, customers, leads, fields, totals,
     isDelivery, orderType, setOrderType, onQty, onRemove, onCreate, isSubmitting, rootError,
     submitLabel = "Create order",
   } = props;
   return (
     <Paper sx={{ width: 400, flexShrink: 0, display: "flex", flexDirection: "column", height: "100%", p: 2 }}>
       <Typography variant="h6" gutterBottom>Current order</Typography>
-      <CustomerSelect control={control} errors={errors} watch={watch} setValue={setValue} customers={customers} />
+      <CustomerSelect control={control} errors={errors} watch={watch} setValue={setValue} customers={customers} leads={leads} />
       <Divider sx={{ my: 1.5 }} />
       <Fulfilment control={control} errors={errors} isDelivery={isDelivery} orderType={orderType} setOrderType={setOrderType} />
       <Divider sx={{ my: 1.5 }} />

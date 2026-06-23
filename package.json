@@ -10,7 +10,7 @@
     "dev:mobile": "npm --prefix mobile-app run start",
     "dev:delivery": "npm --prefix delivery run start",
     "kill:ports": "node scripts/kill-ports.mjs",
-    "all": "npm run kill:ports && concurrently -n website,server,admin,mobile,delivery,status -c blue,green,magenta,yellow,cyan,white \"npm:dev:website\" \"npm:dev:server\" \"npm:dev:admin\" \"npm:dev:mobile\" \"npm:dev:delivery\" \"node scripts/stack-status.mjs\"",
+    "run:all": "npm run kill:ports && concurrently -n website,server,admin,mobile,delivery,status -c blue,green,magenta,yellow,cyan,white \"npm:dev:website\" \"npm:dev:server\" \"npm:dev:admin\" \"npm:dev:mobile\" \"npm:dev:delivery\" \"node scripts/stack-status.mjs\"",
     "build:website": "npm --prefix website run build",
     "build:server": "npm --prefix server run build",
     "build:admin": "npm --prefix admin run build",

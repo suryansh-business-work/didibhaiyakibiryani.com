@@ -20,6 +20,13 @@ export interface CustomerOption {
   phone?: string;
 }
 
+export interface LeadOption {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+}
+
 /** Empty-form defaults. Items are added by tapping the catalogue; POS counter
  * sales default to a completed takeaway. */
 export const BLANK_MANUAL_ORDER: ManualOrderForm = {
@@ -91,6 +98,17 @@ export function computeTotals(v: ManualOrderForm): Totals {
   return { subtotal, discount, deliveryFee, total };
 }
 
+/** Merge duplicate lines of the same dish so an order shows one row per dish. */
+function mergeItemsByName(items: Order["items"]) {
+  const map = new Map<string, { name: string; price: number; qty: number; spiceLevel: number }>();
+  for (const it of items) {
+    const existing = map.get(it.name);
+    if (existing) existing.qty += it.qty;
+    else map.set(it.name, { name: it.name, price: it.price, qty: it.qty, spiceLevel: it.spiceLevel ?? 0 });
+  }
+  return [...map.values()];
+}
+
 /** Prefill the POS form from an existing order (for the Edit flow). */
 export function orderToManualForm(o: Order): ManualOrderForm {
   const isDelivery = o.orderType === "DELIVERY" || Boolean(o.address);
@@ -100,7 +118,7 @@ export function orderToManualForm(o: Order): ManualOrderForm {
     userId: o.user?.id ?? "",
     customerName: o.customerName ?? o.user?.name ?? "",
     customerPhone: o.customerPhone ?? o.user?.phone ?? "",
-    items: o.items.map((it) => ({ menuItemId: "", name: it.name, price: it.price, qty: it.qty, spiceLevel: it.spiceLevel ?? 0 })),
+    items: mergeItemsByName(o.items).map((it) => ({ menuItemId: "", ...it })),
     line1: o.address?.line1 ?? "",
     line2: o.address?.line2 ?? "",
     city: o.address?.city ?? "",

@@ -1,2 +1,2 @@
-export { RHFField, RHFCheckbox } from "./RHFField";
+export { RHFField, RHFSelect, RHFCheckbox } from "./RHFField";
 export * from "./schemas";

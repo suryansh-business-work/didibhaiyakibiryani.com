@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { AppBar, Box, Dialog, IconButton, Toolbar, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { CATEGORIES, CUSTOMERS, MENU_ITEMS } from "../../../graphql/queries";
+import { CATEGORIES, CUSTOMERS, LEADS, MENU_ITEMS } from "../../../graphql/queries";
 import { CREATE_MANUAL_ORDER, UPDATE_MANUAL_ORDER } from "../../../graphql/mutations";
 import { manualOrderSchema, type ManualOrderForm } from "../../../form";
 import { ItemCatalog } from "./ItemCatalog";
@@ -16,6 +16,7 @@ import {
   orderToManualForm,
   type CategoryOption,
   type CustomerOption,
+  type LeadOption,
   type MenuOption,
 } from "./types";
 import type { Order } from "../types";
@@ -33,6 +34,7 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
   const { data: menuData } = useQuery<{ menuItems: MenuOption[] }>(MENU_ITEMS);
   const { data: catData } = useQuery<{ categories: CategoryOption[] }>(CATEGORIES);
   const { data: custData } = useQuery<{ customers: CustomerOption[] }>(CUSTOMERS);
+  const { data: leadData } = useQuery<{ leads: LeadOption[] }>(LEADS);
   const [create] = useMutation(CREATE_MANUAL_ORDER);
   const [updateOrder] = useMutation(UPDATE_MANUAL_ORDER);
 
@@ -56,8 +58,10 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
 
   function addMenuItem(m: MenuOption) {
     const items = getValues("items");
-    const idx = items.findIndex((it) => it.menuItemId === m.id);
-    if (idx >= 0) update(idx, { ...items[idx], qty: Number(items[idx].qty) + 1 });
+    // Match by name so a prefilled (edit-mode) line of the same dish is
+    // incremented instead of appended as a duplicate.
+    const idx = items.findIndex((it) => it.name === m.name);
+    if (idx >= 0) update(idx, { ...items[idx], menuItemId: m.id, qty: Number(items[idx].qty) + 1 });
     else append({ menuItemId: m.id, name: m.name, price: m.price, qty: 1, spiceLevel: 0 });
   }
 
@@ -101,6 +105,7 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
           watch={watch}
           setValue={setValue}
           customers={custData?.customers ?? []}
+          leads={leadData?.leads ?? []}
           fields={fields}
           totals={totals}
           isDelivery={isDelivery}

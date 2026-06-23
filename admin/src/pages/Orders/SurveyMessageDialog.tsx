@@ -12,43 +12,8 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { SETTINGS } from "../../graphql/queries";
+import { DEFAULT_SURVEY_TEMPLATE, fillSurveyTemplate } from "../../constants/surveyTemplate";
 import type { Order } from "./types";
-
-/** Intro line, dynamic by order status. */
-const STATUS_INTRO: Record<string, string> = {
-  DELIVERED:
-    "We hope you enjoyed your meal. We would greatly appreciate it if you could take a moment to share your feedback and rate your experience using the link below:",
-  OUT_FOR_DELIVERY:
-    "Your order is out for delivery and will reach you shortly. Once it arrives, we'd love your feedback using the link below:",
-  PREPARING:
-    "Your order is being freshly prepared. After you've enjoyed it, please share your feedback using the link below:",
-  CONFIRMED:
-    "Your order has been confirmed and will be prepared soon. Afterwards, we'd love your feedback using the link below:",
-  PLACED: "We've received your order. Once it's delivered, we'd love your feedback using the link below:",
-  CANCELLED: "We're sorry your order was cancelled. We'd still value your feedback using the link below:",
-};
-
-function buildMessage(o: Order, brandName: string, website: string): string {
-  const name = o.user?.name ?? o.customerName ?? "there";
-  const surveyLink = o.ratingToken ? `${window.location.origin}/survey/${o.id}/${o.ratingToken}` : "";
-  const intro = STATUS_INTRO[o.status] ?? STATUS_INTRO.PLACED;
-  return `Hi ${name},
-
-Greetings from ${brandName}!
-
-${intro}
-
-${surveyLink}
-
-Your feedback helps us improve and serve you better. If you have any upcoming orders or special requirements, please feel free to let us know.
-
-Thank you for choosing ${brandName}. We look forward to serving you again!
-
-Best Regards,
-Team ${brandName} 🍛🙏
-Website: ${website}
-Receipt no: ${o.orderNumber}`;
-}
 
 interface Props {
   order: Order;
@@ -56,10 +21,23 @@ interface Props {
 }
 
 export default function SurveyMessageDialog({ order, onClose }: Readonly<Props>) {
-  const { data } = useQuery<{ settings?: { brandName?: string; website?: string } }>(SETTINGS);
+  const { data } = useQuery<{ settings?: { brandName?: string; website?: string; surveyMessageTemplate?: string } }>(SETTINGS);
   const brandName = data?.settings?.brandName || "Didi Bhaiya ki Biryani";
   const website = data?.settings?.website || "didibhaiyakibiryani.com";
-  const message = useMemo(() => buildMessage(order, brandName, website), [order, brandName, website]);
+  const template = data?.settings?.surveyMessageTemplate || DEFAULT_SURVEY_TEMPLATE;
+
+  const message = useMemo(
+    () =>
+      fillSurveyTemplate(template, {
+        name: order.user?.name ?? order.customerName ?? "there",
+        surveyLink: order.ratingToken ? `${window.location.origin}/survey/${order.id}/${order.ratingToken}` : "",
+        orderNumber: order.orderNumber,
+        brandName,
+        website,
+      }),
+    [order, brandName, website, template]
+  );
+
   const ref = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
@@ -82,7 +60,7 @@ export default function SurveyMessageDialog({ order, onClose }: Readonly<Props>)
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" gutterBottom>
-          Edit if you like, then copy and send it to the customer.
+          Edit if you like, then copy and send it to the customer. Manage the template under Survey Message.
         </Typography>
         <Box
           ref={ref}

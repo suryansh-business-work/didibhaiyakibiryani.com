@@ -18,7 +18,7 @@ const STRING_FIELDS = new Set([
   "supportPhone", "supportEmail", "feedbackEmail", "website", "fssaiLicense",
   "instagramUrl", "facebookUrl", "youtubeUrl",
   "storeOpenTime", "storeCloseTime", "storeTimezone",
-  "gstLegalName", "gstNumber", "surveyUrl",
+  "gstLegalName", "gstNumber", "surveyUrl", "surveyMessageTemplate",
 ]);
 const NUMBER_FIELDS = new Set([
   "minDeliveryCost", "perKmCharge", "freeDeliveryAbove", "storeLat", "storeLng",

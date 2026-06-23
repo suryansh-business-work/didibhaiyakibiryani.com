@@ -4,13 +4,12 @@ import { useQuery } from "@apollo/client";
 import {
   Alert,
   AppBar,
+  Avatar,
   Box,
   Button,
   Drawer,
   IconButton,
-  List,
   ListItemButton,
-  ListItemIcon,
   ListItemText,
   Toolbar,
   Typography,
@@ -18,62 +17,16 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
 import BrandLogo from "./BrandLogo";
+import SidebarNav from "./SidebarNav";
 import { useAuth } from "../auth";
 import { SETTINGS } from "../graphql/queries";
-import {
-  IGrid,
-  IOrders,
-  IMenu,
-  ITag,
-  ILayers,
-  IImage,
-  IBuilding,
-  IParty,
-  IUsers,
-  IRupee,
-  IBank,
-  IBike,
-  IClock,
-  IHeadset,
-  ISend,
-  IPalette,
-  IPlug,
-} from "./icons";
 
-const DRAWER_W = 246;
+const DRAWER_W = 280;
 
-const NAV = [
-  { to: "/", label: "Dashboard", icon: IGrid, end: true },
-  { to: "/orders", label: "Orders", icon: IOrders },
-  { to: "/payments", label: "Payments", icon: IRupee },
-  { to: "/finance", label: "Finance", icon: IBank },
-  { to: "/menu", label: "Menu", icon: IMenu },
-  { to: "/categories", label: "Categories", icon: ILayers },
-  { to: "/slider", label: "Slider", icon: IImage },
-  { to: "/societies", label: "Societies", icon: IBuilding },
-  { to: "/coupons", label: "Coupons", icon: ITag },
-  { to: "/party-orders", label: "Party Orders", icon: IParty },
-  { to: "/customers", label: "Customers", icon: IUsers },
-  { to: "/riders", label: "Riders", icon: IBike },
-  { to: "/support", label: "Support", icon: IHeadset },
-  { to: "/campaigns", label: "Campaigns", icon: ISend },
-  { to: "/store", label: "Store", icon: IClock },
-  { to: "/branding", label: "Branding", icon: IPalette },
-  { to: "/integrations", label: "Integrations", icon: IPlug },
-];
-
-const activeSx = {
-  color: "text.secondary",
-  borderRadius: 2,
-  mb: "2px",
-  "& .MuiListItemIcon-root": { color: "text.secondary", minWidth: 32 },
-  "&:hover": { bgcolor: "rgba(255,255,255,0.04)", color: "text.primary" },
-  "&.active": {
-    bgcolor: "rgba(228,182,92,0.13)",
-    color: "primary.main",
-    "& .MuiListItemIcon-root": { color: "primary.main" },
-  },
-};
+function initials(name?: string): string {
+  if (!name) return "?";
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
+}
 
 interface DrawerContentProps {
   name?: string;
@@ -93,21 +46,18 @@ function DrawerContent({ name, role, onNav, onLogout }: Readonly<DrawerContentPr
         </Box>
       </Box>
 
-      <List sx={{ flex: 1, overflowY: "auto" }}>
-        {NAV.map((n) => {
-          const Icon = n.icon;
-          return (
-            <ListItemButton key={n.to} component={NavLink} to={n.to} end={n.end} onClick={onNav} sx={activeSx}>
-              <ListItemIcon><Icon /></ListItemIcon>
-              <ListItemText primary={n.label} primaryTypographyProps={{ fontSize: "0.92rem", fontWeight: 600 }} />
-            </ListItemButton>
-          );
-        })}
-      </List>
+      <SidebarNav onNav={onNav} />
 
-      <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}>
-        <Typography variant="body2" fontWeight={700}>{name}</Typography>
-        <Typography variant="caption" color="text.secondary">{role}</Typography>
+      <Box sx={{ borderTop: 1, borderColor: "divider", pt: 1.5, mt: 1 }}>
+        <ListItemButton component={NavLink} to="/profile" onClick={onNav} sx={{ borderRadius: 2, "&.active": { bgcolor: "rgba(228,182,92,0.13)" } }}>
+          <Avatar sx={{ width: 34, height: 34, mr: 1.25, bgcolor: "primary.main", color: "#1a1206", fontWeight: 800, fontSize: "0.85rem" }}>{initials(name)}</Avatar>
+          <ListItemText
+            primary={name}
+            secondary={role}
+            primaryTypographyProps={{ fontWeight: 700, fontSize: "0.9rem", noWrap: true }}
+            secondaryTypographyProps={{ fontSize: "0.7rem", color: "text.secondary" }}
+          />
+        </ListItemButton>
         <Button onClick={onLogout} startIcon={<LogoutIcon />} color="inherit" fullWidth sx={{ justifyContent: "flex-start", mt: 1, color: "text.secondary", "&:hover": { color: "error.main", bgcolor: "rgba(224,88,75,0.12)" } }}>
           Sign out
         </Button>
