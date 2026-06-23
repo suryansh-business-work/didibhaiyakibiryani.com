@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text } from "tamagui";
 import { MY_ORDERS } from "../graphql";
 import { useAuth } from "../auth";
+import { MIcon } from "../components";
 import { brand, inr, STATUS_META } from "../theme";
 
 interface ActiveOrder {
@@ -77,7 +78,10 @@ export function ActiveOrderBar() {
           </Text>
           <Text color={brand.dim} fontSize={12}>Tap to track your order</Text>
         </YStack>
-        <Text color={brand.gold} fontWeight="800">{inr(active.total)} ›</Text>
+        <XStack alignItems="center" gap={2}>
+          <Text color={brand.gold} fontWeight="800">{inr(active.total)}</Text>
+          <MIcon name="chevron-right" size={18} color={brand.gold} />
+        </XStack>
       </XStack>
     </YStack>
   );

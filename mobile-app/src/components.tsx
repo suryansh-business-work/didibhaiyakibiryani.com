@@ -1,11 +1,52 @@
-import { Image } from "react-native";
-import { Text, XStack, YStack } from "tamagui";
+import type { ComponentProps } from "react";
+import { Image } from "expo-image";
+import { Text, XStack, YStack, Button } from "tamagui";
 import Svg, { Ellipse, Circle, Path, G, Defs, RadialGradient, Stop } from "react-native-svg";
+import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { brand } from "./theme";
+
+export type IconName = ComponentProps<typeof MaterialDesignIcons>["name"];
+
+/** Thin wrapper around Material Design Icons so every screen uses the same set. */
+export function MIcon({
+  name,
+  size = 20,
+  color = brand.text,
+}: Readonly<{ name: IconName; size?: number; color?: string }>) {
+  return <MaterialDesignIcons name={name} size={size} color={color} />;
+}
+
+/** Circular back button used in screen headers. */
+export function BackButton({ onPress }: Readonly<{ onPress: () => void }>) {
+  return (
+    <Button
+      size="$3"
+      circular
+      backgroundColor={brand.card}
+      borderColor={brand.border}
+      borderWidth={1}
+      onPress={onPress}
+    >
+      <MIcon name="chevron-left" size={24} color={brand.text} />
+    </Button>
+  );
+}
+
+/**
+ * Request a right-sized, auto-format ImageKit thumbnail (2× for retina) instead
+ * of the full-resolution original — small files load fast on mobile data.
+ */
+function thumbUrl(uri: string, size: number): string {
+  if (!uri.includes("imagekit.io")) return uri;
+  const px = Math.round(size * 2);
+  const sep = uri.includes("?") ? "&" : "?";
+  return `${uri}${sep}tr=w-${px},h-${px},fo-auto`;
+}
 
 /**
  * Food thumbnail. Shows the item's real photo when `uri` is set, otherwise
- * falls back to the stylised biryani-bowl illustration.
+ * falls back to the stylised biryani-bowl illustration. Uses expo-image for
+ * reliable remote loading + caching on both native and the web export.
  */
 export function FoodThumb({
   size = 96,
@@ -15,9 +56,10 @@ export function FoodThumb({
   if (uri) {
     return (
       <Image
-        source={{ uri }}
+        source={thumbUrl(uri, size)}
         style={{ width: size, height: size, borderRadius: 14, backgroundColor: brand.cardSoft }}
-        resizeMode="cover"
+        contentFit="cover"
+        transition={150}
       />
     );
   }
@@ -83,15 +125,62 @@ export function Badge({
   );
 }
 
+const SPICE_ICON = ["chili-mild", "chili-medium", "chili-hot"] as const;
+
+/** Ordered spice levels (index = stored spiceLevel) shared across screens. */
+export const SPICE_LABELS = ["Mild", "Medium", "Spicy", "Fiery"] as const;
+
 export function Spice({ level }: Readonly<{ level: number }>) {
   if (level <= 0) return <Text fontSize={12} color={brand.muted}>Mild</Text>;
-  return <Text fontSize={12}>{"🌶️".repeat(level)}</Text>;
+  return (
+    <XStack gap={2} alignItems="center">
+      {Array.from({ length: level }, (_, i) => (
+        <MIcon key={i} name={SPICE_ICON[Math.min(level, 3) - 1]} size={14} color={brand.red} />
+      ))}
+    </XStack>
+  );
+}
+
+/** Chip row to pick a spice level. Reused on the item page and in the cart so
+ * the customer can set spice at order time. `value` is the current level. */
+export function SpicePicker({
+  value,
+  onChange,
+  size = "$2.5",
+}: Readonly<{
+  value: number;
+  onChange: (level: number) => void;
+  size?: ComponentProps<typeof Button>["size"];
+}>) {
+  return (
+    <XStack gap={8} flexWrap="wrap">
+      {SPICE_LABELS.map((label, level) => {
+        const active = value === level;
+        return (
+          <Button
+            key={label}
+            size={size}
+            borderRadius={999}
+            backgroundColor={active ? "rgba(228,182,92,0.16)" : "rgba(255,255,255,0.04)"}
+            borderColor={active ? brand.goldDeep : brand.border}
+            borderWidth={1}
+            color={active ? brand.gold : brand.dim}
+            fontWeight="700"
+            onPress={() => onChange(level)}
+          >
+            {"🌶️".repeat(level) || "○"} {label}
+          </Button>
+        );
+      })}
+    </XStack>
+  );
 }
 
 export function Stars({ rating }: Readonly<{ rating: number }>) {
   return (
-    <Text fontSize={12} color={brand.gold}>
-      ★ <Text color={brand.dim}>{rating.toFixed(1)}</Text>
-    </Text>
+    <XStack gap={3} alignItems="center">
+      <MIcon name="star" size={13} color={brand.gold} />
+      <Text fontSize={12} color={brand.dim}>{rating.toFixed(1)}</Text>
+    </XStack>
   );
 }

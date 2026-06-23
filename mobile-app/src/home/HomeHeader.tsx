@@ -1,5 +1,6 @@
 import { XStack, YStack, Text } from "tamagui";
 import { brand } from "../theme";
+import { MIcon } from "../components";
 import { useSettings } from "../settings";
 import { FadeInView } from "../animations";
 import { HERO_STATS } from "../config";
@@ -63,7 +64,7 @@ function CartButton({ count, onPress }: Readonly<{ count: number; onPress: () =>
       pressStyle={{ opacity: 0.8, scale: 0.94 }}
       onPress={onPress}
     >
-      <Text fontSize={18}>🛒</Text>
+      <MIcon name="cart-outline" size={20} color={brand.text} />
       {count > 0 && (
         <YStack
           position="absolute"

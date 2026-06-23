@@ -7,15 +7,13 @@ import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { MENU_ITEM } from "../../src/graphql";
 import { useCart } from "../../src/cart";
 import { brand, inr } from "../../src/theme";
-import { FoodThumb, Badge, Stars } from "../../src/components";
+import { FoodThumb, Badge, Stars, BackButton, SpicePicker } from "../../src/components";
 
 interface Item {
   id: string; name: string; description?: string; price: number; image?: string; spiceLevel: number;
   serves: string; badge: string; isAvailable: boolean; rating: number; ratingCount: number;
   category?: { name: string } | null;
 }
-
-const SPICE_LABELS = ["Mild", "Medium", "Spicy", "Fiery"];
 
 export default function ItemDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,7 +35,7 @@ export default function ItemDetail() {
     <YStack flex={1} backgroundColor={brand.bg}>
       {/* Top bar */}
       <XStack paddingTop={insets.top + 8} paddingHorizontal={16} paddingBottom={8} alignItems="center">
-        <Button size="$3" circular backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} color={brand.text} onPress={() => router.back()}>‹</Button>
+        <BackButton onPress={() => router.back()} />
       </XStack>
 
       <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 30, gap: 16 }}>
@@ -63,23 +61,7 @@ export default function ItemDetail() {
         {/* Spice selector */}
         <YStack gap={10}>
           <Text fontWeight="800" color={brand.text}>Spice level</Text>
-          <XStack gap={8} flexWrap="wrap">
-            {SPICE_LABELS.map((label, lvl) => (
-              <Button
-                key={lvl}
-                size="$2.5"
-                borderRadius={999}
-                backgroundColor={chosenSpice === lvl ? "rgba(228,182,92,0.16)" : "rgba(255,255,255,0.04)"}
-                borderColor={chosenSpice === lvl ? brand.goldDeep : brand.border}
-                borderWidth={1}
-                color={chosenSpice === lvl ? brand.gold : brand.dim}
-                fontWeight="700"
-                onPress={() => setSpice(lvl)}
-              >
-                {"🌶️".repeat(lvl) || "○"} {label}
-              </Button>
-            ))}
-          </XStack>
+          <SpicePicker value={chosenSpice} onChange={setSpice} />
         </YStack>
 
         {/* Quantity */}

@@ -2,13 +2,16 @@ import { useState } from "react";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useMutation, useQuery } from "@apollo/client";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { YStack, XStack, Text, Button, Spinner, Input } from "tamagui";
+import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { ME, ADD_ADDRESS, REMOVE_ADDRESS } from "../src/graphql";
 import { useAuth } from "../src/auth";
 import { brand } from "../src/theme";
-import { Field } from "../src/checkout/fields";
 import { SocietyPicker, type Society } from "../src/checkout/SocietyPicker";
+import { RHFTextField, BlockPicker, addressSchema, type AddressForm } from "../src/form";
+import { BackButton, MIcon } from "../src/components";
 
 interface Address {
   id: string;
@@ -29,11 +32,21 @@ export default function Addresses() {
   const [removeAddr, { loading: removing }] = useMutation(REMOVE_ADDRESS);
 
   const [showForm, setShowForm] = useState(false);
-  const [label, setLabel] = useState("");
   const [society, setSociety] = useState<Society | null>(null);
-  const [flatBlock, setFlatBlock] = useState("");
   const [isDefault, setIsDefault] = useState(false);
-  const [error, setError] = useState("");
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    setError,
+    formState: { errors },
+  } = useForm<AddressForm>({
+    resolver: zodResolver(addressSchema),
+    defaultValues: { label: "", societyId: "", flatNumber: "", block: "" },
+  });
 
   if (!authLoading && !user) {
     return (
@@ -46,25 +59,29 @@ export default function Addresses() {
 
   const addresses = data?.me?.addresses ?? [];
 
-  function resetForm() {
-    setLabel("");
-    setSociety(null);
-    setFlatBlock("");
-    setIsDefault(false);
+  function pickSociety(s: Society) {
+    setSociety(s);
+    setValue("societyId", s.id, { shouldValidate: true });
   }
 
-  async function submit() {
-    setError("");
-    if (!society || !flatBlock.trim()) {
-      setError("Please pick a society and enter your flat number & block.");
+  function closeForm() {
+    setShowForm(false);
+    setSociety(null);
+    setIsDefault(false);
+    reset();
+  }
+
+  async function onSubmit(form: AddressForm) {
+    if (!society) {
+      setError("societyId", { message: "Select your society" });
       return;
     }
     try {
       await addAddr({
         variables: {
           input: {
-            label: label.trim() || "Home",
-            line1: flatBlock.trim(),
+            label: form.label?.trim() || "Home",
+            line1: `Flat ${form.flatNumber.trim()}, Block ${form.block}`,
             line2: society.area || undefined,
             city: society.name,
             pincode: society.pincode || "",
@@ -72,11 +89,10 @@ export default function Addresses() {
           },
         },
       });
-      resetForm();
-      setShowForm(false);
+      closeForm();
       await refetch();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Could not add address.");
+      setError("flatNumber", { message: e instanceof Error ? e.message : "Could not add address." });
     }
   }
 
@@ -92,7 +108,7 @@ export default function Addresses() {
   return (
     <YStack flex={1} backgroundColor={brand.bg}>
       <XStack paddingTop={insets.top + 8} paddingHorizontal={16} paddingBottom={10} alignItems="center" gap={12}>
-        <Button size="$3" circular backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} color={brand.text} onPress={() => router.back()}>‹</Button>
+        <BackButton onPress={() => router.back()} />
         <Text fontSize={22} fontWeight="800" color={brand.text}>Saved addresses</Text>
       </XStack>
 
@@ -102,7 +118,7 @@ export default function Addresses() {
         ) : addresses.length === 0 && !showForm ? (
           <YStack gap={12}>
             <YStack alignItems="center" padding={28} gap={12}>
-              <Text fontSize={40}>📍</Text>
+              <MIcon name="map-marker-outline" size={40} color={brand.gold} />
               <Text color={brand.muted} textAlign="center">No saved addresses yet.</Text>
             </YStack>
             <Button backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" onPress={() => setShowForm(true)}>
@@ -122,17 +138,8 @@ export default function Addresses() {
                     <Text fontSize={13} color={brand.dim}>{a.line1}</Text>
                     <Text fontSize={12} color={brand.muted}>{a.city}{a.pincode ? ` — ${a.pincode}` : ""}</Text>
                   </YStack>
-                  <Button
-                    size="$2"
-                    backgroundColor="rgba(224,88,75,0.12)"
-                    borderColor="rgba(224,88,75,0.4)"
-                    borderWidth={1}
-                    color={brand.red}
-                    fontWeight="700"
-                    disabled={removing}
-                    onPress={() => deleteAddress(a.id)}
-                  >
-                    ✕
+                  <Button size="$2" circular backgroundColor="rgba(224,88,75,0.12)" borderColor="rgba(224,88,75,0.4)" borderWidth={1} disabled={removing} onPress={() => deleteAddress(a.id)}>
+                    <MIcon name="trash-can-outline" size={16} color={brand.red} />
                   </Button>
                 </XStack>
               </YStack>
@@ -149,17 +156,16 @@ export default function Addresses() {
           <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={12} padding={16} gap={10}>
             <Text fontWeight="800" color={brand.text} fontSize={15}>Add new address</Text>
 
-            <YStack gap={5}>
-              <Text fontSize={12} color={brand.muted} fontWeight="700">Label</Text>
-              <Input value={label} onChangeText={setLabel} placeholder="e.g. Home, Office" backgroundColor={brand.bgSoft} borderColor={brand.borderStrong} color={brand.text} placeholderTextColor={brand.faint} />
-            </YStack>
+            <RHFTextField control={control} name="label" label="Label" placeholder="e.g. Home, Office" error={errors.label?.message} />
 
             <YStack gap={5}>
               <Text fontSize={12} color={brand.muted} fontWeight="700">Society</Text>
-              <SocietyPicker selectedId={society?.id ?? null} onSelect={setSociety} />
+              <SocietyPicker selectedId={watch("societyId") || null} onSelect={pickSociety} />
+              {errors.societyId ? <Text fontSize={12} color={brand.red}>{errors.societyId.message}</Text> : null}
             </YStack>
 
-            <Field label="Flat no. & Block" value={flatBlock} onChange={setFlatBlock} />
+            <RHFTextField control={control} name="flatNumber" label="Flat number" keyboard="number-pad" error={errors.flatNumber?.message} />
+            <BlockPicker label="Block" value={watch("block") ?? ""} onChange={(b) => setValue("block", b, { shouldValidate: true })} error={errors.block?.message} />
 
             <XStack gap={10} alignItems="center" paddingVertical={8}>
               <Button
@@ -176,13 +182,11 @@ export default function Addresses() {
               </Button>
             </XStack>
 
-            {error && <Text color={brand.red} fontSize={12}>{error}</Text>}
-
             <XStack gap={10}>
-              <Button flex={1} backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} color={brand.text} fontWeight="700" onPress={() => { setShowForm(false); setError(""); }}>
+              <Button flex={1} backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} color={brand.text} fontWeight="700" onPress={closeForm}>
                 Cancel
               </Button>
-              <Button flex={1} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" disabled={adding} onPress={submit}>
+              <Button flex={1} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" disabled={adding} onPress={handleSubmit(onSubmit)}>
                 {adding ? "Saving…" : "Save address"}
               </Button>
             </XStack>

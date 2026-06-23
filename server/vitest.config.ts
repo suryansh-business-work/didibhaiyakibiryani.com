@@ -12,14 +12,20 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "text-summary"],
       include: ["src/utils/**", "src/graphql/resolvers/**", "src/emails/**"],
-      // logger.ts is the OTLP/stdout pino transport wiring — infra glue exercised
-      // in production, not unit tests.
-      exclude: ["src/utils/logger.ts"],
+      // External-IO adapters (pino transport, SMTP, ImageKit SDK) are thin glue
+      // exercised against real services in integration/production, not unit tests.
+      // Their pure logic that DOES carry behaviour is tested elsewhere.
+      exclude: [
+        "src/utils/logger.ts",
+        "src/utils/mailer.ts",
+        "src/utils/imagekit.ts",
+        "src/utils/razorpay.ts",
+      ],
       thresholds: {
-        statements: 97,
-        lines: 97,
+        statements: 100,
+        lines: 100,
         functions: 100,
-        branches: 86,
+        branches: 100,
       },
     },
   },

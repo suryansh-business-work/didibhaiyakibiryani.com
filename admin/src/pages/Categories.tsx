@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { CATEGORIES } from "../graphql/queries";
 import { CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY } from "../graphql/mutations";
@@ -6,12 +8,13 @@ import Layout from "../components/Layout";
 import { AsyncList, Modal } from "../components/ui";
 import { IPlus } from "../components/icons";
 import { useAlert, useConfirm } from "../components/dialog";
+import { RHFField, RHFCheckbox, categorySchema, type CategoryForm } from "../form";
 
 interface Cat {
   id: string; name: string; description?: string; sortOrder: number;
   isActive: boolean; itemCount: number;
 }
-const BLANK = { name: "", description: "", sortOrder: 0, isActive: true };
+const BLANK: CategoryForm = { name: "", description: "", sortOrder: 0, isActive: true };
 
 export default function Categories() {
   const { data, loading, refetch } = useQuery<{ categories: Cat[] }>(CATEGORIES);
@@ -24,30 +27,37 @@ export default function Categories() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Cat | null>(null);
-  const [form, setForm] = useState({ ...BLANK });
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<CategoryForm>({ resolver: zodResolver(categorySchema), defaultValues: { ...BLANK } });
 
   const cats = data?.categories ?? [];
 
-  function openNew() { setEditing(null); setForm({ ...BLANK }); setErr(""); setOpen(true); }
+  function openNew() {
+    setEditing(null);
+    reset({ ...BLANK });
+    setOpen(true);
+  }
   function openEdit(c: Cat) {
     setEditing(c);
-    setForm({ name: c.name, description: c.description ?? "", sortOrder: c.sortOrder, isActive: c.isActive });
-    setErr(""); setOpen(true);
+    reset({ name: c.name, description: c.description ?? "", sortOrder: c.sortOrder, isActive: c.isActive });
+    setOpen(true);
   }
 
-  async function save() {
-    if (!form.name.trim()) { setErr("Name is required."); return; }
-    setBusy(true); setErr("");
-    const input = { name: form.name.trim(), description: form.description, sortOrder: Number(form.sortOrder), isActive: form.isActive };
+  async function onSave(form: CategoryForm) {
+    const input = { name: form.name.trim(), description: form.description, sortOrder: form.sortOrder, isActive: form.isActive };
     try {
       if (editing) await update({ variables: { id: editing.id, input } });
       else await create({ variables: { input } });
-      setOpen(false); await refetch();
+      setOpen(false);
+      await refetch();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not save.");
-    } finally { setBusy(false); }
+      setError("root", { message: e instanceof Error ? e.message : "Could not save." });
+    }
   }
 
   async function remove(c: Cat) {
@@ -62,10 +72,7 @@ export default function Categories() {
       await del({ variables: { id: c.id } });
       await refetch();
     } catch (e: unknown) {
-      await notify({
-        title: "Could not delete",
-        message: e instanceof Error ? e.message : "Could not delete.",
-      });
+      await notify({ title: "Could not delete", message: e instanceof Error ? e.message : "Could not delete." });
     }
   }
 
@@ -107,14 +114,14 @@ export default function Categories() {
           onClose={() => setOpen(false)}
           footer={<>
             <button className="btn btn-ghost" onClick={() => setOpen(false)}>Cancel</button>
-            <button className="btn btn-gold" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+            <button className="btn btn-gold" onClick={handleSubmit(onSave)} disabled={isSubmitting}>{isSubmitting ? "Saving…" : "Save"}</button>
           </>}
         >
-          <div className="field"><label>Name</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-          <div className="field"><label>Description</label><input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-          <div className="field"><label>Sort order</label><input type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })} /></div>
-          <label className="check"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
-          {err && <div className="error-text">{err}</div>}
+          <RHFField control={control} name="name" label="Name" error={errors.name?.message} />
+          <RHFField control={control} name="description" label="Description" error={errors.description?.message} />
+          <RHFField control={control} name="sortOrder" label="Sort order" type="number" error={errors.sortOrder?.message} />
+          <RHFCheckbox control={control} name="isActive" label="Active" />
+          {errors.root && <div className="error-text">{errors.root.message}</div>}
         </Modal>
       )}
     </Layout>

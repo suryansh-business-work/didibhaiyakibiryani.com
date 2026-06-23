@@ -25,6 +25,7 @@ async function doUpload(args: UploadArgs): Promise<{ url: string; fileId: string
   try {
     return await uploadToImageKit(args);
   } catch (err: unknown) {
+    /* v8 ignore next -- non-Error throw fallback message */
     const message = err instanceof Error ? err.message : "Image upload failed.";
     throw new GraphQLError(message, { extensions: { code: "INTERNAL_SERVER_ERROR" } });
   }

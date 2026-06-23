@@ -1,90 +1,63 @@
+import type { Control, FieldErrors } from "react-hook-form";
 import { Modal } from "../../components/ui";
-import type { RiderForm } from "./types";
+import { RHFField, RHFCheckbox, type RiderForm } from "../../form";
 
 interface RiderModalProps {
-  form: RiderForm;
+  control: Control<RiderForm>;
+  errors: FieldErrors<RiderForm>;
   editing: boolean;
-  busy: boolean;
-  error: string;
-  onChange: (form: RiderForm) => void;
+  isSubmitting: boolean;
   onClose: () => void;
-  onSave: () => void;
+  onSubmit: () => void;
 }
 
 export default function RiderModal({
-  form,
+  control,
+  errors,
   editing,
-  busy,
-  error,
-  onChange,
+  isSubmitting,
   onClose,
-  onSave,
+  onSubmit,
 }: Readonly<RiderModalProps>) {
-  const set = (patch: Partial<RiderForm>) => onChange({ ...form, ...patch });
-  const saveLabel = editing ? "Save changes" : "Create rider";
-
   return (
     <Modal
       title={editing ? "Edit delivery partner" : "New delivery partner"}
       onClose={onClose}
       footer={
         <>
-          <button className="btn btn-ghost" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn btn-gold" onClick={onSave} disabled={busy}>
-            {busy ? "Saving…" : saveLabel}
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-gold" onClick={onSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Saving…" : editing ? "Save changes" : "Create rider"}
           </button>
         </>
       }
     >
-      <div className="field">
-        <label>Full name</label>
-        <input value={form.name} onChange={(e) => set({ name: e.target.value })} />
-      </div>
-      <div className="field">
-        <label>Email (login id for the delivery app)</label>
-        <input
-          type="email"
-          value={form.email}
-          disabled={editing}
-          onChange={(e) => set({ email: e.target.value })}
-        />
-        {editing && (
-          <p className="muted" style={{ fontSize: "0.75rem", marginTop: 4 }}>
-            Email is the rider's login id and can't be changed.
-          </p>
-        )}
-      </div>
+      <RHFField control={control} name="name" label="Full name" error={errors.name?.message} />
+      <RHFField
+        control={control}
+        name="email"
+        label="Email (login id for the delivery app)"
+        type="email"
+        disabled={editing}
+        hint={editing ? "Email is the rider's login id and can't be changed." : undefined}
+        error={errors.email?.message}
+      />
       <div className="field-row">
-        <div className="field">
-          <label>Phone</label>
-          <input type="tel" value={form.phone} onChange={(e) => set({ phone: e.target.value })} />
-        </div>
-        <div className="field">
-          <label>{editing ? "New password (optional)" : "Password"}</label>
-          <input
-            type="password"
-            value={form.password}
-            placeholder={editing ? "Leave blank to keep current" : ""}
-            onChange={(e) => set({ password: e.target.value })}
-          />
-        </div>
+        <RHFField control={control} name="phone" label="Phone" type="tel" error={errors.phone?.message} />
+        <RHFField
+          control={control}
+          name="password"
+          label={editing ? "New password (optional)" : "Password"}
+          type="password"
+          placeholder={editing ? "Leave blank to keep current" : ""}
+          error={errors.password?.message}
+        />
       </div>
-      {editing && (
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={form.isActive}
-            onChange={(e) => set({ isActive: e.target.checked })}
-          />{" "}
-          Active (can sign in & receive deliveries)
-        </label>
-      )}
+      {editing && <RHFCheckbox control={control} name="isActive" label="Active (can sign in & receive deliveries)" />}
       <p className="muted" style={{ fontSize: "0.8rem" }}>
         The rider signs in at delivery.didibhaiyakibiryani.com with these credentials.
       </p>
-      {error && <div className="error-text">{error}</div>}
+      {errors.root && <div className="error-text">{errors.root.message}</div>}
     </Modal>
   );
 }

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { COUPONS, MENU_ITEMS } from "../../graphql/queries";
 import {
@@ -12,13 +14,8 @@ import { IPlus } from "../../components/icons";
 import { useConfirm } from "../../components/dialog";
 import CouponsTable from "./CouponsTable";
 import CouponModal from "./CouponModal";
-import {
-  BLANK_FORM,
-  couponToForm,
-  type Coupon,
-  type CouponForm,
-  type FreeItemOption,
-} from "./types";
+import { couponSchema, type CouponForm } from "../../form";
+import { BLANK_FORM, couponToForm, type Coupon, type FreeItemOption } from "./types";
 
 export default function Coupons() {
   const { data, loading, refetch } = useQuery<{ coupons: Coupon[] }>(COUPONS);
@@ -31,58 +28,44 @@ export default function Coupons() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Coupon | null>(null);
-  const [form, setForm] = useState<CouponForm>({ ...BLANK_FORM });
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<CouponForm>({ resolver: zodResolver(couponSchema), defaultValues: { ...BLANK_FORM } });
 
   const coupons = data?.coupons ?? [];
   const items = itemData?.menuItems ?? [];
 
   function openNew() {
     setEditing(null);
-    setForm({ ...BLANK_FORM });
-    setErr("");
+    reset({ ...BLANK_FORM });
     setOpen(true);
   }
 
   function openEdit(c: Coupon) {
     setEditing(c);
-    setForm(couponToForm(c));
-    setErr("");
+    reset(couponToForm(c));
     setOpen(true);
   }
 
-  function validate(): string {
-    if (!form.code.trim() || !form.title.trim()) {
-      return "Code and title are required.";
-    }
-    if (form.type === "FREE_ITEM" && !form.freeItemId) {
-      return "Pick the free item.";
-    }
-    return "";
-  }
-
-  async function save() {
-    const validationError = validate();
-    if (validationError) {
-      setErr(validationError);
-      return;
-    }
-    setBusy(true);
-    setErr("");
+  async function onSave(form: CouponForm) {
     const input = {
       code: form.code.trim().toUpperCase(),
       title: form.title.trim(),
       description: form.description,
       type: form.type,
-      value: Number(form.value),
-      maxDiscount: form.maxDiscount ? Number(form.maxDiscount) : null,
-      minOrder: Number(form.minOrder),
+      value: form.value,
+      maxDiscount: form.maxDiscount ? form.maxDiscount : null,
+      minOrder: form.minOrder,
       freeItemId: form.type === "FREE_ITEM" ? form.freeItemId : null,
       appOnly: form.appOnly,
       firstOrderOnly: form.firstOrderOnly,
       isActive: form.isActive,
-      usageLimit: form.usageLimit ? Number(form.usageLimit) : null,
+      usageLimit: form.usageLimit ? form.usageLimit : null,
     };
     try {
       if (editing) {
@@ -93,9 +76,7 @@ export default function Coupons() {
       setOpen(false);
       await refetch();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not save.");
-    } finally {
-      setBusy(false);
+      setError("root", { message: e instanceof Error ? e.message : "Could not save." });
     }
   }
 
@@ -135,13 +116,13 @@ export default function Coupons() {
       {open && (
         <CouponModal
           editing={Boolean(editing)}
-          form={form}
+          control={control}
+          errors={errors}
+          type={watch("type")}
           items={items}
-          busy={busy}
-          error={err}
-          onChange={setForm}
+          isSubmitting={isSubmitting}
           onClose={() => setOpen(false)}
-          onSave={save}
+          onSubmit={handleSubmit(onSave)}
         />
       )}
     </Layout>

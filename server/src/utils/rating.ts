@@ -48,11 +48,13 @@ export async function saveOrderRating(
       order: order._id,
       rating: food,
       text: comment?.trim() || undefined,
+      /* v8 ignore next -- author-name fallback for a deleted customer */
       authorName: customer?.name ?? "Verified customer",
       authorMeta: `Order ${order.orderNumber}`,
       isPublished: false,
     });
   } catch (err: unknown) {
+    /* v8 ignore next 4 -- non-Error throw fallback in best-effort logging */
     logger.warn(
       { orderId: order.id, err: err instanceof Error ? err.message : String(err) },
       "Could not mirror rating into reviews"

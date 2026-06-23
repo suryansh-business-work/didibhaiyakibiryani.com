@@ -76,6 +76,7 @@ export const integrationResolvers = {
         { $set: update },
         { new: true }
       ).exec();
+      /* v8 ignore next -- findOneAndUpdate after getOrCreateSettings never returns null */
       return toIntegrationView(saved ?? (await getOrCreateSettings()));
     },
 

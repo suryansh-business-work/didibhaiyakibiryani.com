@@ -52,12 +52,13 @@ export function DropIn({ children, index }: Readonly<AnimatedBlockProps>) {
   );
 }
 
-/** Bottom bars (cart bar, sticky CTAs) springing up from the bottom edge. */
-export function SpringUp({ children }: Readonly<{ children: ReactNode }>) {
+/** Bottom bars (cart bar, sticky CTAs) springing up from the bottom edge.
+ * `bottom` offsets it above the tab bar / safe area so it never overlaps them. */
+export function SpringUp({ children, bottom = 0 }: Readonly<{ children: ReactNode; bottom?: number }>) {
   return (
     <Animated.View
       entering={SlideInDown.springify().damping(18).stiffness(160)}
-      style={{ position: "absolute", left: 0, right: 0, bottom: 0 }}
+      style={{ position: "absolute", left: 0, right: 0, bottom }}
     >
       {children}
     </Animated.View>

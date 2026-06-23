@@ -5,6 +5,7 @@ import { YStack, XStack, Text, Button, Spinner, Separator } from "tamagui";
 import { useAuth } from "../../src/auth";
 import { useSettings } from "../../src/settings";
 import { brand } from "../../src/theme";
+import { MIcon, type IconName } from "../../src/components";
 
 /** Format an "HH:mm" 24h time as a friendly 12-hour label, e.g. "7 PM". */
 function to12h(hhmm: string): string {
@@ -33,7 +34,7 @@ export default function Profile() {
     return (
       <YStack flex={1} backgroundColor={brand.bg} alignItems="center" justifyContent="center" padding={28} gap={14}>
         <YStack width={70} height={70} borderRadius={999} backgroundColor={brand.maroonSoft} alignItems="center" justifyContent="center">
-          <Text fontSize={30}>👋</Text>
+          <MIcon name="hand-wave" size={32} color={brand.gold} />
         </YStack>
         <Text fontSize={22} fontWeight="800" color={brand.text}>Welcome to the family</Text>
         <Text color={brand.muted} textAlign="center">Log in to save addresses, reorder in a tap and earn rewards.</Text>
@@ -58,17 +59,17 @@ export default function Profile() {
         </XStack>
 
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} overflow="hidden">
-          <Row label="Saved addresses" value={`${user.addresses?.length ?? 0}`} onPress={() => router.push("../addresses")} chevron />
+          <Row icon="map-marker-outline" label="Saved addresses" value={`${user.addresses?.length ?? 0}`} onPress={() => router.push("../addresses")} chevron />
           <Separator borderColor={brand.border} />
-          <Row label="My orders" onPress={() => router.push("/orders")} chevron />
+          <Row icon="receipt-text-outline" label="My orders" onPress={() => router.push("/orders")} chevron />
           <Separator borderColor={brand.border} />
-          <Row label="Offers & coupons" onPress={() => router.push("/offers")} chevron />
+          <Row icon="tag-heart-outline" label="Offers & coupons" onPress={() => router.push("/offers")} chevron />
           <Separator borderColor={brand.border} />
-          <Row label="🎉 Plan a party order" onPress={() => router.push("/party")} chevron />
+          <Row icon="party-popper" label="Plan a party order" onPress={() => router.push("/party")} chevron />
         </YStack>
 
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} overflow="hidden">
-          <Row label="Delivery hours" value={deliveryHours} />
+          <Row icon="clock-outline" label="Delivery hours" value={deliveryHours} />
         </YStack>
 
         <Button
@@ -89,8 +90,8 @@ export default function Profile() {
 }
 
 function Row({
-  label, value, valueColor, chevron, onPress,
-}: Readonly<{ label: string; value?: string; valueColor?: string; chevron?: boolean; onPress?: () => void }>) {
+  icon, label, value, valueColor, chevron, onPress,
+}: Readonly<{ icon?: IconName; label: string; value?: string; valueColor?: string; chevron?: boolean; onPress?: () => void }>) {
   return (
     <XStack
       paddingHorizontal={16}
@@ -100,8 +101,15 @@ function Row({
       pressStyle={onPress ? { backgroundColor: "rgba(255,255,255,0.03)" } : undefined}
       onPress={onPress}
     >
-      <Text color={brand.text} fontWeight="600">{label}</Text>
-      <Text color={valueColor ?? brand.muted} fontWeight="700">{value ?? (chevron ? "›" : "")}</Text>
+      <XStack gap={12} alignItems="center" flex={1}>
+        {icon ? <MIcon name={icon} size={20} color={brand.gold} /> : null}
+        <Text color={brand.text} fontWeight="600">{label}</Text>
+      </XStack>
+      {value ? (
+        <Text color={valueColor ?? brand.muted} fontWeight="700">{value}</Text>
+      ) : chevron ? (
+        <MIcon name="chevron-right" size={20} color={brand.muted} />
+      ) : null}
     </XStack>
   );
 }

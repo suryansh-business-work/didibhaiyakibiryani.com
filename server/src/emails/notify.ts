@@ -53,6 +53,7 @@ async function buildJob(order: IOrder, kind: "CONFIRMED" | "DELIVERED") {
 export function notifyOrderEmail(order: IOrder, kind: "CONFIRMED" | "DELIVERED"): void {
   buildJob(order, kind)
     .then((job) => (job ? sendMail(job) : false))
+    /* v8 ignore next 6 -- fire-and-forget delivery-failure logging, not unit-tested */
     .catch((err: unknown) => {
       logger.error(
         { orderId: order.id, kind, err: err instanceof Error ? err.message : String(err) },

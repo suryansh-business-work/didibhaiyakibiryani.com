@@ -1,34 +1,31 @@
+import { Controller, type Control, type FieldErrors } from "react-hook-form";
 import { Modal } from "../../components/ui";
-import {
-  TYPE_OPTIONS,
-  type CouponForm,
-  type FreeItemOption,
-} from "./types";
+import { RHFField, RHFCheckbox, type CouponForm } from "../../form";
+import { TYPE_OPTIONS, type FreeItemOption } from "./types";
 
 interface CouponModalProps {
   editing: boolean;
-  form: CouponForm;
+  control: Control<CouponForm>;
+  errors: FieldErrors<CouponForm>;
+  type: string;
   items: FreeItemOption[];
-  busy: boolean;
-  error: string;
-  onChange: (form: CouponForm) => void;
+  isSubmitting: boolean;
   onClose: () => void;
-  onSave: () => void;
+  onSubmit: () => void;
 }
 
 export default function CouponModal({
   editing,
-  form,
+  control,
+  errors,
+  type,
   items,
-  busy,
-  error,
-  onChange,
+  isSubmitting,
   onClose,
-  onSave,
+  onSubmit,
 }: Readonly<CouponModalProps>) {
-  const set = (patch: Partial<CouponForm>) => onChange({ ...form, ...patch });
-  const isAmountType = form.type === "PERCENT" || form.type === "FLAT";
-  const valueLabel = form.type === "PERCENT" ? "Percent (%)" : "Amount (₹)";
+  const isAmountType = type === "PERCENT" || type === "FLAT";
+  const valueLabel = type === "PERCENT" ? "Percent (%)" : "Amount (₹)";
 
   return (
     <Modal
@@ -36,133 +33,66 @@ export default function CouponModal({
       onClose={onClose}
       footer={
         <>
-          <button className="btn btn-ghost" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn btn-gold" onClick={onSave} disabled={busy}>
-            {busy ? "Saving…" : "Save"}
-          </button>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-gold" onClick={onSubmit} disabled={isSubmitting}>{isSubmitting ? "Saving…" : "Save"}</button>
         </>
       }
     >
       <div className="field-row">
-        <div className="field">
-          <label>Code</label>
-          <input
-            value={form.code}
-            onChange={(e) => set({ code: e.target.value.toUpperCase() })}
-            placeholder="BIRYANI50"
-          />
-        </div>
+        <RHFField control={control} name="code" label="Code" placeholder="BIRYANI50" error={errors.code?.message} />
         <div className="field">
           <label>Type</label>
-          <select value={form.type} onChange={(e) => set({ type: e.target.value })}>
-            {TYPE_OPTIONS.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+          <Controller
+            control={control}
+            name="type"
+            render={({ field }) => (
+              <select value={field.value} onChange={field.onChange}>
+                {TYPE_OPTIONS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
+            )}
+          />
         </div>
       </div>
-      <div className="field">
-        <label>Title</label>
-        <input value={form.title} onChange={(e) => set({ title: e.target.value })} />
-      </div>
-      <div className="field">
-        <label>Description</label>
-        <input
-          value={form.description}
-          onChange={(e) => set({ description: e.target.value })}
-        />
-      </div>
+      <RHFField control={control} name="title" label="Title" error={errors.title?.message} />
+      <RHFField control={control} name="description" label="Description" error={errors.description?.message} />
 
       {isAmountType && (
         <div className="field-row">
-          <div className="field">
-            <label>{valueLabel}</label>
-            <input
-              type="number"
-              value={form.value}
-              onChange={(e) => set({ value: Number(e.target.value) })}
-            />
-          </div>
-          {form.type === "PERCENT" && (
-            <div className="field">
-              <label>Max discount (₹)</label>
-              <input
-                type="number"
-                value={form.maxDiscount}
-                onChange={(e) => set({ maxDiscount: Number(e.target.value) })}
-              />
-            </div>
+          <RHFField control={control} name="value" label={valueLabel} type="number" error={errors.value?.message} />
+          {type === "PERCENT" && (
+            <RHFField control={control} name="maxDiscount" label="Max discount (₹)" type="number" error={errors.maxDiscount?.message} />
           )}
         </div>
       )}
 
-      {form.type === "FREE_ITEM" && (
+      {type === "FREE_ITEM" && (
         <div className="field">
           <label>Free item</label>
-          <select
-            value={form.freeItemId}
-            onChange={(e) => set({ freeItemId: e.target.value })}
-          >
-            <option value="">Select…</option>
-            {items.map((i) => (
-              <option key={i.id} value={i.id}>
-                {i.name}
-              </option>
-            ))}
-          </select>
+          <Controller
+            control={control}
+            name="freeItemId"
+            render={({ field }) => (
+              <select value={field.value ?? ""} onChange={field.onChange} style={errors.freeItemId ? { borderColor: "var(--red)" } : undefined}>
+                <option value="">Select…</option>
+                {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+              </select>
+            )}
+          />
+          {errors.freeItemId ? <div className="field-error">{errors.freeItemId.message}</div> : null}
         </div>
       )}
 
       <div className="field-row">
-        <div className="field">
-          <label>Min order (₹)</label>
-          <input
-            type="number"
-            value={form.minOrder}
-            onChange={(e) => set({ minOrder: Number(e.target.value) })}
-          />
-        </div>
-        <div className="field">
-          <label>Usage limit (0 = ∞)</label>
-          <input
-            type="number"
-            value={form.usageLimit}
-            onChange={(e) => set({ usageLimit: Number(e.target.value) })}
-          />
-        </div>
+        <RHFField control={control} name="minOrder" label="Min order (₹)" type="number" error={errors.minOrder?.message} />
+        <RHFField control={control} name="usageLimit" label="Usage limit (0 = ∞)" type="number" error={errors.usageLimit?.message} />
       </div>
 
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginTop: 4 }}>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={form.firstOrderOnly}
-            onChange={(e) => set({ firstOrderOnly: e.target.checked })}
-          />{" "}
-          First order only
-        </label>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={form.appOnly}
-            onChange={(e) => set({ appOnly: e.target.checked })}
-          />{" "}
-          App only
-        </label>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={form.isActive}
-            onChange={(e) => set({ isActive: e.target.checked })}
-          />{" "}
-          Active
-        </label>
+        <RHFCheckbox control={control} name="firstOrderOnly" label="First order only" />
+        <RHFCheckbox control={control} name="appOnly" label="App only" />
+        <RHFCheckbox control={control} name="isActive" label="Active" />
       </div>
-      {error && <div className="error-text">{error}</div>}
+      {errors.root && <div className="error-text">{errors.root.message}</div>}
     </Modal>
   );
 }

@@ -1,4 +1,7 @@
 import { inr } from "../../components/ui";
+import type { CouponForm } from "../../form";
+
+export type { CouponForm };
 
 export interface Coupon {
   id: string;
@@ -20,21 +23,6 @@ export interface Coupon {
 export interface FreeItemOption {
   id: string;
   name: string;
-}
-
-export interface CouponForm {
-  code: string;
-  title: string;
-  description: string;
-  type: string;
-  value: number;
-  maxDiscount: number;
-  minOrder: number;
-  freeItemId: string;
-  appOnly: boolean;
-  firstOrderOnly: boolean;
-  isActive: boolean;
-  usageLimit: number;
 }
 
 /** Empty-form defaults (reusable configuration, not business data). */
@@ -89,7 +77,7 @@ export function couponToForm(c: Coupon): CouponForm {
     code: c.code,
     title: c.title,
     description: c.description ?? "",
-    type: c.type,
+    type: c.type as CouponForm["type"],
     value: c.value,
     maxDiscount: c.maxDiscount ?? 0,
     minOrder: c.minOrder,

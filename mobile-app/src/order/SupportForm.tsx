@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useMutation } from "@apollo/client";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as ImagePicker from "expo-image-picker";
-import { YStack, XStack, Text, Button, Input } from "tamagui";
+import { YStack, XStack, Text, Button } from "tamagui";
 import { CREATE_SUPPORT_TICKET, UPLOAD_SUPPORT_IMAGE } from "../graphql";
 import { useSettings } from "../settings";
 import { brand } from "../theme";
-
-const OTHER = "Other (custom subject)";
+import { MIcon } from "../components";
+import { RHFTextField, supportSchema, OTHER_SUBJECT, type SupportForm as SupportFormData } from "../form";
 
 interface SupportFormProps {
   orderId: string;
@@ -16,20 +18,28 @@ interface SupportFormProps {
 /** Raise a support request: subject (admin-managed list + custom), photo, details. */
 export function SupportForm({ orderId, onCreated }: Readonly<SupportFormProps>) {
   const settings = useSettings();
-  const subjects = [...settings.supportSubjects, OTHER];
+  const subjects = [...settings.supportSubjects, OTHER_SUBJECT];
 
-  const [subject, setSubject] = useState("");
-  const [customSubject, setCustomSubject] = useState("");
-  const [body, setBody] = useState("");
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    setError,
+    formState: { errors },
+  } = useForm<SupportFormData>({
+    resolver: zodResolver(supportSchema),
+    defaultValues: { subject: "", customSubject: "", body: "" },
+  });
+  const subject = watch("subject");
+
   const [imageUrl, setImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
 
   const [uploadImage] = useMutation(UPLOAD_SUPPORT_IMAGE);
   const [createTicket, { loading: creating }] = useMutation(CREATE_SUPPORT_TICKET);
 
   async function pickImage() {
-    setError("");
     setUploading(true);
     try {
       const picked = await ImagePicker.launchImageLibraryAsync({
@@ -47,30 +57,21 @@ export function SupportForm({ orderId, onCreated }: Readonly<SupportFormProps>) 
       });
       setImageUrl(data.uploadSupportImage.url);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Could not upload the photo.");
+      setError("root", { message: e instanceof Error ? e.message : "Could not upload the photo." });
     } finally {
       setUploading(false);
     }
   }
 
-  async function submit() {
-    setError("");
-    const finalSubject = subject === OTHER ? customSubject.trim() : subject;
-    if (!finalSubject) {
-      setError("Please choose what you need help with.");
-      return;
-    }
-    if (!body.trim()) {
-      setError("Please describe the issue briefly.");
-      return;
-    }
+  async function onSubmit(data: SupportFormData) {
+    const finalSubject = data.subject === OTHER_SUBJECT ? (data.customSubject?.trim() ?? "") : data.subject;
     try {
       await createTicket({
-        variables: { orderId, subject: finalSubject, body: body.trim(), imageUrl: imageUrl || null },
+        variables: { orderId, subject: finalSubject, body: data.body.trim(), imageUrl: imageUrl || null },
       });
       onCreated();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Could not send — please try again.");
+      setError("root", { message: e instanceof Error ? e.message : "Could not send — please try again." });
     }
   }
 
@@ -88,62 +89,31 @@ export function SupportForm({ orderId, onCreated }: Readonly<SupportFormProps>) 
             borderWidth={1}
             color={subject === s ? brand.gold : brand.dim}
             fontWeight="700"
-            onPress={() => setSubject(s)}
+            onPress={() => setValue("subject", s, { shouldValidate: true })}
           >
             {s}
           </Button>
         ))}
       </XStack>
+      {errors.subject ? <Text fontSize={12} color={brand.red}>{errors.subject.message}</Text> : null}
 
-      {subject === OTHER && (
-        <Input
-          value={customSubject}
-          onChangeText={setCustomSubject}
-          placeholder="Type your subject…"
-          backgroundColor={brand.bgSoft}
-          borderColor={brand.borderStrong}
-          color={brand.text}
-          placeholderTextColor={brand.faint}
-        />
+      {subject === OTHER_SUBJECT && (
+        <RHFTextField control={control} name="customSubject" label="Custom subject" placeholder="Type your subject…" error={errors.customSubject?.message} />
       )}
 
-      <Input
-        value={body}
-        onChangeText={setBody}
-        placeholder="Tell us what happened…"
-        multiline
-        numberOfLines={3}
-        backgroundColor={brand.bgSoft}
-        borderColor={brand.borderStrong}
-        color={brand.text}
-        placeholderTextColor={brand.faint}
-      />
+      <RHFTextField control={control} name="body" label="Details" placeholder="Tell us what happened…" multiline error={errors.body?.message} />
 
       <XStack gap={10} alignItems="center">
-        <Button
-          size="$3"
-          backgroundColor="rgba(228,182,92,0.12)"
-          borderColor={brand.gold}
-          borderWidth={1}
-          color={brand.gold}
-          fontWeight="700"
-          disabled={uploading}
-          onPress={pickImage}
-        >
-          {uploading ? "Uploading…" : imageUrl ? "📷 Change photo" : "📷 Add a photo"}
+        <Button size="$3" backgroundColor="rgba(228,182,92,0.12)" borderColor={brand.gold} borderWidth={1} color={brand.gold} fontWeight="700" disabled={uploading} onPress={pickImage}
+          icon={<MIcon name="camera-outline" size={16} color={brand.gold} />}>
+          {uploading ? "Uploading…" : imageUrl ? "Change photo" : "Add a photo"}
         </Button>
         {imageUrl ? <Text fontSize={12} color={brand.green}>Photo attached ✓</Text> : null}
       </XStack>
 
-      {error ? <Text color={brand.red} fontSize={12}>{error}</Text> : null}
+      {errors.root ? <Text color={brand.red} fontSize={12}>{errors.root.message}</Text> : null}
 
-      <Button
-        backgroundColor={brand.gold}
-        color="#2a1a06"
-        fontWeight="800"
-        disabled={creating || uploading}
-        onPress={submit}
-      >
+      <Button backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" disabled={creating || uploading} onPress={handleSubmit(onSubmit)}>
         {creating ? "Sending…" : "Send to support"}
       </Button>
     </YStack>

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { CATEGORIES, MENU_ITEMS } from "../../graphql/queries";
 import {
@@ -12,7 +14,8 @@ import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
 import MenuTable from "./MenuTable";
 import MenuItemModal from "./MenuItemModal";
-import { BLANK_FORM, type Cat, type Item, type MenuForm } from "./types";
+import { menuItemSchema, type MenuForm } from "../../form";
+import { BLANK_FORM, type Cat, type Item } from "./types";
 
 export default function Menu() {
   const { data: catData } = useQuery<{ categories: Cat[] }>(CATEGORIES);
@@ -27,23 +30,28 @@ export default function Menu() {
 
   const [editing, setEditing] = useState<Item | null>(null);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<MenuForm>({ ...BLANK_FORM });
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<MenuForm>({ resolver: zodResolver(menuItemSchema), defaultValues: { ...BLANK_FORM } });
 
   const cats = catData?.categories ?? [];
   const items = data?.menuItems ?? [];
 
   function openNew() {
     setEditing(null);
-    setForm({ ...BLANK_FORM, categoryId: cats[0]?.id ?? "" });
-    setErr("");
+    reset({ ...BLANK_FORM, categoryId: cats[0]?.id ?? "" });
     setOpen(true);
   }
 
   function openEdit(it: Item) {
     setEditing(it);
-    setForm({
+    reset({
       name: it.name,
       description: it.description ?? "",
       price: it.price,
@@ -51,31 +59,24 @@ export default function Menu() {
       categoryId: it.category?.id ?? "",
       spiceLevel: it.spiceLevel,
       serves: it.serves,
-      badge: it.badge,
+      badge: it.badge as MenuForm["badge"],
       tags: it.tags.join(", "),
       isAvailable: it.isAvailable,
     });
-    setErr("");
     setOpen(true);
   }
 
-  async function save() {
-    setErr("");
-    if (!form.name.trim() || !form.categoryId) {
-      setErr("Name and category are required.");
-      return;
-    }
-    setBusy(true);
+  async function onSave(form: MenuForm) {
     const input = {
       name: form.name.trim(),
       description: form.description,
-      price: Number(form.price),
+      price: form.price,
       image: form.image,
       categoryId: form.categoryId,
-      spiceLevel: Number(form.spiceLevel),
+      spiceLevel: form.spiceLevel,
       serves: form.serves,
       badge: form.badge,
-      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tags: (form.tags ?? "").split(",").map((t) => t.trim()).filter(Boolean),
       isAvailable: form.isAvailable,
     };
     try {
@@ -87,9 +88,7 @@ export default function Menu() {
       setOpen(false);
       await refetch();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not save.");
-    } finally {
-      setBusy(false);
+      setError("root", { message: e instanceof Error ? e.message : "Could not save." });
     }
   }
 
@@ -146,13 +145,14 @@ export default function Menu() {
       {open && (
         <MenuItemModal
           editing={Boolean(editing)}
-          form={form}
+          control={control}
+          errors={errors}
           cats={cats}
-          busy={busy}
-          error={err}
-          onChange={setForm}
+          imageUrl={watch("image") ?? ""}
+          onImageUploaded={(url) => setValue("image", url)}
+          isSubmitting={isSubmitting}
           onClose={() => setOpen(false)}
-          onSave={save}
+          onSubmit={handleSubmit(onSave)}
         />
       )}
     </Layout>

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { SLIDERS } from "../../graphql/queries";
 import { CREATE_SLIDER, UPDATE_SLIDER, DELETE_SLIDER } from "../../graphql/mutations";
@@ -7,18 +9,13 @@ import { AsyncList, Modal } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import ImageUpload from "../../components/ImageUpload";
 import { useAlert, useConfirm } from "../../components/dialog";
+import { RHFField, RHFCheckbox, sliderSchema, type SliderForm } from "../../form";
 
 interface Slide {
-  id: string;
-  imageUrl: string;
-  title?: string;
-  subtitle?: string;
-  linkUrl?: string;
-  sortOrder: number;
-  isActive: boolean;
+  id: string; imageUrl: string; title?: string; subtitle?: string;
+  linkUrl?: string; sortOrder: number; isActive: boolean;
 }
-
-const BLANK = { imageUrl: "", title: "", subtitle: "", linkUrl: "", sortOrder: 0, isActive: true };
+const BLANK: SliderForm = { imageUrl: "", title: "", subtitle: "", linkUrl: "", sortOrder: 0, isActive: true };
 
 export default function Slider() {
   const { data, loading, refetch } = useQuery<{ banners: Slide[] }>(SLIDERS);
@@ -31,21 +28,26 @@ export default function Slider() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Slide | null>(null);
-  const [form, setForm] = useState({ ...BLANK });
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<SliderForm>({ resolver: zodResolver(sliderSchema), defaultValues: { ...BLANK } });
 
   const slides = data?.banners ?? [];
 
   function openNew() {
     setEditing(null);
-    setForm({ ...BLANK });
-    setErr("");
+    reset({ ...BLANK });
     setOpen(true);
   }
   function openEdit(s: Slide) {
     setEditing(s);
-    setForm({
+    reset({
       imageUrl: s.imageUrl,
       title: s.title ?? "",
       subtitle: s.subtitle ?? "",
@@ -53,23 +55,16 @@ export default function Slider() {
       sortOrder: s.sortOrder,
       isActive: s.isActive,
     });
-    setErr("");
     setOpen(true);
   }
 
-  async function save() {
-    if (!form.imageUrl.trim()) {
-      setErr("Please upload an image for the slide.");
-      return;
-    }
-    setBusy(true);
-    setErr("");
+  async function onSave(form: SliderForm) {
     const input = {
       imageUrl: form.imageUrl.trim(),
-      title: form.title.trim(),
-      subtitle: form.subtitle.trim(),
-      linkUrl: form.linkUrl.trim(),
-      sortOrder: Number(form.sortOrder),
+      title: form.title?.trim(),
+      subtitle: form.subtitle?.trim(),
+      linkUrl: form.linkUrl?.trim(),
+      sortOrder: form.sortOrder,
       isActive: form.isActive,
     };
     try {
@@ -78,9 +73,7 @@ export default function Slider() {
       setOpen(false);
       await refetch();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not save.");
-    } finally {
-      setBusy(false);
+      setError("root", { message: e instanceof Error ? e.message : "Could not save." });
     }
   }
 
@@ -96,10 +89,7 @@ export default function Slider() {
       await del({ variables: { id: s.id } });
       await refetch();
     } catch (e: unknown) {
-      await notify({
-        title: "Could not delete",
-        message: e instanceof Error ? e.message : "Could not delete.",
-      });
+      await notify({ title: "Could not delete", message: e instanceof Error ? e.message : "Could not delete." });
     }
   }
 
@@ -107,9 +97,7 @@ export default function Slider() {
     <Layout title="Slider">
       <div className="toolbar">
         <div className="spacer" />
-        <button className="btn btn-gold" onClick={openNew}>
-          <IPlus size={16} /> New slide
-        </button>
+        <button className="btn btn-gold" onClick={openNew}><IPlus size={16} /> New slide</button>
       </div>
 
       <div className="card">
@@ -117,37 +105,23 @@ export default function Slider() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th>Image</th>
-                  <th>Title</th>
-                  <th>Link</th>
-                  <th>Order</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
+                <tr><th>Image</th><th>Title</th><th>Link</th><th>Order</th><th>Status</th><th></th></tr>
               </thead>
               <tbody>
                 {slides.map((s) => (
                   <tr key={s.id}>
-                    <td>
-                      <img src={s.imageUrl} alt="" className="upload-preview" />
-                    </td>
+                    <td><img src={s.imageUrl} alt="" className="upload-preview" /></td>
                     <td className="t-strong">{s.title || "—"}</td>
                     <td className="muted">{s.linkUrl || "—"}</td>
                     <td className="muted">{s.sortOrder}</td>
                     <td>
                       <span className={`badge ${s.isActive ? "badge--green" : "badge--muted"}`}>
-                        <span className="dot" />
-                        {s.isActive ? "Active" : "Hidden"}
+                        <span className="dot" />{s.isActive ? "Active" : "Hidden"}
                       </span>
                     </td>
                     <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(s)}>
-                        Edit
-                      </button>{" "}
-                      <button className="btn btn-danger btn-sm" onClick={() => remove(s)}>
-                        Delete
-                      </button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(s)}>Edit</button>{" "}
+                      <button className="btn btn-danger btn-sm" onClick={() => remove(s)}>Delete</button>
                     </td>
                   </tr>
                 ))}
@@ -161,43 +135,24 @@ export default function Slider() {
         <Modal
           title={editing ? "Edit slide" : "New slide"}
           onClose={() => setOpen(false)}
-          footer={
-            <>
-              <button className="btn btn-ghost" onClick={() => setOpen(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-gold" onClick={save} disabled={busy}>
-                {busy ? "Saving…" : "Save"}
-              </button>
-            </>
-          }
+          footer={<>
+            <button className="btn btn-ghost" onClick={() => setOpen(false)}>Cancel</button>
+            <button className="btn btn-gold" onClick={handleSubmit(onSave)} disabled={isSubmitting}>{isSubmitting ? "Saving…" : "Save"}</button>
+          </>}
         >
           <ImageUpload
             folder="/slider"
             label="Slide image"
-            currentUrl={form.imageUrl}
-            onUploaded={(url) => setForm({ ...form, imageUrl: url })}
+            currentUrl={watch("imageUrl")}
+            onUploaded={(url) => setValue("imageUrl", url, { shouldValidate: true })}
           />
-          <div className="field">
-            <label>Title (optional)</label>
-            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          </div>
-          <div className="field">
-            <label>Subtitle (optional)</label>
-            <input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} />
-          </div>
-          <div className="field">
-            <label>Link URL (optional)</label>
-            <input value={form.linkUrl} onChange={(e) => setForm({ ...form, linkUrl: e.target.value })} placeholder="https://…" />
-          </div>
-          <div className="field">
-            <label>Sort order</label>
-            <input type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })} />
-          </div>
-          <label className="check">
-            <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active
-          </label>
-          {err && <div className="error-text">{err}</div>}
+          {errors.imageUrl ? <div className="field-error">{errors.imageUrl.message}</div> : null}
+          <RHFField control={control} name="title" label="Title (optional)" error={errors.title?.message} />
+          <RHFField control={control} name="subtitle" label="Subtitle (optional)" error={errors.subtitle?.message} />
+          <RHFField control={control} name="linkUrl" label="Link URL (optional)" placeholder="https://…" error={errors.linkUrl?.message} />
+          <RHFField control={control} name="sortOrder" label="Sort order" type="number" error={errors.sortOrder?.message} />
+          <RHFCheckbox control={control} name="isActive" label="Active" />
+          {errors.root && <div className="error-text">{errors.root.message}</div>}
         </Modal>
       )}
     </Layout>

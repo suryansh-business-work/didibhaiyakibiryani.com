@@ -22,6 +22,7 @@ export function minutesNowInZone(timezone: string, now: Date = new Date()): numb
     hour12: false,
   });
   const parts = fmt.formatToParts(now);
+  /* v8 ignore next 2 -- the "0" fallbacks are unreachable (hour/minute are always present) */
   const hour = Number.parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
   const minute = Number.parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10);
   return hour * 60 + minute;

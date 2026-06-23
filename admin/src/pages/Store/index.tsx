@@ -5,6 +5,7 @@ import { UPDATE_SETTINGS } from "../../graphql/mutations";
 import Layout from "../../components/Layout";
 import { Spinner } from "../../components/ui";
 import Switch from "../../components/Switch";
+import MuiTimePicker from "../../components/MuiTimePicker";
 import { useAlert } from "../../components/dialog";
 import {
   BLANK_STORE,
@@ -82,22 +83,16 @@ export default function Store() {
           </span>
         </div>
         <div className="field-row">
-          <div className="field">
-            <label>Opens at</label>
-            <input
-              type="time"
-              value={form.storeOpenTime}
-              onChange={(e) => patch({ storeOpenTime: e.target.value })}
-            />
-          </div>
-          <div className="field">
-            <label>Closes at</label>
-            <input
-              type="time"
-              value={form.storeCloseTime}
-              onChange={(e) => patch({ storeCloseTime: e.target.value })}
-            />
-          </div>
+          <MuiTimePicker
+            label="Opens at"
+            value={form.storeOpenTime}
+            onChange={(v) => patch({ storeOpenTime: v })}
+          />
+          <MuiTimePicker
+            label="Closes at"
+            value={form.storeCloseTime}
+            onChange={(v) => patch({ storeCloseTime: v })}
+          />
         </div>
         <div className="field">
           <label>Timezone (IANA)</label>

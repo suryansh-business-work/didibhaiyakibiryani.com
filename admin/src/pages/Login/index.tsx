@@ -1,30 +1,32 @@
-import { useState, type FormEvent } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../../auth";
 import RecoverAccess from "./RecoverAccess";
+import { RHFField, adminLoginSchema, type AdminLoginForm } from "../../form";
 
 export default function Login() {
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [err, setErr] = useState("");
-  const [busy, setBusy] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<AdminLoginForm>({
+    resolver: zodResolver(adminLoginSchema),
+    defaultValues: { email: "", password: "" },
+  });
 
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    setErr("");
-    setBusy(true);
+  async function onSubmit(data: AdminLoginForm) {
     try {
-      await login(email, password);
+      await login(data.email, data.password);
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Login failed.");
-    } finally {
-      setBusy(false);
+      setError("root", { message: e instanceof Error ? e.message : "Login failed." });
     }
   }
 
   return (
     <div className="login-wrap">
-      <form className="login-card" onSubmit={submit}>
+      <form className="login-card" onSubmit={handleSubmit(onSubmit)}>
         <div className="brand">
           <span className="brand__badge" />
           <div>
@@ -35,30 +37,13 @@ export default function Login() {
         <h2>Welcome back</h2>
         <p className="sub">Sign in to manage orders, menu &amp; offers.</p>
 
-        <div className="field">
-          <label>Email or phone</label>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@didibhaiyakibiryani.com"
-            autoComplete="username"
-          />
-        </div>
-        <div className="field">
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            autoComplete="current-password"
-          />
-        </div>
+        <RHFField control={control} name="email" label="Email or phone" placeholder="you@didibhaiyakibiryani.com" autoComplete="username" error={errors.email?.message} />
+        <RHFField control={control} name="password" label="Password" type="password" placeholder="••••••••" autoComplete="current-password" error={errors.password?.message} />
 
-        {err && <div className="error-text">{err}</div>}
+        {errors.root && <div className="error-text">{errors.root.message}</div>}
 
-        <button className="btn btn-gold" disabled={busy} type="submit">
-          {busy ? "Signing in…" : "Sign in"}
+        <button className="btn btn-gold" disabled={isSubmitting} type="submit">
+          {isSubmitting ? "Signing in…" : "Sign in"}
         </button>
 
         <RecoverAccess />

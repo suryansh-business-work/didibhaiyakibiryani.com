@@ -1,6 +1,8 @@
 import { XStack, Text } from "tamagui";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { brand, inr } from "../theme";
 import { SpringUp } from "../animations";
+import { MIcon } from "../components";
 
 interface CartBarProps {
   count: number;
@@ -10,11 +12,12 @@ interface CartBarProps {
 
 export function CartBar({ count, subtotal, onPress }: Readonly<CartBarProps>) {
   const itemLabel = count > 1 ? "items" : "item";
+  const tabBarHeight = useBottomTabBarHeight();
 
   return (
-    <SpringUp>
+    <SpringUp bottom={tabBarHeight}>
       <XStack
-        marginBottom={16}
+        marginBottom={10}
         marginHorizontal={16}
         backgroundColor={brand.gold}
         borderRadius={14}
@@ -28,9 +31,10 @@ export function CartBar({ count, subtotal, onPress }: Readonly<CartBarProps>) {
         <Text color="#2a1a06" fontWeight="800">
           {count} {itemLabel} · {inr(subtotal)}
         </Text>
-        <Text color="#2a1a06" fontWeight="800">
-          View cart →
-        </Text>
+        <XStack alignItems="center" gap={4}>
+          <Text color="#2a1a06" fontWeight="800">View cart</Text>
+          <MIcon name="arrow-right" size={18} color="#2a1a06" />
+        </XStack>
       </XStack>
     </SpringUp>
   );

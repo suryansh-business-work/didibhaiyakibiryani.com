@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { RIDERS } from "../../graphql/queries";
 import { CREATE_STAFF_USER, UPDATE_STAFF_USER, DELETE_STAFF_USER } from "../../graphql/mutations";
@@ -7,7 +9,10 @@ import { AsyncList } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
 import RiderModal from "./RiderModal";
-import { BLANK_RIDER, validateRiderForm, type RiderForm, type RiderRow } from "./types";
+import { riderSchema, riderEditSchema, type RiderForm } from "../../form";
+import type { RiderRow } from "./types";
+
+const BLANK: RiderForm = { name: "", email: "", phone: "", password: "", isActive: true };
 
 export default function Riders() {
   const { data, loading, refetch } = useQuery<{ riders: RiderRow[] }>(RIDERS);
@@ -20,42 +25,44 @@ export default function Riders() {
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<RiderForm>({ ...BLANK_RIDER });
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const editingRef = useRef(false);
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<RiderForm>({
+    resolver: (values, ctx, options) =>
+      zodResolver(editingRef.current ? riderEditSchema : riderSchema)(values, ctx, options),
+    defaultValues: { ...BLANK },
+  });
 
   const riders = data?.riders ?? [];
 
   function openNew() {
+    editingRef.current = false;
     setEditingId(null);
-    setForm({ ...BLANK_RIDER });
-    setErr("");
+    reset({ ...BLANK });
     setOpen(true);
   }
-
   function openEdit(r: RiderRow) {
+    editingRef.current = true;
     setEditingId(r.id);
-    setForm({ name: r.name, email: r.email, phone: r.phone ?? "", password: "", isActive: r.isActive });
-    setErr("");
+    reset({ name: r.name, email: r.email, phone: r.phone ?? "", password: "", isActive: r.isActive });
     setOpen(true);
   }
 
-  async function save() {
-    const problem = validateRiderForm(form, editingId !== null);
-    if (problem) {
-      setErr(problem);
-      return;
-    }
-    setBusy(true);
-    setErr("");
+  async function onSave(form: RiderForm) {
     try {
       if (editingId) {
         await updateStaff({
           variables: {
             id: editingId,
             name: form.name.trim(),
-            phone: form.phone.trim() || null,
+            phone: form.phone?.trim() || null,
             password: form.password || null,
             isActive: form.isActive,
           },
@@ -65,7 +72,7 @@ export default function Riders() {
           variables: {
             name: form.name.trim(),
             email: form.email.trim(),
-            phone: form.phone.trim() || null,
+            phone: form.phone?.trim() || null,
             password: form.password,
             role: "DELIVERY",
           },
@@ -74,9 +81,7 @@ export default function Riders() {
       setOpen(false);
       await refetch();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not save the rider.");
-    } finally {
-      setBusy(false);
+      setError("root", { message: e instanceof Error ? e.message : "Could not save the rider." });
     }
   }
 
@@ -93,10 +98,7 @@ export default function Riders() {
       await deleteStaff({ variables: { id: r.id } });
       await refetch();
     } catch (e: unknown) {
-      await notify({
-        title: "Could not delete",
-        message: e instanceof Error ? e.message : "Could not delete the rider.",
-      });
+      await notify({ title: "Could not delete", message: e instanceof Error ? e.message : "Could not delete the rider." });
     } finally {
       setDeletingId(null);
     }
@@ -109,27 +111,15 @@ export default function Riders() {
           Riders sign in on the delivery portal to pick up and deliver assigned orders.
         </p>
         <div className="spacer" />
-        <button className="btn btn-gold" onClick={openNew}>
-          <IPlus size={16} /> New rider
-        </button>
+        <button className="btn btn-gold" onClick={openNew}><IPlus size={16} /> New rider</button>
       </div>
 
       <div className="card">
-        <AsyncList
-          loading={loading && !data}
-          empty={riders.length === 0}
-          emptyLabel="No delivery partners yet — create the first one."
-        >
+        <AsyncList loading={loading && !data} empty={riders.length === 0} emptyLabel="No delivery partners yet — create the first one.">
           <div className="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
+                <tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th></th></tr>
               </thead>
               <tbody>
                 {riders.map((r) => (
@@ -139,17 +129,12 @@ export default function Riders() {
                     <td className="muted">{r.phone ?? "—"}</td>
                     <td>
                       <span className={`badge ${r.isActive ? "badge--green" : "badge--muted"}`}>
-                        <span className="dot" />
-                        {r.isActive ? "Active" : "Disabled"}
+                        <span className="dot" />{r.isActive ? "Active" : "Disabled"}
                       </span>
                     </td>
                     <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                       <button className="btn btn-ghost btn-sm" onClick={() => openEdit(r)}>Edit</button>{" "}
-                      <button
-                        className="btn btn-danger btn-sm"
-                        disabled={deletingId === r.id}
-                        onClick={() => remove(r)}
-                      >
+                      <button className="btn btn-danger btn-sm" disabled={deletingId === r.id} onClick={() => remove(r)}>
                         {deletingId === r.id ? "Deleting…" : "Delete"}
                       </button>
                     </td>
@@ -163,13 +148,12 @@ export default function Riders() {
 
       {open && (
         <RiderModal
-          form={form}
+          control={control}
+          errors={errors}
           editing={editingId !== null}
-          busy={busy}
-          error={err}
-          onChange={setForm}
+          isSubmitting={isSubmitting}
           onClose={() => setOpen(false)}
-          onSave={save}
+          onSubmit={handleSubmit(onSave)}
         />
       )}
     </Layout>

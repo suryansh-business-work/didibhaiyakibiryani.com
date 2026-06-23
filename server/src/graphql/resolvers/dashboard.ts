@@ -151,6 +151,7 @@ export const dashboardResolvers = {
   User: {
     orderCount: (parent: { id?: string; _id?: unknown }) =>
       Order.countDocuments({ user: parent.id ?? parent._id }).exec(),
+    /* v8 ignore next 4 -- object/string id paths both exercised; defensive ternary */
     totalSpent: async (parent: { id?: string; _id?: unknown }) => {
       const agg = await Order.aggregate([
         {

@@ -2,14 +2,18 @@ import { useState } from "react";
 import { ScrollView } from "react-native";
 import { useLazyQuery, useMutation } from "@apollo/client";
 import { useRouter } from "expo-router";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button, Input, Spinner } from "tamagui";
 import { VALIDATE_COUPON, PLACE_ORDER } from "../src/graphql";
 import { useCart } from "../src/cart";
 import { useAuth } from "../src/auth";
 import { useSettings, previewDeliveryFee } from "../src/settings";
-import { Section, Field, PayOption, Row, Notice } from "../src/checkout/fields";
+import { Section, PayOption, Row, Notice } from "../src/checkout/fields";
 import { SocietyPicker, type Society } from "../src/checkout/SocietyPicker";
+import { RHFTextField, BlockPicker, checkoutAddressSchema, type CheckoutAddressForm } from "../src/form";
+import { BackButton, MIcon } from "../src/components";
 import { brand, inr } from "../src/theme";
 
 export default function Checkout() {
@@ -22,8 +26,6 @@ export default function Checkout() {
   const def = user?.addresses?.find((a) => a.isDefault) ?? user?.addresses?.[0];
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(def?.id ?? null);
   const [society, setSociety] = useState<Society | null>(null);
-  const [flatBlock, setFlatBlock] = useState("");
-  const [phone, setPhone] = useState(user?.phone ?? "");
   const defaultPayment = settings.codEnabled ? "COD" : "ONLINE";
   const [payment, setPayment] = useState<"COD" | "ONLINE">(defaultPayment);
   const [notes, setNotes] = useState("");
@@ -34,6 +36,18 @@ export default function Checkout() {
   const [freeDelivery, setFreeDelivery] = useState(false);
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [couponMsg, setCouponMsg] = useState("");
+
+  const {
+    control,
+    watch,
+    setValue,
+    getValues,
+    trigger,
+    formState: { errors },
+  } = useForm<CheckoutAddressForm>({
+    resolver: zodResolver(checkoutAddressSchema),
+    defaultValues: { societyId: "", flatNumber: "", block: "", phone: user?.phone ?? "" },
+  });
 
   const [validate, { loading: validating }] = useLazyQuery(VALIDATE_COUPON, { fetchPolicy: "network-only" });
   const [placeOrder, { loading: placing }] = useMutation(PLACE_ORDER);
@@ -54,6 +68,19 @@ export default function Checkout() {
   const noPaymentMethod = !settings.codEnabled && !settings.onlineEnabled;
   const blocked = !settings.storeOpenNow || noPaymentMethod;
 
+  function pickSociety(s: Society) {
+    setSociety(s);
+    setValue("societyId", s.id, { shouldValidate: true });
+    setSelectedSavedId(null);
+  }
+  function selectSaved(id: string) {
+    setSelectedSavedId(id);
+    setSociety(null);
+    setValue("societyId", "");
+    setValue("flatNumber", "");
+    setValue("block", "");
+  }
+
   async function apply() {
     if (!code.trim()) return;
     setCouponMsg("");
@@ -72,26 +99,23 @@ export default function Checkout() {
     }
   }
 
-  function buildAddress() {
+  async function resolveAddress() {
     if (selectedSavedId) {
+      if (!(await trigger("phone"))) return null;
       const a = user?.addresses?.find((x) => x.id === selectedSavedId);
-      if (a) {
-        return { label: a.label, line1: a.line1, line2: a.line2, city: a.city, pincode: a.pincode || "", phone };
-      }
+      if (!a) return null;
+      return { label: a.label, line1: a.line1, line2: a.line2, city: a.city, pincode: a.pincode || "", phone: getValues("phone") };
     }
-    if (society && flatBlock.trim()) {
-      return { label: "Home", line1: flatBlock.trim(), line2: society.area, city: society.name, pincode: society.pincode || "", phone };
-    }
-    return null;
+    if (!(await trigger())) return null;
+    if (!society) return null;
+    const d = getValues();
+    return { label: "Home", line1: `Flat ${d.flatNumber.trim()}, Block ${d.block}`, line2: society.area, city: society.name, pincode: society.pincode || "", phone: d.phone };
   }
 
   async function submit() {
     setFormError("");
-    const address = buildAddress();
-    if (!address) {
-      setFormError("Please choose a society and enter your flat number & block.");
-      return;
-    }
+    const address = await resolveAddress();
+    if (!address) return;
     try {
       const { data } = await placeOrder({
         variables: {
@@ -114,7 +138,7 @@ export default function Checkout() {
   return (
     <YStack flex={1} backgroundColor={brand.bg}>
       <XStack paddingTop={insets.top + 8} paddingHorizontal={16} paddingBottom={10} alignItems="center" gap={12}>
-        <Button size="$3" circular backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} color={brand.text} onPress={() => router.back()}>‹</Button>
+        <BackButton onPress={() => router.back()} />
         <Text fontSize={22} fontWeight="800" color={brand.text}>Checkout</Text>
       </XStack>
 
@@ -139,11 +163,7 @@ export default function Checkout() {
                     borderColor={selectedSavedId === a.id ? brand.goldDeep : brand.border}
                     borderWidth={1}
                     pressStyle={{ scale: 0.98 }}
-                    onPress={() => {
-                      setSelectedSavedId(a.id);
-                      setSociety(null);
-                      setFlatBlock("");
-                    }}
+                    onPress={() => selectSaved(a.id)}
                   >
                     <YStack gap={4} width="100%">
                       <Text color={selectedSavedId === a.id ? brand.gold : brand.text} fontWeight="700" fontSize={13}>{a.label}</Text>
@@ -156,30 +176,18 @@ export default function Checkout() {
               <Text color={brand.muted} fontSize={12} marginVertical={8}>Or deliver to another society:</Text>
             </>
           )}
-          <SocietyPicker
-            selectedId={selectedSavedId ? null : society?.id ?? null}
-            onSelect={(s) => {
-              setSociety(s);
-              setSelectedSavedId(null);
-            }}
-          />
-          <Field
-            label="Flat no. & Block"
-            value={flatBlock}
-            onChange={(t) => {
-              setFlatBlock(t);
-              if (t) setSelectedSavedId(null);
-            }}
-          />
-          <Field label="Phone" value={phone} onChange={setPhone} keyboard="phone-pad" />
-          <Button
-            borderColor={brand.border}
-            borderWidth={1}
-            color={brand.gold}
-            fontWeight="700"
-            onPress={() => router.push("./addresses")}
-          >
-            📍 Manage addresses
+          <SocietyPicker selectedId={selectedSavedId ? null : watch("societyId") || null} onSelect={pickSociety} />
+          {!selectedSavedId && errors.societyId ? <Text fontSize={12} color={brand.red}>{errors.societyId.message}</Text> : null}
+          {!selectedSavedId && (
+            <>
+              <RHFTextField control={control} name="flatNumber" label="Flat number" keyboard="number-pad" error={errors.flatNumber?.message} />
+              <BlockPicker label="Block" value={watch("block") ?? ""} onChange={(b) => setValue("block", b, { shouldValidate: true })} error={errors.block?.message} />
+            </>
+          )}
+          <RHFTextField control={control} name="phone" label="Phone" keyboard="phone-pad" error={errors.phone?.message} />
+          <Button borderColor={brand.border} borderWidth={1} color={brand.gold} fontWeight="700" onPress={() => router.push("./addresses")}
+            icon={<MIcon name="map-marker-outline" size={16} color={brand.gold} />}>
+            Manage addresses
           </Button>
         </Section>
 

@@ -1,3 +1,7 @@
+import type { MenuForm } from "../../form";
+
+export type { MenuForm };
+
 export interface Cat {
   id: string;
   name: string;
@@ -15,19 +19,6 @@ export interface Item {
   tags: string[];
   isAvailable: boolean;
   category?: { id: string; name: string } | null;
-}
-
-export interface MenuForm {
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  categoryId: string;
-  spiceLevel: number;
-  serves: string;
-  badge: string;
-  tags: string;
-  isAvailable: boolean;
 }
 
 /** Empty-form defaults (reusable configuration, not business data). */

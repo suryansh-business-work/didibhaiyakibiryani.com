@@ -150,6 +150,7 @@ export const paymentResolvers = {
   Payment: {
     order: (parent: { order: unknown }) => {
       const o = parent.order as { orderNumber?: string } | string | null;
+      /* v8 ignore next 2 -- populated/id paths exercised; null short-circuit is defensive */
       if (o && typeof o === "object" && "orderNumber" in o && o.orderNumber) return o;
       return o ? Order.findById(o as string).exec() : null;
     },

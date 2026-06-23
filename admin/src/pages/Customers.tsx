@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { CUSTOMERS } from "../graphql/queries";
 import { UPDATE_CUSTOMER, DELETE_CUSTOMER } from "../graphql/mutations";
@@ -6,6 +8,7 @@ import Layout from "../components/Layout";
 import { AsyncList, Modal, inr, fmtDate } from "../components/ui";
 import { ISearch } from "../components/icons";
 import { useAlert, useConfirm } from "../components/dialog";
+import { RHFField, customerSchema, type CustomerForm } from "../form";
 
 interface Customer {
   id: string; name: string; email: string; phone?: string;
@@ -23,37 +26,32 @@ export default function Customers() {
   const notify = useAlert();
 
   const [editing, setEditing] = useState<Customer | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "" });
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<CustomerForm>({ resolver: zodResolver(customerSchema), defaultValues: { name: "", phone: "" } });
 
   const customers = data?.customers ?? [];
 
   function openEdit(c: Customer) {
     setEditing(c);
-    setForm({ name: c.name, phone: c.phone ?? "" });
-    setErr("");
+    reset({ name: c.name, phone: c.phone ?? "" });
   }
 
-  async function save() {
+  async function onSave(form: CustomerForm) {
     if (!editing) return;
-    if (!form.name.trim()) {
-      setErr("Name is required.");
-      return;
-    }
-    setBusy(true);
-    setErr("");
     try {
       await updateCustomer({
-        variables: { id: editing.id, name: form.name.trim(), phone: form.phone.trim() || null },
+        variables: { id: editing.id, name: form.name.trim(), phone: form.phone?.trim() || null },
       });
       setEditing(null);
       await refetch();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not save.");
-    } finally {
-      setBusy(false);
+      setError("root", { message: e instanceof Error ? e.message : "Could not save." });
     }
   }
 
@@ -133,20 +131,14 @@ export default function Customers() {
           footer={
             <>
               <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="btn btn-gold" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+              <button className="btn btn-gold" onClick={handleSubmit(onSave)} disabled={isSubmitting}>{isSubmitting ? "Saving…" : "Save"}</button>
             </>
           }
         >
-          <div className="field">
-            <label>Name</label>
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          </div>
-          <div className="field">
-            <label>Phone</label>
-            <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-          </div>
+          <RHFField control={control} name="name" label="Name" error={errors.name?.message} />
+          <RHFField control={control} name="phone" label="Phone" type="tel" error={errors.phone?.message} />
           <p className="muted" style={{ fontSize: "0.8rem" }}>Email ({editing.email}) is the login id and can't be changed here.</p>
-          {err && <div className="error-text">{err}</div>}
+          {errors.root && <div className="error-text">{errors.root.message}</div>}
         </Modal>
       )}
     </Layout>

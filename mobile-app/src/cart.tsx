@@ -15,6 +15,7 @@ interface CartCtx {
   subtotal: number;
   add: (line: Omit<CartLine, "qty">, qty?: number) => void;
   setQty: (id: string, qty: number) => void;
+  setSpice: (id: string, spiceLevel: number) => void;
   remove: (id: string) => void;
   clear: () => void;
 }
@@ -57,6 +58,10 @@ export function CartProvider({ children }: Readonly<{ children: React.ReactNode 
     );
   }
 
+  function setSpice(id: string, spiceLevel: number) {
+    setLines((prev) => prev.map((l) => (l.id === id ? { ...l, spiceLevel } : l)));
+  }
+
   function remove(id: string) {
     setLines((prev) => prev.filter((l) => l.id !== id));
   }
@@ -69,7 +74,7 @@ export function CartProvider({ children }: Readonly<{ children: React.ReactNode 
   const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
 
   return (
-    <Ctx.Provider value={{ lines, count, subtotal, add, setQty, remove, clear }}>
+    <Ctx.Provider value={{ lines, count, subtotal, add, setQty, setSpice, remove, clear }}>
       {children}
     </Ctx.Provider>
   );

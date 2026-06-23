@@ -1,52 +1,12 @@
 import { Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useForm, Controller, type Control } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { YStack, XStack, Text, Button, Input, Spinner } from "tamagui";
+import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { useAuth } from "../src/auth";
 import { brand } from "../src/theme";
-
-const schema = z.object({
-  emailOrPhone: z.string().trim().min(1, "Enter your email or phone"),
-  password: z.string().min(1, "Enter your password"),
-});
-type FormData = z.infer<typeof schema>;
-
-interface FieldProps {
-  control: Control<FormData>;
-  name: keyof FormData;
-  label: string;
-  error?: string;
-  secure?: boolean;
-}
-
-function Field({ control, name, label, error, secure }: Readonly<FieldProps>) {
-  return (
-    <YStack gap={6}>
-      <Text fontSize={12} color={brand.muted} fontWeight="700">{label}</Text>
-      <Controller
-        control={control}
-        name={name}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Input
-            value={value}
-            onChangeText={onChange}
-            onBlur={onBlur}
-            secureTextEntry={secure}
-            autoCapitalize="none"
-            keyboardType={name === "emailOrPhone" ? "email-address" : "default"}
-            backgroundColor={brand.bgSoft}
-            borderColor={error ? brand.red : brand.borderStrong}
-            color={brand.text}
-          />
-        )}
-      />
-      {error ? <Text fontSize={12} color={brand.red}>{error}</Text> : null}
-    </YStack>
-  );
-}
+import { RHFTextField, loginSchema, type LoginForm } from "../src/form";
 
 export default function Login() {
   const insets = useSafeAreaInsets();
@@ -56,12 +16,12 @@ export default function Login() {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
     defaultValues: { emailOrPhone: "", password: "" },
   });
 
-  async function onSubmit(data: FormData) {
+  async function onSubmit(data: LoginForm) {
     try {
       await login(data.emailOrPhone.trim(), data.password);
       router.replace("/");
@@ -79,8 +39,8 @@ export default function Login() {
         <Text color={brand.muted}>Your assigned orders are waiting.</Text>
       </YStack>
 
-      <Field control={control} name="emailOrPhone" label="Email or phone" error={errors.emailOrPhone?.message} />
-      <Field control={control} name="password" label="Password" secure error={errors.password?.message} />
+      <RHFTextField control={control} name="emailOrPhone" label="Email or phone" keyboard="email-address" error={errors.emailOrPhone?.message} />
+      <RHFTextField control={control} name="password" label="Password" secure error={errors.password?.message} />
 
       <Button height={52} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" fontSize={16} disabled={isSubmitting} onPress={handleSubmit(onSubmit)}>
         {isSubmitting ? <Spinner color="#2a1a06" /> : "Sign in"}

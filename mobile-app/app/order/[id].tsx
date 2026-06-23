@@ -8,6 +8,7 @@ import { RatingCard, type OrderRating } from "../../src/order/RatingCard";
 import { CancelOrder } from "../../src/order/CancelOrder";
 import { SupportBox } from "../../src/order/SupportBox";
 import { FadeInView } from "../../src/animations";
+import { BackButton, MIcon, SPICE_LABELS } from "../../src/components";
 import { brand, inr, STATUS_FLOW, STATUS_META } from "../../src/theme";
 
 interface Order {
@@ -44,7 +45,7 @@ export default function OrderTracking() {
   return (
     <YStack flex={1} backgroundColor={brand.bg}>
       <XStack paddingTop={insets.top + 8} paddingHorizontal={16} paddingBottom={10} alignItems="center" gap={12}>
-        <Button size="$3" circular backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} color={brand.text} onPress={() => router.replace("/orders")}>‹</Button>
+        <BackButton onPress={() => router.replace("/orders")} />
         <YStack>
           <Text fontSize={20} fontWeight="800" color={brand.text}>{o.orderNumber}</Text>
           <Text fontSize={12} color={brand.muted}>{new Date(o.placedAt).toLocaleString("en-IN")}</Text>
@@ -57,7 +58,7 @@ export default function OrderTracking() {
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} padding={18} gap={2}>
           {cancelled ? (
             <XStack gap={12} alignItems="center" paddingVertical={6}>
-              <YStack width={26} height={26} borderRadius={999} backgroundColor={brand.red} alignItems="center" justifyContent="center"><Text color="#fff" fontWeight="800">✕</Text></YStack>
+              <YStack width={26} height={26} borderRadius={999} backgroundColor={brand.red} alignItems="center" justifyContent="center"><MIcon name="close" size={16} color="#fff" /></YStack>
               <Text color={brand.red} fontWeight="800">Order cancelled</Text>
             </XStack>
           ) : (
@@ -96,7 +97,9 @@ export default function OrderTracking() {
           <Text fontWeight="800" color={brand.text}>Items</Text>
           {o.items.map((it) => (
             <XStack key={`${it.name}-${it.spiceLevel ?? 0}`} justifyContent="space-between">
-              <Text color={brand.dim}>{it.qty}× {it.name}</Text>
+              <Text color={brand.dim}>
+                {it.qty}× {it.name}{it.spiceLevel ? ` · ${SPICE_LABELS[it.spiceLevel]}` : ""}
+              </Text>
               <Text color={brand.dim}>{inr(it.price * it.qty)}</Text>
             </XStack>
           ))}

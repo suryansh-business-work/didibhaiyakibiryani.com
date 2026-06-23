@@ -1,5 +1,6 @@
 import { ScrollView } from "react-native";
 import { YStack, Text, Spinner } from "tamagui";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { brand } from "../theme";
 import { RiseIn } from "../animations";
 import { MenuItemCard } from "./MenuItemCard";
@@ -18,6 +19,7 @@ function hueFor(index: number): number {
 }
 
 export function HomeList({ loading, error, items, count, onAdd }: Readonly<HomeListProps>) {
+  const tabBarHeight = useBottomTabBarHeight();
   if (loading) {
     return (
       <YStack flex={1} alignItems="center" justifyContent="center">
@@ -41,7 +43,7 @@ export function HomeList({ loading, error, items, count, onAdd }: Readonly<HomeL
 
   return (
     <ScrollView
-      contentContainerStyle={{ padding: 14, paddingBottom: count > 0 ? 110 : 30, gap: 12 }}
+      contentContainerStyle={{ padding: 14, paddingBottom: tabBarHeight + (count > 0 ? 84 : 20), gap: 12 }}
     >
       {items.map((it, idx) => (
         <RiseIn key={it.id} index={idx}>
