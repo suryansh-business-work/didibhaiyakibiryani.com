@@ -46,7 +46,7 @@ export function orderConfirmedEmail(
     : "Takeaway / counter";
   const body = cardSection(`
     <mj-text color="#f5ece0" font-size="18px" font-weight="700">Order confirmed — ${order.orderNumber} 🍛</mj-text>
-    <mj-text color="#cdbfb0">Thanks ${name}! Your biryani is headed for the dum. Here's your invoice:</mj-text>
+    <mj-text color="#cdbfb0">Thanks ${name}! Your biryani is headed for the dum. Here's your receipt:</mj-text>
     ${invoiceTable(order)}
     <mj-text color="#8d8073" font-size="13px" padding-top="10px">
       <strong style="color:#cdbfb0">Payment:</strong> ${payLabel}<br/>
@@ -75,7 +75,7 @@ export function orderDeliveredEmail(
   const body = cardSection(`
     <mj-text color="#f5ece0" font-size="18px" font-weight="700">Delivered! Enjoy your biryani 🎉</mj-text>
     <mj-text color="#cdbfb0">Hi ${name}, order <strong>${order.orderNumber}</strong> (${inr(order.total)}) has been delivered. ${brand.tagline}</mj-text>
-    <mj-text color="#8d8073" font-size="13px">Your invoice is attached to this email as a PDF.</mj-text>
+    <mj-text color="#8d8073" font-size="13px">Your receipt is attached to this email as a PDF.</mj-text>
     ${rateBlock}
     <mj-text color="#8d8073" font-size="13px">Loved it? Order again anytime — your favourites are saved in the app.</mj-text>
     ${ctaButton(brand, "Order again", orderUrl)}

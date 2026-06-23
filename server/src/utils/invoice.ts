@@ -78,9 +78,9 @@ function partyBlock(doc: PDFKit.PDFDocument, order: IOrder): void {
 
 function meta(doc: PDFKit.PDFDocument, order: IOrder): void {
   const placed = new Date(order.placedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(14).text("TAX INVOICE");
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(14).text("RECEIPT");
   doc.font("Helvetica").fontSize(10).fillColor(MUTED);
-  doc.text(`Invoice / Order no: ${order.orderNumber}`);
+  doc.text(`Receipt / Order no: ${order.orderNumber}`);
   doc.text(`Order date: ${placed}`);
   doc.text(`Fulfilment: ${order.orderType === "TAKEAWAY" ? "Takeaway / counter" : "Delivery"}`);
   const pay = order.paymentMethod === "COD" ? "Cash on delivery" : "Paid online";

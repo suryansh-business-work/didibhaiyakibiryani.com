@@ -1,11 +1,12 @@
 import { useQuery } from "@apollo/client";
-import { Box, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Box, Rating, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { DASHBOARD } from "../graphql/queries";
 import Layout from "../components/Layout";
 import { Spinner, StatusBadge, inr, fmtDate } from "../components/ui";
 import { IOrders, IRupee, IClock, IUsers } from "../components/icons";
 
 interface TopItem { name: string; qty: number; revenue: number; }
+interface DishRating { name: string; rating: number; count: number; }
 interface RevPoint { date: string; revenue: number; orders: number; }
 interface RecentOrder {
   id: string; orderNumber: string; total: number; status: string;
@@ -14,7 +15,8 @@ interface RecentOrder {
 interface Stats {
   totalOrders: number; totalRevenue: number; todayOrders: number; todayRevenue: number;
   pendingOrders: number; totalCustomers: number; avgOrderValue: number;
-  avgRating: number; ratingCount: number;
+  avgFoodRating: number; avgDeliveryRating: number; ratingCount: number;
+  dishRatings: DishRating[];
   topItems: TopItem[]; revenueByDay: RevPoint[]; recentOrders: RecentOrder[];
 }
 
@@ -65,7 +67,8 @@ function Body({ s }: Readonly<{ s: Stats }>) {
         <Stat label="Total revenue" value={inr(s.totalRevenue)} sub={`Avg ${inr(s.avgOrderValue)} / order`} icon={<IOrders />} />
         <Stat label="Pending orders" value={String(s.pendingOrders)} sub="Need attention" icon={<IClock />} />
         <Stat label="Customers" value={String(s.totalCustomers)} sub={`${s.totalOrders} lifetime orders`} icon={<IUsers />} />
-        <Stat label="Customer rating" value={s.ratingCount ? `${s.avgRating} ★` : "—"} sub={`${s.ratingCount} rating(s)`} icon={<span>★</span>} />
+        <Stat label="Food rating" value={s.ratingCount ? `${s.avgFoodRating} ★` : "—"} sub={`${s.ratingCount} rating(s)`} icon={<span>★</span>} />
+        <Stat label="Delivery rating" value={s.ratingCount ? `${s.avgDeliveryRating} ★` : "—"} sub={`${s.ratingCount} rating(s)`} icon={<span>★</span>} />
       </div>
 
       <div className="grid-2 section-gap">
@@ -107,6 +110,25 @@ function Body({ s }: Readonly<{ s: Stats }>) {
             </Table>
           )}
         </div>
+      </div>
+
+      <div className="card section-gap" style={{ padding: 20 }}>
+        <div className="panel-title">Dish ratings</div>
+        {s.dishRatings.length === 0 ? (
+          <p className="muted">No dish ratings yet.</p>
+        ) : (
+          <Table size="small">
+            <TableBody>
+              {s.dishRatings.map((d) => (
+                <TableRow key={d.name}>
+                  <TableCell><Typography fontWeight={700}>{d.name}</Typography></TableCell>
+                  <TableCell><Rating value={d.rating} precision={0.5} readOnly size="small" /></TableCell>
+                  <TableCell align="right"><Typography variant="body2" color="text.secondary">{d.rating} ★ · {d.count} rating(s)</Typography></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       <div className="card section-gap" style={{ padding: 20 }}>

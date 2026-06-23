@@ -41,7 +41,7 @@ async function buildJob(order: IOrder, kind: "CONFIRMED" | "DELIVERED") {
     ...content,
     attachments: [
       {
-        filename: `invoice-${order.orderNumber}.pdf`,
+        filename: `receipt-${order.orderNumber}.pdf`,
         content: invoice,
         contentType: "application/pdf",
       },

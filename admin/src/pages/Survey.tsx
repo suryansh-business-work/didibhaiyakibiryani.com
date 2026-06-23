@@ -183,7 +183,7 @@ export default function Survey() {
 
         <Box sx={{ textAlign: "center", mt: 2 }}>
           <Button variant="outlined" href={`${SERVER_BASE}/invoice/${orderId}/${token}`} target="_blank" rel="noreferrer">
-            ⬇ Download invoice (PDF)
+            ⬇ Download receipt (PDF)
           </Button>
         </Box>
       </Container>

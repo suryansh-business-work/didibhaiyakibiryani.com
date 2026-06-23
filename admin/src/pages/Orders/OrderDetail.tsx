@@ -44,7 +44,7 @@ export default function OrderDetail({
 
   async function onDownloadInvoice() {
     const { data } = await fetchInvoice({ variables: { orderId: active.id } });
-    if (data?.invoicePdf) downloadBase64Pdf(data.invoicePdf, `invoice-${active.orderNumber}.pdf`);
+    if (data?.invoicePdf) downloadBase64Pdf(data.invoicePdf, `receipt-${active.orderNumber}.pdf`);
   }
 
   const customerName = active.user?.name ?? active.customerName ?? "Walk-in customer";
@@ -111,31 +111,24 @@ export default function OrderDetail({
 
       <div style={{ marginBottom: 14 }}>
         <button className="btn btn-ghost btn-sm" onClick={onDownloadInvoice} disabled={invoiceLoading}>
-          {invoiceLoading ? "Preparing…" : "⬇ Download invoice (PDF)"}
+          {invoiceLoading ? "Preparing…" : "⬇ Download receipt (PDF)"}
         </button>
-        {invoiceError ? <div className="field-error">Could not generate the invoice. Try again.</div> : null}
+        {invoiceError ? <div className="field-error">Could not generate the receipt. Try again.</div> : null}
       </div>
 
       {active.rating && (
         <Section label="Customer rating">
           <Stack spacing={0.75}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Typography fontWeight={800}>Overall</Typography>
-              <Rating value={Math.round((active.rating.food + active.rating.delivery) / 2)} readOnly size="small" />
+              <Typography fontWeight={800}>Food (overall)</Typography>
+              <Rating value={active.rating.food} precision={0.5} readOnly size="small" />
             </Stack>
-            {active.rating.items?.length
-              ? active.rating.items.map((r) => (
-                  <Stack key={r.name} direction="row" alignItems="center" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">{r.name}</Typography>
-                    <Rating value={r.rating} readOnly size="small" />
-                  </Stack>
-                ))
-              : (
-                  <Stack direction="row" alignItems="center" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">Food</Typography>
-                    <Rating value={active.rating.food} readOnly size="small" />
-                  </Stack>
-                )}
+            {active.rating.items?.map((r) => (
+              <Stack key={r.name} direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="body2" color="text.secondary">{r.name}</Typography>
+                <Rating value={r.rating} readOnly size="small" />
+              </Stack>
+            ))}
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography variant="body2" color="text.secondary">Delivery</Typography>
               <Rating value={active.rating.delivery} readOnly size="small" />

@@ -21,8 +21,14 @@ export const DASHBOARD = gql`
       pendingOrders
       totalCustomers
       avgOrderValue
-      avgRating
+      avgFoodRating
+      avgDeliveryRating
       ratingCount
+      dishRatings {
+        name
+        rating
+        count
+      }
       topItems {
         name
         qty

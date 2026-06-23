@@ -282,6 +282,12 @@ export const typeDefs = /* GraphQL */ `
     revenue: Float!
   }
 
+  type DishRating {
+    name: String!
+    rating: Float!
+    count: Int!
+  }
+
   type RevenuePoint {
     date: String!
     revenue: Float!
@@ -296,8 +302,10 @@ export const typeDefs = /* GraphQL */ `
     pendingOrders: Int!
     totalCustomers: Int!
     avgOrderValue: Float!
-    avgRating: Float!
+    avgFoodRating: Float!
+    avgDeliveryRating: Float!
     ratingCount: Int!
+    dishRatings: [DishRating!]!
     topItems: [TopItem!]!
     revenueByDay: [RevenuePoint!]!
     recentOrders: [Order!]!
