@@ -4,8 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { CATEGORIES } from "../graphql/queries";
 import { CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY } from "../graphql/mutations";
+import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import Layout from "../components/Layout";
-import { AsyncList, Modal } from "../components/ui";
+import { AsyncList, FormActions, Modal, OnOffChip } from "../components/ui";
 import { IPlus } from "../components/icons";
 import { useAlert, useConfirm } from "../components/dialog";
 import { RHFField, RHFCheckbox, categorySchema, type CategoryForm } from "../form";
@@ -78,33 +79,37 @@ export default function Categories() {
 
   return (
     <Layout title="Categories">
-      <div className="toolbar">
-        <div className="spacer" />
-        <button className="btn btn-gold" onClick={openNew}><IPlus size={16} /> New category</button>
-      </div>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New category</Button>
+      </Box>
 
       <div className="card">
         <AsyncList loading={loading && !data} empty={cats.length === 0} emptyLabel="No categories yet.">
-          <div className="table-wrap">
-            <table>
-              <thead><tr><th>Name</th><th>Description</th><th>Items</th><th>Order</th><th>Status</th><th></th></tr></thead>
-              <tbody>
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell><TableCell>Description</TableCell><TableCell>Items</TableCell>
+                  <TableCell>Order</TableCell><TableCell>Status</TableCell><TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {cats.map((c) => (
-                  <tr key={c.id}>
-                    <td className="t-strong">{c.name}</td>
-                    <td className="muted">{c.description || "—"}</td>
-                    <td className="muted">{c.itemCount}</td>
-                    <td className="muted">{c.sortOrder}</td>
-                    <td><span className={`badge ${c.isActive ? "badge--green" : "badge--muted"}`}><span className="dot" />{c.isActive ? "Active" : "Hidden"}</span></td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(c)}>Edit</button>{" "}
-                      <button className="btn btn-danger btn-sm" onClick={() => remove(c)}>Delete</button>
-                    </td>
-                  </tr>
+                  <TableRow key={c.id} hover>
+                    <TableCell><Typography fontWeight={700}>{c.name}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{c.description || "—"}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{c.itemCount}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{c.sortOrder}</Typography></TableCell>
+                    <TableCell><OnOffChip on={c.isActive} offLabel="Hidden" /></TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                      <Button size="small" onClick={() => openEdit(c)}>Edit</Button>
+                      <Button size="small" color="error" onClick={() => remove(c)}>Delete</Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Box>
         </AsyncList>
       </div>
 
@@ -112,16 +117,13 @@ export default function Categories() {
         <Modal
           title={editing ? "Edit category" : "New category"}
           onClose={() => setOpen(false)}
-          footer={<>
-            <button className="btn btn-ghost" onClick={() => setOpen(false)}>Cancel</button>
-            <button className="btn btn-gold" onClick={handleSubmit(onSave)} disabled={isSubmitting}>{isSubmitting ? "Saving…" : "Save"}</button>
-          </>}
+          footer={<FormActions onCancel={() => setOpen(false)} onSave={handleSubmit(onSave)} busy={isSubmitting} />}
         >
           <RHFField control={control} name="name" label="Name" error={errors.name?.message} />
           <RHFField control={control} name="description" label="Description" error={errors.description?.message} />
           <RHFField control={control} name="sortOrder" label="Sort order" type="number" error={errors.sortOrder?.message} />
           <RHFCheckbox control={control} name="isActive" label="Active" />
-          {errors.root && <div className="error-text">{errors.root.message}</div>}
+          {errors.root ? <Typography color="error" variant="body2" sx={{ mt: 1 }}>{errors.root.message}</Typography> : null}
         </Modal>
       )}
     </Layout>

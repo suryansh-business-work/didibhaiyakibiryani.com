@@ -103,6 +103,7 @@ export const typeDefs = /* GraphQL */ `
     image: String
     category: Category
     isVeg: Boolean!
+    spiceSelectable: Boolean!
     spiceLevel: Int!
     serves: String!
     badge: Badge!
@@ -204,11 +205,22 @@ export const typeDefs = /* GraphQL */ `
     note: String
   }
 
+  type ItemRating {
+    name: String!
+    rating: Int!
+  }
+
   type OrderRating {
     food: Int!
     delivery: Int!
     comment: String
+    items: [ItemRating!]
     ratedAt: DateTime!
+  }
+
+  input ItemRatingInput {
+    name: String!
+    rating: Int!
   }
 
   type Order {
@@ -233,8 +245,25 @@ export const typeDefs = /* GraphQL */ `
     statusHistory: [StatusEvent!]!
     rating: OrderRating
     surveyUrl: String
+    ratingToken: String!
     notes: String
     placedAt: DateTime!
+  }
+
+  # Public projection of an order for the no-login feedback survey page.
+  type SurveyOrder {
+    orderNumber: String!
+    customerName: String
+    items: [OrderItem!]!
+    subtotal: Float!
+    discount: Float!
+    deliveryFee: Float!
+    total: Float!
+    status: OrderStatus!
+    placedAt: DateTime!
+    alreadyRated: Boolean!
+    canRate: Boolean!
+    rating: OrderRating
   }
 
   type Review {
@@ -267,6 +296,8 @@ export const typeDefs = /* GraphQL */ `
     pendingOrders: Int!
     totalCustomers: Int!
     avgOrderValue: Float!
+    avgRating: Float!
+    ratingCount: Int!
     topItems: [TopItem!]!
     revenueByDay: [RevenuePoint!]!
     recentOrders: [Order!]!
@@ -306,6 +337,7 @@ export const typeDefs = /* GraphQL */ `
     price: Float!
     image: String
     categoryId: ID!
+    spiceSelectable: Boolean
     spiceLevel: Int
     serves: String
     badge: Badge
@@ -438,6 +470,8 @@ export const typeDefs = /* GraphQL */ `
     companyEmail: String!
     supportPhone: String!
     supportEmail: String!
+    feedbackEmail: String!
+    website: String!
     fssaiLicense: String!
     instagramUrl: String!
     facebookUrl: String!
@@ -482,6 +516,8 @@ export const typeDefs = /* GraphQL */ `
     companyEmail: String
     supportPhone: String
     supportEmail: String
+    feedbackEmail: String
+    website: String
     fssaiLicense: String
     instagramUrl: String
     facebookUrl: String
@@ -676,6 +712,7 @@ export const typeDefs = /* GraphQL */ `
     order(id: ID!): Order
     orders(status: OrderStatus): [Order!]! # admin/staff
     invoicePdf(orderId: ID!): String! # admin/staff — base64-encoded themed PDF
+    surveyOrder(orderId: ID!, token: String!): SurveyOrder # public — no login
 
     riders: [User!]! # admin/staff
     deliveryQueue: [Order!]! # DELIVERY: my active assigned orders
@@ -736,9 +773,11 @@ export const typeDefs = /* GraphQL */ `
     # Orders
     placeOrder(input: PlaceOrderInput!): Order!
     createManualOrder(input: ManualOrderInput!): Order! # admin/staff — POS
+    updateManualOrder(id: ID!, input: ManualOrderInput!): Order! # admin/staff — POS edit
     cancelOrder(id: ID!): Order!
     updateOrderStatus(id: ID!, status: OrderStatus!, note: String): Order! # admin/staff
     rateOrder(orderId: ID!, food: Int!, delivery: Int!, comment: String): Order!
+    submitOrderSurvey(orderId: ID!, token: String!, itemRatings: [ItemRatingInput!]!, delivery: Int!, comment: String): Boolean! # public — token-gated, per-item
     deleteOrder(id: ID!): Boolean! # admin
     deleteOrders(ids: [ID!]!): Int! # admin — bulk delete, returns count removed
 

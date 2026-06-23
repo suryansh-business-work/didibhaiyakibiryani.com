@@ -2,6 +2,7 @@ import type { Control, FieldErrors, UseFormSetValue, UseFormWatch } from "react-
 import { Box, Button, Divider, Paper, Stack, Typography } from "@mui/material";
 import { inr } from "../../../components/ui";
 import { CustomerSelect } from "./CustomerSelect";
+import { Fulfilment } from "./Fulfilment";
 import { OrderLines } from "./OrderLines";
 import { OrderOptions } from "./OrderOptions";
 import type { ManualOrderForm } from "../../../form";
@@ -26,6 +27,7 @@ interface Props {
   onCreate: () => void;
   isSubmitting: boolean;
   rootError?: string;
+  submitLabel?: string;
 }
 
 function Row({ k, v, strong }: Readonly<{ k: string; v: string; strong?: boolean }>) {
@@ -42,16 +44,19 @@ export function OrderPanel(props: Readonly<Props>) {
   const {
     control, errors, watch, setValue, customers, fields, totals,
     isDelivery, orderType, setOrderType, onQty, onRemove, onAddCustom, onCreate, isSubmitting, rootError,
+    submitLabel = "Create order",
   } = props;
   return (
     <Paper sx={{ width: 400, flexShrink: 0, display: "flex", flexDirection: "column", height: "100%", p: 2 }}>
       <Typography variant="h6" gutterBottom>Current order</Typography>
       <CustomerSelect control={control} errors={errors} watch={watch} setValue={setValue} customers={customers} />
       <Divider sx={{ my: 1.5 }} />
+      <Fulfilment control={control} errors={errors} isDelivery={isDelivery} orderType={orderType} setOrderType={setOrderType} />
+      <Divider sx={{ my: 1.5 }} />
       <Box sx={{ flex: 1, overflowY: "auto", pr: 0.5 }}>
         <OrderLines control={control} errors={errors} fields={fields} watch={watch} onQty={onQty} onRemove={onRemove} />
         <Button size="small" onClick={onAddCustom} sx={{ mt: 1 }}>+ Add custom item</Button>
-        <OrderOptions control={control} errors={errors} isDelivery={isDelivery} orderType={orderType} setOrderType={setOrderType} />
+        <OrderOptions control={control} />
       </Box>
       <Divider sx={{ my: 1.5 }} />
       <Stack spacing={0.5}>
@@ -62,7 +67,7 @@ export function OrderPanel(props: Readonly<Props>) {
       </Stack>
       {rootError ? <Typography color="error" variant="caption" sx={{ mt: 1 }}>{rootError}</Typography> : null}
       <Button variant="contained" size="large" sx={{ mt: 1.5 }} onClick={onCreate} disabled={isSubmitting}>
-        {isSubmitting ? "Creating…" : `Create order · ${inr(totals.total)}`}
+        {isSubmitting ? "Saving…" : `${submitLabel} · ${inr(totals.total)}`}
       </Button>
     </Paper>
   );

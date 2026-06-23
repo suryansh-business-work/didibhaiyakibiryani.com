@@ -41,11 +41,17 @@ export interface IStatusEvent {
   note?: string;
 }
 
-/** Post-delivery survey: food + delivery experience, 1–5 stars each. */
+export interface IOrderItemRating {
+  name: string;
+  rating: number;
+}
+
+/** Post-delivery survey: per-item food stars + a separate delivery rating. */
 export interface IOrderRating {
-  food: number;
+  food: number; // overall food (avg of per-item ratings, or in-app single score)
   delivery: number;
   comment?: string;
+  items?: IOrderItemRating[];
   ratedAt: Date;
 }
 
@@ -116,11 +122,20 @@ const statusEventSchema = new Schema<IStatusEvent>(
   { _id: false }
 );
 
+const orderItemRatingSchema = new Schema<IOrderItemRating>(
+  {
+    name: { type: String, required: true },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+  },
+  { _id: false }
+);
+
 const orderRatingSchema = new Schema<IOrderRating>(
   {
     food: { type: Number, required: true, min: 1, max: 5 },
     delivery: { type: Number, required: true, min: 1, max: 5 },
     comment: String,
+    items: { type: [orderItemRatingSchema], default: undefined },
     ratedAt: { type: Date, default: Date.now },
   },
   { _id: false }

@@ -1,18 +1,30 @@
 import type { ReactNode } from "react";
+import {
+  Box,
+  Button,
+  Chip,
+  type ChipProps,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 
 export function Spinner({ label }: Readonly<{ label?: string }>) {
   return (
-    <div className="loading">
-      <div style={{ textAlign: "center" }}>
-        <div className="spinner" style={{ margin: "0 auto 12px" }} />
-        {label && <div className="muted">{label}</div>}
-      </div>
-    </div>
+    <Box sx={{ display: "grid", placeItems: "center", py: 7, gap: 1.5 }}>
+      <CircularProgress color="primary" />
+      {label ? <Typography color="text.secondary">{label}</Typography> : null}
+    </Box>
   );
 }
 
 export function Empty({ children }: Readonly<{ children: ReactNode }>) {
-  return <div className="empty">{children}</div>;
+  return <Box sx={{ textAlign: "center", color: "text.secondary", py: 7 }}>{children}</Box>;
 }
 
 /**
@@ -50,41 +62,68 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
 }>) {
-  // Intentionally no backdrop click-to-close: dialogs dismiss only via the ×
-  // button (or an explicit footer action) to avoid accidental data loss.
+  // Dismiss only via the × button or an explicit footer action — ignore
+  // backdrop clicks and Escape so a half-filled form isn't lost by accident.
   return (
-    <div className="modal-backdrop">
-      <div className="modal">
-        <div className="modal__head">
-          <h3>{title}</h3>
-          <button className="modal__close" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </div>
-        {children}
-        {footer && <div className="modal__foot">{footer}</div>}
-      </div>
-    </div>
+    <Dialog
+      open
+      onClose={(_, reason) => {
+        if (reason !== "backdropClick") onClose();
+      }}
+      disableEscapeKeyDown
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pr: 1 }}>
+        {title}
+        <IconButton onClick={onClose} aria-label="Close" size="small">
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers>{children}</DialogContent>
+      {footer ? <DialogActions sx={{ px: 3, py: 2 }}>{footer}</DialogActions> : null}
+    </Dialog>
   );
 }
 
-const STATUS_STYLE: Record<string, { cls: string; label: string }> = {
-  PLACED: { cls: "badge--amber", label: "Placed" },
-  CONFIRMED: { cls: "badge--blue", label: "Confirmed" },
-  PREPARING: { cls: "badge--blue", label: "Preparing" },
-  OUT_FOR_DELIVERY: { cls: "badge--gold", label: "Out for delivery" },
-  DELIVERED: { cls: "badge--green", label: "Delivered" },
-  CANCELLED: { cls: "badge--red", label: "Cancelled" },
+const STATUS_STYLE: Record<string, { color: ChipProps["color"]; label: string }> = {
+  PLACED: { color: "warning", label: "Placed" },
+  CONFIRMED: { color: "info", label: "Confirmed" },
+  PREPARING: { color: "info", label: "Preparing" },
+  OUT_FOR_DELIVERY: { color: "primary", label: "Out for delivery" },
+  DELIVERED: { color: "success", label: "Delivered" },
+  CANCELLED: { color: "error", label: "Cancelled" },
 };
 
 export function StatusBadge({ status }: Readonly<{ status: string }>) {
-  const s = STATUS_STYLE[status] ?? { cls: "badge--muted", label: status };
+  const s = STATUS_STYLE[status] ?? { color: "default" as const, label: status };
+  return <Chip size="small" variant="outlined" color={s.color} label={s.label} />;
+}
+
+/** Standard modal footer: a ghost Cancel + a contained primary action. */
+export function FormActions({
+  onCancel,
+  onSave,
+  busy,
+  saveLabel = "Save",
+}: Readonly<{ onCancel: () => void; onSave: () => void; busy?: boolean; saveLabel?: string }>) {
   return (
-    <span className={`badge ${s.cls}`}>
-      <span className="dot" />
-      {s.label}
-    </span>
+    <>
+      <Button color="inherit" onClick={onCancel}>Cancel</Button>
+      <Button variant="contained" onClick={onSave} disabled={busy}>
+        {busy ? "Saving…" : saveLabel}
+      </Button>
+    </>
   );
+}
+
+/** Active/off pill used in list tables (green when on, grey otherwise). */
+export function OnOffChip({
+  on,
+  onLabel = "Active",
+  offLabel = "Off",
+}: Readonly<{ on: boolean; onLabel?: string; offLabel?: string }>) {
+  return <Chip size="small" variant="outlined" color={on ? "success" : "default"} label={on ? onLabel : offLabel} />;
 }
 
 export function inr(n: number): string {

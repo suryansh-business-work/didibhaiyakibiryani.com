@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { ORDERS, RIDERS } from "../../graphql/queries";
 import { ASSIGN_RIDER, UPDATE_ORDER_STATUS, DELETE_ORDER, DELETE_ORDERS } from "../../graphql/mutations";
+import { Button } from "@mui/material";
 import Layout from "../../components/Layout";
 import { AsyncList } from "../../components/ui";
 import { IPlus } from "../../components/icons";
@@ -10,6 +11,7 @@ import OrderDetail from "./OrderDetail";
 import OrderMap from "./OrderMap";
 import OrdersTable, { type SortKey } from "./OrdersTable";
 import ManualOrderModal from "./ManualOrderModal";
+import LockedOrderEdit from "./LockedOrderEdit";
 import { FILTERS, type Order, type Rider } from "./types";
 
 const PAGE_SIZE = 15;
@@ -25,6 +27,15 @@ export default function Orders() {
   const [mapOrder, setMapOrder] = useState<Order | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [posOpen, setPosOpen] = useState(false);
+  const [editPos, setEditPos] = useState<Order | null>(null);
+  const [statusOrder, setStatusOrder] = useState<Order | null>(null);
+
+  // Delivered orders are locked from full editing — route them (and the
+  // "Change delivery status" action) to the status-only dialog.
+  function openEdit(o: Order) {
+    if (o.status === "DELIVERED") setStatusOrder(o);
+    else setEditPos(o);
+  }
 
   const { data, loading, refetch } = useQuery<{ orders: Order[] }>(ORDERS, {
     variables: { status: filter === "ALL" ? null : filter },
@@ -188,9 +199,7 @@ export default function Orders() {
           onChange={(e) => onSearch(e.target.value)}
           style={{ minWidth: 220 }}
         />
-        <button className="btn btn-gold" onClick={() => setPosOpen(true)}>
-          <IPlus size={16} /> New order (POS)
-        </button>
+        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={() => setPosOpen(true)}>New order (POS)</Button>
       </div>
 
       {selected.size > 0 && (
@@ -215,6 +224,8 @@ export default function Orders() {
             sortDir={sortDir}
             onSort={onSort}
             onOpen={setActive}
+            onEditPos={openEdit}
+            onChangeStatus={setStatusOrder}
             onDelete={removeOne}
             onShowMap={setMapOrder}
             deletingId={deletingId}
@@ -242,9 +253,23 @@ export default function Orders() {
         />
       )}
       {mapOrder && <OrderMap order={mapOrder} onClose={() => setMapOrder(null)} />}
-      {posOpen && (
+      {statusOrder && (
+        <LockedOrderEdit
+          order={statusOrder}
+          onClose={() => setStatusOrder(null)}
+          onSaved={() => {
+            refetch().catch(() => undefined);
+          }}
+        />
+      )}
+      {(posOpen || editPos) && (
         <ManualOrderModal
-          onClose={() => setPosOpen(false)}
+          key={editPos?.id ?? "new"}
+          editOrder={editPos ?? undefined}
+          onClose={() => {
+            setPosOpen(false);
+            setEditPos(null);
+          }}
           onCreated={() => {
             refetch().catch(() => undefined);
           }}

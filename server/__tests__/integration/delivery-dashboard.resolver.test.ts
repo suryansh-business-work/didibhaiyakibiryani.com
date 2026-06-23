@@ -46,7 +46,7 @@ describe("delivery resolver", () => {
 describe("dashboard resolver", () => {
   it("reviews / customers (+search) / stats / field resolvers", async () => {
     const cust = await makeUser("CUSTOMER", { name: "Asha", phone: "999" });
-    await makeOrder(cust.id, { status: "DELIVERED" });
+    await makeOrder(cust.id, { status: "DELIVERED", rating: { food: 5, delivery: 4, ratedAt: new Date() } });
     await makeOrder(cust.id, { status: "PLACED" });
     await Review.create({ authorName: "Asha", text: "Great", rating: 5, isPublished: true });
 
@@ -57,6 +57,8 @@ describe("dashboard resolver", () => {
     const stats = await dashboardResolvers.Query.dashboardStats(null, null, adminCtx);
     expect(stats.totalOrders).toBe(2);
     expect(stats.totalCustomers).toBe(1);
+    expect(stats.avgRating).toBeGreaterThan(0);
+    expect(stats.ratingCount).toBe(1);
     expect(stats.topItems.length).toBeGreaterThan(0);
     expect(Array.isArray(stats.revenueByDay)).toBe(true);
     expect(stats.recentOrders.length).toBe(2);

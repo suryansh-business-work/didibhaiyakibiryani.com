@@ -1,3 +1,4 @@
+import { Box, Button, Chip, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { Spinner, Empty, inr } from "../../components/ui";
 import type { Item } from "./types";
 
@@ -9,17 +10,7 @@ interface MenuTableProps {
   onDelete: (item: Item) => void;
 }
 
-function badgeClass(badge: string): string {
-  return badge === "NEW" ? "badge--green" : "badge--gold";
-}
-
-export default function MenuTable({
-  items,
-  loading,
-  onEdit,
-  onToggle,
-  onDelete,
-}: Readonly<MenuTableProps>) {
+export default function MenuTable({ items, loading, onEdit, onToggle, onDelete }: Readonly<MenuTableProps>) {
   if (loading) {
     return <Spinner />;
   }
@@ -28,74 +19,55 @@ export default function MenuTable({
   }
 
   return (
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Category</th>
-            <th>Spice</th>
-            <th>Available</th>
-            <th style={{ textAlign: "right" }}>Price</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
+    <Box sx={{ overflowX: "auto" }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Item</TableCell>
+            <TableCell>Category</TableCell>
+            <TableCell>Spice</TableCell>
+            <TableCell>Available</TableCell>
+            <TableCell align="right">Price</TableCell>
+            <TableCell />
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {items.map((it) => (
-            <tr key={it.id}>
-              <td>
-                <div className="t-strong">
-                  {it.name}{" "}
-                  {it.badge !== "NONE" && (
-                    <span className={`badge ${badgeClass(it.badge)}`}>{it.badge}</span>
-                  )}
-                </div>
-                <div
-                  className="muted"
-                  style={{
-                    fontSize: "0.78rem",
-                    maxWidth: 360,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
+            <TableRow key={it.id} hover>
+              <TableCell>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography fontWeight={700}>{it.name}</Typography>
+                  {it.badge !== "NONE" ? (
+                    <Chip size="small" variant="outlined" color={it.badge === "NEW" ? "success" : "primary"} label={it.badge} />
+                  ) : null}
+                </Box>
+                <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block", maxWidth: 360 }}>
                   {it.description}
-                </div>
-              </td>
-              <td className="muted">{it.category?.name ?? "—"}</td>
-              <td>
-                {it.spiceLevel > 0 ? (
-                  "🌶️".repeat(it.spiceLevel)
-                ) : (
-                  <span className="muted">mild</span>
-                )}
-              </td>
-              <td>
-                <button
-                  className={`badge ${it.isAvailable ? "badge--green" : "badge--red"}`}
+                </Typography>
+              </TableCell>
+              <TableCell><Typography variant="body2" color="text.secondary">{it.category?.name ?? "—"}</Typography></TableCell>
+              <TableCell>
+                {it.spiceLevel > 0 ? "🌶️".repeat(it.spiceLevel) : <Typography variant="body2" color="text.secondary">mild</Typography>}
+              </TableCell>
+              <TableCell>
+                <Chip
+                  size="small"
+                  clickable
+                  variant="outlined"
+                  color={it.isAvailable ? "success" : "error"}
+                  label={it.isAvailable ? "In stock" : "Out of stock"}
                   onClick={() => onToggle(it)}
-                  title="Toggle out of stock"
-                >
-                  <span className="dot" />
-                  {it.isAvailable ? "In stock" : "Out of stock"}
-                </button>
-              </td>
-              <td className="t-mono" style={{ textAlign: "right" }}>
-                {inr(it.price)}
-              </td>
-              <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => onEdit(it)}>
-                  Edit
-                </button>{" "}
-                <button className="btn btn-danger btn-sm" onClick={() => onDelete(it)}>
-                  Delete
-                </button>
-              </td>
-            </tr>
+                />
+              </TableCell>
+              <TableCell align="right"><Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(it.price)}</Typography></TableCell>
+              <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                <Button size="small" onClick={() => onEdit(it)}>Edit</Button>
+                <Button size="small" color="error" onClick={() => onDelete(it)}>Delete</Button>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </Box>
   );
 }

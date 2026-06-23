@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useLazyQuery } from "@apollo/client";
+import { Chip, Rating, Stack, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
 import { INVOICE_PDF } from "../../graphql/queries";
 import { Modal, StatusBadge, inr, fmtDate } from "../../components/ui";
 import { LABEL, NEXT, type Order, type Rider } from "./types";
@@ -54,8 +55,8 @@ export default function OrderDetail({
       <div className="row-between" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <StatusBadge status={active.status} />
-          {active.source === "POS" ? <span className="badge badge--muted">POS</span> : null}
-          {active.orderType === "TAKEAWAY" ? <span className="badge badge--muted">Takeaway</span> : null}
+          {active.source === "POS" ? <Chip size="small" label="POS" /> : null}
+          {active.orderType === "TAKEAWAY" ? <Chip size="small" label="Takeaway" /> : null}
         </div>
         <span className="muted">{fmtDate(active.placedAt)}</span>
       </div>
@@ -86,19 +87,17 @@ export default function OrderDetail({
       )}
 
       <Section label="Items">
-        <table>
-          <tbody>
+        <Table size="small">
+          <TableBody>
             {active.items.map((it) => (
-              <tr key={`${it.name}-${it.spiceLevel ?? 0}`}>
-                <td className="t-strong">{it.qty}×</td>
-                <td>{it.name}</td>
-                <td className="t-mono" style={{ textAlign: "right" }}>
-                  {inr(it.price * it.qty)}
-                </td>
-              </tr>
+              <TableRow key={`${it.name}-${it.spiceLevel ?? 0}`}>
+                <TableCell sx={{ width: 36 }}><Typography fontWeight={700}>{it.qty}×</Typography></TableCell>
+                <TableCell>{it.name}</TableCell>
+                <TableCell align="right"><Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(it.price * it.qty)}</Typography></TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </Section>
 
       <div className="card" style={{ padding: 14, marginBottom: 14 }}>
@@ -119,10 +118,30 @@ export default function OrderDetail({
 
       {active.rating && (
         <Section label="Customer rating">
-          <div>
-            Food {"★".repeat(active.rating.food)} · Delivery {"★".repeat(active.rating.delivery)}
-          </div>
-          {active.rating.comment && <div className="muted">“{active.rating.comment}”</div>}
+          <Stack spacing={0.75}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Typography fontWeight={800}>Overall</Typography>
+              <Rating value={Math.round((active.rating.food + active.rating.delivery) / 2)} readOnly size="small" />
+            </Stack>
+            {active.rating.items?.length
+              ? active.rating.items.map((r) => (
+                  <Stack key={r.name} direction="row" alignItems="center" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">{r.name}</Typography>
+                    <Rating value={r.rating} readOnly size="small" />
+                  </Stack>
+                ))
+              : (
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Food</Typography>
+                    <Rating value={active.rating.food} readOnly size="small" />
+                  </Stack>
+                )}
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Typography variant="body2" color="text.secondary">Delivery</Typography>
+              <Rating value={active.rating.delivery} readOnly size="small" />
+            </Stack>
+            {active.rating.comment ? <Typography variant="body2" color="text.secondary">“{active.rating.comment}”</Typography> : null}
+          </Stack>
         </Section>
       )}
 

@@ -4,8 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { SOCIETIES } from "../../graphql/queries";
 import { CREATE_SOCIETY, UPDATE_SOCIETY, DELETE_SOCIETY } from "../../graphql/mutations";
+import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
-import { AsyncList, Modal } from "../../components/ui";
+import { AsyncList, FormActions, Modal, OnOffChip } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
 import { RHFField, RHFCheckbox, societySchema, type SocietyForm } from "../../form";
@@ -84,33 +85,37 @@ export default function Societies() {
 
   return (
     <Layout title="Societies">
-      <div className="toolbar">
-        <div className="spacer" />
-        <button className="btn btn-gold" onClick={openNew}><IPlus size={16} /> New society</button>
-      </div>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New society</Button>
+      </Box>
 
       <div className="card">
         <AsyncList loading={loading && !data} empty={societies.length === 0} emptyLabel="No societies yet.">
-          <div className="table-wrap">
-            <table>
-              <thead><tr><th>Name</th><th>Area</th><th>Pincode</th><th>Order</th><th>Status</th><th></th></tr></thead>
-              <tbody>
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell><TableCell>Area</TableCell><TableCell>Pincode</TableCell>
+                  <TableCell>Order</TableCell><TableCell>Status</TableCell><TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {societies.map((s) => (
-                  <tr key={s.id}>
-                    <td className="t-strong">{s.name}</td>
-                    <td className="muted">{s.area || "—"}</td>
-                    <td className="muted">{s.pincode || "—"}</td>
-                    <td className="muted">{s.sortOrder}</td>
-                    <td><span className={`badge ${s.isActive ? "badge--green" : "badge--muted"}`}><span className="dot" />{s.isActive ? "Active" : "Hidden"}</span></td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(s)}>Edit</button>{" "}
-                      <button className="btn btn-danger btn-sm" onClick={() => remove(s)}>Delete</button>
-                    </td>
-                  </tr>
+                  <TableRow key={s.id} hover>
+                    <TableCell><Typography fontWeight={700}>{s.name}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{s.area || "—"}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{s.pincode || "—"}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{s.sortOrder}</Typography></TableCell>
+                    <TableCell><OnOffChip on={s.isActive} offLabel="Hidden" /></TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                      <Button size="small" onClick={() => openEdit(s)}>Edit</Button>
+                      <Button size="small" color="error" onClick={() => remove(s)}>Delete</Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Box>
         </AsyncList>
       </div>
 
@@ -118,17 +123,14 @@ export default function Societies() {
         <Modal
           title={editing ? "Edit society" : "New society"}
           onClose={() => setOpen(false)}
-          footer={<>
-            <button className="btn btn-ghost" onClick={() => setOpen(false)}>Cancel</button>
-            <button className="btn btn-gold" onClick={handleSubmit(onSave)} disabled={isSubmitting}>{isSubmitting ? "Saving…" : "Save"}</button>
-          </>}
+          footer={<FormActions onCancel={() => setOpen(false)} onSave={handleSubmit(onSave)} busy={isSubmitting} />}
         >
           <RHFField control={control} name="name" label="Name" placeholder="e.g. Prestige Lakeside" error={errors.name?.message} />
           <RHFField control={control} name="area" label="Area (optional)" placeholder="e.g. Whitefield" error={errors.area?.message} />
           <RHFField control={control} name="pincode" label="Pincode (optional)" error={errors.pincode?.message} />
           <RHFField control={control} name="sortOrder" label="Sort order" type="number" error={errors.sortOrder?.message} />
           <RHFCheckbox control={control} name="isActive" label="Active" />
-          {errors.root && <div className="error-text">{errors.root.message}</div>}
+          {errors.root ? <Typography color="error" variant="body2" sx={{ mt: 1 }}>{errors.root.message}</Typography> : null}
         </Modal>
       )}
     </Layout>

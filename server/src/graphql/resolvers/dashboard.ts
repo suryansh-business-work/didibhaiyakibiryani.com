@@ -50,6 +50,7 @@ export const dashboardResolvers = {
         topItemsAgg,
         revenueByDayAgg,
         recentOrders,
+        ratingAgg,
       ] = await Promise.all([
         Order.countDocuments({ status: { $ne: "CANCELLED" } }),
         Order.aggregate([
@@ -94,10 +95,24 @@ export const dashboardResolvers = {
           { $sort: { _id: 1 } },
         ]),
         Order.find().sort({ placedAt: -1 }).limit(8),
+        Order.aggregate([
+          { $match: { "rating.food": { $exists: true } } },
+          {
+            $group: {
+              _id: null,
+              food: { $avg: "$rating.food" },
+              delivery: { $avg: "$rating.delivery" },
+              count: { $sum: 1 },
+            },
+          },
+        ]),
       ]);
 
       const totalRevenue = revenueAgg[0]?.total ?? 0;
       const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+      const r = ratingAgg[0];
+      const avgRating = r ? Math.round(((r.food + r.delivery) / 2) * 10) / 10 : 0;
+      const ratingCount = r?.count ?? 0;
 
       return {
         totalOrders,
@@ -107,6 +122,8 @@ export const dashboardResolvers = {
         pendingOrders,
         totalCustomers,
         avgOrderValue,
+        avgRating,
+        ratingCount,
         topItems: topItemsAgg.map((t) => ({
           menuItemId: t._id,
           name: t.name,

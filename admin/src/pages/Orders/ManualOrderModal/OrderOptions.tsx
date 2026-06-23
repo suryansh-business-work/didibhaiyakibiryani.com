@@ -1,4 +1,4 @@
-import { Controller, type Control, type FieldErrors } from "react-hook-form";
+import { Controller, type Control } from "react-hook-form";
 import {
   Accordion,
   AccordionDetails,
@@ -6,16 +6,12 @@ import {
   MenuItem,
   Stack,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import type { ManualOrderForm } from "../../../form";
 import { ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES } from "./types";
-
-type OrderType = "DELIVERY" | "TAKEAWAY";
 
 interface SelectFieldProps {
   control: Control<ManualOrderForm>;
@@ -42,66 +38,17 @@ function SelectField({ control, name, label, options }: Readonly<SelectFieldProp
 
 interface Props {
   control: Control<ManualOrderForm>;
-  errors: FieldErrors<ManualOrderForm>;
-  isDelivery: boolean;
-  orderType: OrderType;
-  setOrderType: (v: OrderType) => void;
 }
 
-/** Collapsible order details: fulfilment, address, pricing, payment, status,
- * back-date and the feedback-survey link. */
-export function OrderOptions({ control, errors, isDelivery, orderType, setOrderType }: Readonly<Props>) {
+/** Collapsible extras: discount, payment, status, back-date and survey link. */
+export function OrderOptions({ control }: Readonly<Props>) {
   return (
     <Accordion disableGutters sx={{ mt: 1, bgcolor: "transparent" }}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography fontWeight={700}>Order details</Typography>
+        <Typography fontWeight={700}>More options</Typography>
       </AccordionSummary>
       <AccordionDetails>
         <Stack spacing={1.5}>
-          <ToggleButtonGroup
-            size="small"
-            exclusive
-            fullWidth
-            value={orderType}
-            onChange={(_, v) => {
-              if (v) setOrderType(v);
-            }}
-          >
-            <ToggleButton value="TAKEAWAY">Takeaway</ToggleButton>
-            <ToggleButton value="DELIVERY">Delivery</ToggleButton>
-          </ToggleButtonGroup>
-
-          {isDelivery ? (
-            <>
-              <Controller
-                control={control}
-                name="line1"
-                render={({ field }) => (
-                  <TextField {...field} value={field.value ?? ""} label="Address line 1" size="small" error={Boolean(errors.line1)} helperText={errors.line1?.message} />
-                )}
-              />
-              <Stack direction="row" spacing={1}>
-                <Controller
-                  control={control}
-                  name="city"
-                  render={({ field }) => (
-                    <TextField {...field} value={field.value ?? ""} label="City" size="small" fullWidth error={Boolean(errors.city)} helperText={errors.city?.message} />
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="pincode"
-                  render={({ field }) => <TextField {...field} value={field.value ?? ""} label="Pincode" size="small" fullWidth />}
-                />
-              </Stack>
-              <Controller
-                control={control}
-                name="deliveryFee"
-                render={({ field }) => <TextField {...field} value={field.value ?? ""} label="Delivery fee (₹)" type="number" size="small" />}
-              />
-            </>
-          ) : null}
-
           <Controller
             control={control}
             name="discount"

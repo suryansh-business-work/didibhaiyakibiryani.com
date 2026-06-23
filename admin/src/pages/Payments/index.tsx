@@ -2,16 +2,24 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { PAYMENTS } from "../../graphql/queries";
 import { REFUND_PAYMENT } from "../../graphql/mutations";
+import { Box, Chip, type ChipProps, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
 import { AsyncList, inr, fmtDate } from "../../components/ui";
 import { useAlert, useConfirm } from "../../components/dialog";
 import PaymentDetail from "./PaymentDetail";
 import {
   STATUS_FILTERS,
-  STATUS_BADGE,
   refundableAmount,
   type PaymentRow,
 } from "./types";
+
+const STATUS_COLOR: Record<string, ChipProps["color"]> = {
+  CAPTURED: "success",
+  CREATED: "info",
+  FAILED: "error",
+  REFUNDED: "warning",
+  PARTIALLY_REFUNDED: "warning",
+};
 
 export default function Payments() {
   const [filter, setFilter] = useState<string>("ALL");
@@ -49,54 +57,47 @@ export default function Payments() {
 
   return (
     <Layout title="Payments">
-      <div className="toolbar">
-        <div className="chips">
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f}
-              className={`chip ${filter === f ? "active" : ""}`}
-              onClick={() => setFilter(f)}
-            >
-              {f === "ALL" ? "All" : f.replaceAll("_", " ").toLowerCase()}
-            </button>
-          ))}
-        </div>
-      </div>
+      <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap" }}>
+        {STATUS_FILTERS.map((f) => (
+          <Chip
+            key={f}
+            label={f === "ALL" ? "All" : f.replaceAll("_", " ").toLowerCase()}
+            color={filter === f ? "primary" : "default"}
+            variant={filter === f ? "filled" : "outlined"}
+            onClick={() => setFilter(f)}
+          />
+        ))}
+      </Stack>
 
       <div className="card">
         <AsyncList loading={loading && !data} empty={payments.length === 0} emptyLabel="No payments yet.">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Order</th><th>Status</th><th>Method</th><th>Refunded</th>
-                  <th>Created</th><th style={{ textAlign: "right" }}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Order</TableCell><TableCell>Status</TableCell><TableCell>Method</TableCell>
+                  <TableCell>Refunded</TableCell><TableCell>Created</TableCell><TableCell align="right">Amount</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {payments.map((p) => (
-                  <tr key={p.id} style={{ cursor: "pointer" }} onClick={() => setActive(p)}>
-                    <td>
-                      <div className="t-strong">{p.order?.orderNumber ?? "—"}</div>
-                      <div className="muted" style={{ fontSize: "0.75rem" }}>{p.providerOrderId}</div>
-                    </td>
-                    <td>
-                      <span className={`badge ${STATUS_BADGE[p.status] ?? "badge--muted"}`}>
-                        <span className="dot" />
-                        {p.status.replaceAll("_", " ")}
-                      </span>
-                    </td>
-                    <td className="muted">{p.method ?? "—"}</td>
-                    <td className="muted">
-                      {p.refunds.length > 0 ? inr(p.amount - refundableAmount(p)) : "—"}
-                    </td>
-                    <td className="muted">{fmtDate(p.createdAt)}</td>
-                    <td className="t-mono" style={{ textAlign: "right" }}>{inr(p.amount)}</td>
-                  </tr>
+                  <TableRow key={p.id} hover sx={{ cursor: "pointer" }} onClick={() => setActive(p)}>
+                    <TableCell>
+                      <Typography fontWeight={700}>{p.order?.orderNumber ?? "—"}</Typography>
+                      <Typography variant="caption" color="text.secondary">{p.providerOrderId}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip size="small" variant="outlined" color={STATUS_COLOR[p.status] ?? "default"} label={p.status.replaceAll("_", " ")} />
+                    </TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{p.method ?? "—"}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{p.refunds.length > 0 ? inr(p.amount - refundableAmount(p)) : "—"}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(p.createdAt)}</Typography></TableCell>
+                    <TableCell align="right"><Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(p.amount)}</Typography></TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Box>
         </AsyncList>
       </div>
 

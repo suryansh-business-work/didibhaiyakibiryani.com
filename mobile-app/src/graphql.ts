@@ -4,6 +4,7 @@ export const APP_SETTINGS = gql`
   query AppSettings {
     settings {
       brandName
+      logoUrl
       tagline
       storeOpenTime
       storeCloseTime
@@ -164,6 +165,7 @@ export const HOME_DATA = gql`
       description
       price
       image
+      spiceSelectable
       spiceLevel
       serves
       badge
@@ -184,6 +186,7 @@ export const MENU_ITEM = gql`
       description
       price
       image
+      spiceSelectable
       spiceLevel
       serves
       badge

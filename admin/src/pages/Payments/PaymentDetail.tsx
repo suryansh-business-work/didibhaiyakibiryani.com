@@ -1,5 +1,14 @@
+import { Box, Button, Chip, type ChipProps, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
 import { Modal, inr, fmtDate } from "../../components/ui";
-import { STATUS_BADGE, refundableAmount, canRefund, type PaymentRow } from "./types";
+import { refundableAmount, canRefund, type PaymentRow } from "./types";
+
+const STATUS_COLOR: Record<string, ChipProps["color"]> = {
+  CAPTURED: "success",
+  CREATED: "info",
+  FAILED: "error",
+  REFUNDED: "warning",
+  PARTIALLY_REFUNDED: "warning",
+};
 
 interface PaymentDetailProps {
   payment: PaymentRow;
@@ -8,73 +17,61 @@ interface PaymentDetailProps {
   onClose: () => void;
 }
 
-export default function PaymentDetail({
-  payment,
-  refunding,
-  onRefund,
-  onClose,
-}: Readonly<PaymentDetailProps>) {
+export default function PaymentDetail({ payment, refunding, onRefund, onClose }: Readonly<PaymentDetailProps>) {
   return (
     <Modal
       title={`Payment · ${payment.order?.orderNumber ?? payment.providerOrderId}`}
       onClose={onClose}
       footer={
         canRefund(payment) ? (
-          <button className="btn btn-danger" disabled={refunding} onClick={() => onRefund(payment)}>
+          <Button variant="contained" color="error" disabled={refunding} onClick={() => onRefund(payment)}>
             {refunding ? "Refunding…" : `Refund ${inr(refundableAmount(payment))}`}
-          </button>
+          </Button>
         ) : undefined
       }
     >
-      <div className="row-between" style={{ marginBottom: 14 }}>
-        <span className={`badge ${STATUS_BADGE[payment.status] ?? "badge--muted"}`}>
-          <span className="dot" />
-          {payment.status.replaceAll("_", " ")}
-        </span>
-        <span className="t-mono t-strong">{inr(payment.amount)}</span>
-      </div>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+        <Chip size="small" variant="outlined" color={STATUS_COLOR[payment.status] ?? "default"} label={payment.status.replaceAll("_", " ")} />
+        <Typography fontWeight={700} sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(payment.amount)}</Typography>
+      </Box>
 
-      <div className="muted" style={{ fontSize: "0.85rem", marginBottom: 14 }}>
-        <div>Provider order: <span className="t-mono">{payment.providerOrderId}</span></div>
-        {payment.providerPaymentId && (
-          <div>Provider payment: <span className="t-mono">{payment.providerPaymentId}</span></div>
-        )}
-        {payment.method && <div>Method: {payment.method}</div>}
+      <Box sx={{ color: "text.secondary", fontSize: "0.85rem", mb: 2 }}>
+        <div>Provider order: <span style={{ fontVariantNumeric: "tabular-nums" }}>{payment.providerOrderId}</span></div>
+        {payment.providerPaymentId ? <div>Provider payment: {payment.providerPaymentId}</div> : null}
+        {payment.method ? <div>Method: {payment.method}</div> : null}
         <div>Created: {fmtDate(payment.createdAt)}</div>
-      </div>
+      </Box>
 
-      {payment.refunds.length > 0 && (
-        <div style={{ marginBottom: 14 }}>
-          <div className="panel-title">Refunds</div>
-          <table>
-            <tbody>
+      {payment.refunds.length > 0 ? (
+        <Box sx={{ mb: 2 }}>
+          <Typography fontWeight={700} gutterBottom>Refunds</Typography>
+          <Table size="small">
+            <TableBody>
               {payment.refunds.map((r) => (
-                <tr key={r.providerRefundId}>
-                  <td className="t-mono" style={{ fontSize: "0.8rem" }}>{r.providerRefundId}</td>
-                  <td className="muted">{r.reason ?? "—"}</td>
-                  <td className="muted">{fmtDate(r.at)}</td>
-                  <td className="t-mono" style={{ textAlign: "right" }}>{inr(r.amount)}</td>
-                </tr>
+                <TableRow key={r.providerRefundId}>
+                  <TableCell sx={{ fontSize: "0.8rem" }}>{r.providerRefundId}</TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary">{r.reason ?? "—"}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(r.at)}</Typography></TableCell>
+                  <TableCell align="right"><Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(r.amount)}</Typography></TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </TableBody>
+          </Table>
+        </Box>
+      ) : null}
 
-      <div className="panel-title">Activity log</div>
-      <table>
-        <tbody>
+      <Typography fontWeight={700} gutterBottom>Activity log</Typography>
+      <Table size="small">
+        <TableBody>
           {payment.events.map((e) => (
-            <tr key={`${e.type}-${e.at}`}>
-              <td className="t-strong" style={{ fontSize: "0.82rem" }}>{e.type}</td>
-              <td className="muted" style={{ fontSize: "0.82rem" }}>{e.data ?? ""}</td>
-              <td className="muted" style={{ textAlign: "right", fontSize: "0.82rem" }}>
-                {fmtDate(e.at)}
-              </td>
-            </tr>
+            <TableRow key={`${e.type}-${e.at}`}>
+              <TableCell><Typography variant="body2" fontWeight={700}>{e.type}</Typography></TableCell>
+              <TableCell><Typography variant="body2" color="text.secondary">{e.data ?? ""}</Typography></TableCell>
+              <TableCell align="right"><Typography variant="body2" color="text.secondary">{fmtDate(e.at)}</Typography></TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </Modal>
   );
 }

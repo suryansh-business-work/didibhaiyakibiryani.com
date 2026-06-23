@@ -1,4 +1,5 @@
 import { useQuery } from "@apollo/client";
+import { Box, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { DASHBOARD } from "../graphql/queries";
 import Layout from "../components/Layout";
 import { Spinner, StatusBadge, inr, fmtDate } from "../components/ui";
@@ -13,6 +14,7 @@ interface RecentOrder {
 interface Stats {
   totalOrders: number; totalRevenue: number; todayOrders: number; todayRevenue: number;
   pendingOrders: number; totalCustomers: number; avgOrderValue: number;
+  avgRating: number; ratingCount: number;
   topItems: TopItem[]; revenueByDay: RevPoint[]; recentOrders: RecentOrder[];
 }
 
@@ -63,6 +65,7 @@ function Body({ s }: Readonly<{ s: Stats }>) {
         <Stat label="Total revenue" value={inr(s.totalRevenue)} sub={`Avg ${inr(s.avgOrderValue)} / order`} icon={<IOrders />} />
         <Stat label="Pending orders" value={String(s.pendingOrders)} sub="Need attention" icon={<IClock />} />
         <Stat label="Customers" value={String(s.totalCustomers)} sub={`${s.totalOrders} lifetime orders`} icon={<IUsers />} />
+        <Stat label="Customer rating" value={s.ratingCount ? `${s.avgRating} ★` : "—"} sub={`${s.ratingCount} rating(s)`} icon={<span>★</span>} />
       </div>
 
       <div className="grid-2 section-gap">
@@ -90,42 +93,45 @@ function Body({ s }: Readonly<{ s: Stats }>) {
           {s.topItems.length === 0 ? (
             <p className="muted">No sales yet.</p>
           ) : (
-            <table>
-              <tbody>
+            <Table size="small">
+              <TableBody>
                 {s.topItems.map((t, i) => (
-                  <tr key={t.name}>
-                    <td style={{ width: 28 }} className="muted">{i + 1}</td>
-                    <td className="t-strong">{t.name}</td>
-                    <td className="muted">{t.qty} sold</td>
-                    <td className="t-mono" style={{ textAlign: "right" }}>{inr(t.revenue)}</td>
-                  </tr>
+                  <TableRow key={t.name}>
+                    <TableCell sx={{ width: 28 }}><Typography variant="body2" color="text.secondary">{i + 1}</Typography></TableCell>
+                    <TableCell><Typography fontWeight={700}>{t.name}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{t.qty} sold</Typography></TableCell>
+                    <TableCell align="right"><Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(t.revenue)}</Typography></TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
       </div>
 
       <div className="card section-gap" style={{ padding: 20 }}>
         <div className="panel-title">Recent orders</div>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Order</th><th>Customer</th><th>Status</th><th>Placed</th><th style={{ textAlign: "right" }}>Total</th></tr>
-            </thead>
-            <tbody>
+        <Box sx={{ overflowX: "auto" }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Order</TableCell><TableCell>Customer</TableCell><TableCell>Status</TableCell>
+                <TableCell>Placed</TableCell><TableCell align="right">Total</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {s.recentOrders.map((o) => (
-                <tr key={o.id}>
-                  <td className="t-strong">{o.orderNumber}</td>
-                  <td>{o.user?.name ?? "—"}</td>
-                  <td><StatusBadge status={o.status} /></td>
-                  <td className="muted">{fmtDate(o.placedAt)}</td>
-                  <td className="t-mono" style={{ textAlign: "right" }}>{inr(o.total)}</td>
-                </tr>
+                <TableRow key={o.id} hover>
+                  <TableCell><Typography fontWeight={700}>{o.orderNumber}</Typography></TableCell>
+                  <TableCell>{o.user?.name ?? "—"}</TableCell>
+                  <TableCell><StatusBadge status={o.status} /></TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(o.placedAt)}</Typography></TableCell>
+                  <TableCell align="right"><Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(o.total)}</Typography></TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </Box>
       </div>
     </>
   );

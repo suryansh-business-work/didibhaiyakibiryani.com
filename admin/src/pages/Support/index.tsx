@@ -2,12 +2,19 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { SUPPORT_TICKETS } from "../../graphql/queries";
 import { REPLY_TICKET, UPDATE_TICKET_STATUS, DELETE_SUPPORT_TICKET } from "../../graphql/mutations";
+import { Box, Button, Chip, type ChipProps, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
 import { AsyncList, fmtDate } from "../../components/ui";
 import { useAlert, useConfirm } from "../../components/dialog";
 import SubjectsManager from "./SubjectsManager";
 import TicketDetail from "./TicketDetail";
-import { TICKET_BADGE, TICKET_FILTERS, type Ticket } from "./types";
+import { TICKET_FILTERS, type Ticket } from "./types";
+
+const STATUS_COLOR: Record<string, ChipProps["color"]> = {
+  OPEN: "warning",
+  IN_PROGRESS: "info",
+  RESOLVED: "success",
+};
 
 export default function Support() {
   const [filter, setFilter] = useState("ALL");
@@ -82,19 +89,17 @@ export default function Support() {
     <Layout title="Support">
       <SubjectsManager />
 
-      <div className="toolbar">
-        <div className="chips">
-          {TICKET_FILTERS.map((f) => (
-            <button
-              key={f}
-              className={`chip ${filter === f ? "active" : ""}`}
-              onClick={() => setFilter(f)}
-            >
-              {f === "ALL" ? "All" : f.replace("_", " ").toLowerCase()}
-            </button>
-          ))}
-        </div>
-      </div>
+      <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap" }}>
+        {TICKET_FILTERS.map((f) => (
+          <Chip
+            key={f}
+            label={f === "ALL" ? "All" : f.replace("_", " ").toLowerCase()}
+            color={filter === f ? "primary" : "default"}
+            variant={filter === f ? "filled" : "outlined"}
+            onClick={() => setFilter(f)}
+          />
+        ))}
+      </Stack>
 
       <div className="card">
         <AsyncList
@@ -102,37 +107,28 @@ export default function Support() {
           empty={tickets.length === 0}
           emptyLabel="No support tickets here."
         >
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Order</th>
-                  <th>Subject</th>
-                  <th>Customer</th>
-                  <th>Status</th>
-                  <th>Updated</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Order</TableCell><TableCell>Subject</TableCell><TableCell>Customer</TableCell>
+                  <TableCell>Status</TableCell><TableCell>Updated</TableCell><TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {tickets.map((t) => (
-                  <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => setActive(t)}>
-                    <td className="t-strong">{t.order?.orderNumber ?? "—"}</td>
-                    <td>
-                      {t.subject}
-                      {t.imageUrl && " 📷"}
-                    </td>
-                    <td className="muted">{t.user?.name ?? "—"}</td>
-                    <td>
-                      <span className={`badge ${TICKET_BADGE[t.status]}`}>
-                        <span className="dot" />
-                        {t.status.replace("_", " ").toLowerCase()}
-                      </span>
-                    </td>
-                    <td className="muted">{fmtDate(t.updatedAt)}</td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button
-                        className="btn btn-danger btn-sm"
+                  <TableRow key={t.id} hover sx={{ cursor: "pointer" }} onClick={() => setActive(t)}>
+                    <TableCell><Typography fontWeight={700}>{t.order?.orderNumber ?? "—"}</Typography></TableCell>
+                    <TableCell>{t.subject}{t.imageUrl ? " 📷" : ""}</TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{t.user?.name ?? "—"}</Typography></TableCell>
+                    <TableCell>
+                      <Chip size="small" variant="outlined" color={STATUS_COLOR[t.status] ?? "default"} label={t.status.replace("_", " ").toLowerCase()} />
+                    </TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(t.updatedAt)}</Typography></TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                      <Button
+                        size="small"
+                        color="error"
                         disabled={deletingId === t.id}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -140,13 +136,13 @@ export default function Support() {
                         }}
                       >
                         {deletingId === t.id ? "…" : "Delete"}
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Box>
         </AsyncList>
       </div>
 

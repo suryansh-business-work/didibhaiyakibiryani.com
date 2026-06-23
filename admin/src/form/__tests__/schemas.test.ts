@@ -114,7 +114,7 @@ describe("couponSchema", () => {
 describe("menuItemSchema", () => {
   const base = {
     name: "Veg Biryani", description: "", image: "", price: 199, categoryId: "c1",
-    spiceLevel: 1, serves: "Serves 1", badge: "NONE", tags: "", isAvailable: true,
+    spiceSelectable: true, spiceLevel: 1, serves: "2", badge: "NONE", tags: "", isAvailable: true,
   };
   it("accepts a valid item", () => {
     expect(ok(menuItemSchema, base)).toBe(true);

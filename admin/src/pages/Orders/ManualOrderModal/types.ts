@@ -1,4 +1,5 @@
 import type { ManualOrderForm } from "../../../form";
+import type { Order } from "../types";
 
 export interface MenuOption {
   id: string;
@@ -56,12 +57,12 @@ export const PAYMENT_STATUSES = [
 ] as const;
 
 export const ORDER_STATUSES = [
-  { value: "DELIVERED", label: "Delivered" },
-  { value: "PLACED", label: "Placed" },
-  { value: "CONFIRMED", label: "Confirmed" },
-  { value: "PREPARING", label: "Preparing" },
-  { value: "OUT_FOR_DELIVERY", label: "Out for delivery" },
-  { value: "CANCELLED", label: "Cancelled" },
+  { value: "PLACED", label: "1 · Placed" },
+  { value: "CONFIRMED", label: "2 · Confirmed" },
+  { value: "PREPARING", label: "3 · Preparing" },
+  { value: "OUT_FOR_DELIVERY", label: "4 · Out for delivery" },
+  { value: "DELIVERED", label: "5 · Delivered" },
+  { value: "CANCELLED", label: "6 · Cancelled" },
 ] as const;
 
 export const SPICE_OPTIONS = [
@@ -88,6 +89,32 @@ export function computeTotals(v: ManualOrderForm): Totals {
   const deliveryFee = v.orderType === "DELIVERY" ? Number(v.deliveryFee) || 0 : 0;
   const total = Math.max(0, subtotal - discount) + deliveryFee;
   return { subtotal, discount, deliveryFee, total };
+}
+
+/** Prefill the POS form from an existing order (for the Edit flow). */
+export function orderToManualForm(o: Order): ManualOrderForm {
+  const isDelivery = o.orderType === "DELIVERY" || Boolean(o.address);
+  return {
+    orderType: isDelivery ? "DELIVERY" : "TAKEAWAY",
+    customerMode: o.user?.id ? "EXISTING" : "WALKIN",
+    userId: o.user?.id ?? "",
+    customerName: o.customerName ?? o.user?.name ?? "",
+    customerPhone: o.customerPhone ?? o.user?.phone ?? "",
+    items: o.items.map((it) => ({ menuItemId: "", name: it.name, price: it.price, qty: it.qty, spiceLevel: it.spiceLevel ?? 0 })),
+    line1: o.address?.line1 ?? "",
+    line2: o.address?.line2 ?? "",
+    city: o.address?.city ?? "",
+    pincode: o.address?.pincode ?? "",
+    phone: o.address?.phone ?? "",
+    discount: o.discount,
+    deliveryFee: o.deliveryFee,
+    paymentMethod: o.paymentMethod as ManualOrderForm["paymentMethod"],
+    paymentStatus: o.paymentStatus as ManualOrderForm["paymentStatus"],
+    status: o.status as ManualOrderForm["status"],
+    placedAt: o.placedAt ?? "",
+    surveyUrl: o.surveyUrl ?? "",
+    notes: o.notes ?? "",
+  };
 }
 
 /** Map the form to the GraphQL `ManualOrderInput`. */

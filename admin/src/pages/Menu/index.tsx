@@ -9,6 +9,7 @@ import {
   DELETE_ITEM,
   TOGGLE_ITEM,
 } from "../../graphql/mutations";
+import { Alert, Box, Button } from "@mui/material";
 import Layout from "../../components/Layout";
 import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
@@ -57,6 +58,7 @@ export default function Menu() {
       price: it.price,
       image: it.image ?? "",
       categoryId: it.category?.id ?? "",
+      spiceSelectable: it.spiceSelectable ?? true,
       spiceLevel: it.spiceLevel,
       serves: it.serves,
       badge: it.badge as MenuForm["badge"],
@@ -73,6 +75,7 @@ export default function Menu() {
       price: form.price,
       image: form.image,
       categoryId: form.categoryId,
+      spiceSelectable: form.spiceSelectable,
       spiceLevel: form.spiceLevel,
       serves: form.serves,
       badge: form.badge,
@@ -120,16 +123,11 @@ export default function Menu() {
 
   return (
     <Layout title="Menu">
-      <div className="toolbar">
-        <div className="spacer" />
-        <button className="btn btn-gold" onClick={openNew} disabled={cats.length === 0}>
-          <IPlus size={16} /> New item
-        </button>
-      </div>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew} disabled={cats.length === 0}>New item</Button>
+      </Box>
       {cats.length === 0 && (
-        <div className="card" style={{ padding: 16, marginBottom: 16 }}>
-          <span className="muted">Create a category first before adding menu items.</span>
-        </div>
+        <Alert severity="info" sx={{ mb: 2 }}>Create a category first before adding menu items.</Alert>
       )}
 
       <div className="card">

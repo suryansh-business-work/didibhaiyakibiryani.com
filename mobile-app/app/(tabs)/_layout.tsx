@@ -1,8 +1,12 @@
 import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { brand } from "../../src/theme";
 
 export default function TabsLayout() {
+  // Add the device's bottom safe-area inset (home indicator / gesture bar) so
+  // the tab labels aren't clipped at the screen edge.
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -12,8 +16,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: "#0c0805",
           borderTopColor: brand.border,
-          height: 62,
-          paddingBottom: 8,
+          height: 62 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },

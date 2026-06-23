@@ -4,8 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { SLIDERS } from "../../graphql/queries";
 import { CREATE_SLIDER, UPDATE_SLIDER, DELETE_SLIDER } from "../../graphql/mutations";
+import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
-import { AsyncList, Modal } from "../../components/ui";
+import { AsyncList, FormActions, Modal, OnOffChip } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import ImageUpload from "../../components/ImageUpload";
 import { useAlert, useConfirm } from "../../components/dialog";
@@ -95,39 +96,37 @@ export default function Slider() {
 
   return (
     <Layout title="Slider">
-      <div className="toolbar">
-        <div className="spacer" />
-        <button className="btn btn-gold" onClick={openNew}><IPlus size={16} /> New slide</button>
-      </div>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New slide</Button>
+      </Box>
 
       <div className="card">
         <AsyncList loading={loading && !data} empty={slides.length === 0} emptyLabel="No slides yet.">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr><th>Image</th><th>Title</th><th>Link</th><th>Order</th><th>Status</th><th></th></tr>
-              </thead>
-              <tbody>
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Image</TableCell><TableCell>Title</TableCell><TableCell>Link</TableCell>
+                  <TableCell>Order</TableCell><TableCell>Status</TableCell><TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {slides.map((s) => (
-                  <tr key={s.id}>
-                    <td><img src={s.imageUrl} alt="" className="upload-preview" /></td>
-                    <td className="t-strong">{s.title || "—"}</td>
-                    <td className="muted">{s.linkUrl || "—"}</td>
-                    <td className="muted">{s.sortOrder}</td>
-                    <td>
-                      <span className={`badge ${s.isActive ? "badge--green" : "badge--muted"}`}>
-                        <span className="dot" />{s.isActive ? "Active" : "Hidden"}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(s)}>Edit</button>{" "}
-                      <button className="btn btn-danger btn-sm" onClick={() => remove(s)}>Delete</button>
-                    </td>
-                  </tr>
+                  <TableRow key={s.id} hover>
+                    <TableCell><Box component="img" src={s.imageUrl} alt="" sx={{ width: 72, height: 48, borderRadius: 1.5, objectFit: "cover" }} /></TableCell>
+                    <TableCell><Typography fontWeight={700}>{s.title || "—"}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{s.linkUrl || "—"}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{s.sortOrder}</Typography></TableCell>
+                    <TableCell><OnOffChip on={s.isActive} offLabel="Hidden" /></TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                      <Button size="small" onClick={() => openEdit(s)}>Edit</Button>
+                      <Button size="small" color="error" onClick={() => remove(s)}>Delete</Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Box>
         </AsyncList>
       </div>
 
@@ -135,10 +134,7 @@ export default function Slider() {
         <Modal
           title={editing ? "Edit slide" : "New slide"}
           onClose={() => setOpen(false)}
-          footer={<>
-            <button className="btn btn-ghost" onClick={() => setOpen(false)}>Cancel</button>
-            <button className="btn btn-gold" onClick={handleSubmit(onSave)} disabled={isSubmitting}>{isSubmitting ? "Saving…" : "Save"}</button>
-          </>}
+          footer={<FormActions onCancel={() => setOpen(false)} onSave={handleSubmit(onSave)} busy={isSubmitting} />}
         >
           <ImageUpload
             folder="/slider"
@@ -146,13 +142,13 @@ export default function Slider() {
             currentUrl={watch("imageUrl")}
             onUploaded={(url) => setValue("imageUrl", url, { shouldValidate: true })}
           />
-          {errors.imageUrl ? <div className="field-error">{errors.imageUrl.message}</div> : null}
+          {errors.imageUrl ? <Typography color="error" variant="caption" sx={{ display: "block" }}>{errors.imageUrl.message}</Typography> : null}
           <RHFField control={control} name="title" label="Title (optional)" error={errors.title?.message} />
           <RHFField control={control} name="subtitle" label="Subtitle (optional)" error={errors.subtitle?.message} />
           <RHFField control={control} name="linkUrl" label="Link URL (optional)" placeholder="https://…" error={errors.linkUrl?.message} />
           <RHFField control={control} name="sortOrder" label="Sort order" type="number" error={errors.sortOrder?.message} />
           <RHFCheckbox control={control} name="isActive" label="Active" />
-          {errors.root && <div className="error-text">{errors.root.message}</div>}
+          {errors.root ? <Typography color="error" variant="body2" sx={{ mt: 1 }}>{errors.root.message}</Typography> : null}
         </Modal>
       )}
     </Layout>

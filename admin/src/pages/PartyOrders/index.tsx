@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { PARTY_ORDERS } from "../../graphql/queries";
 import { UPDATE_PARTY_ORDER_STATUS } from "../../graphql/mutations";
+import { Box, Chip, MenuItem, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
 import { AsyncList, fmtDate } from "../../components/ui";
 import { useAlert } from "../../components/dialog";
@@ -46,78 +47,57 @@ export default function PartyOrders() {
 
   return (
     <Layout title="Party Orders">
-      <div className="toolbar">
-        <div className="chips">
-          {FILTERS.map((f) => (
-            <button
-              key={f}
-              className={`chip ${filter === f ? "active" : ""}`}
-              onClick={() => setFilter(f)}
-            >
-              {f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
-            </button>
-          ))}
-        </div>
-        <div className="spacer" />
-      </div>
+      <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap" }}>
+        {FILTERS.map((f) => (
+          <Chip
+            key={f}
+            label={f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
+            color={filter === f ? "primary" : "default"}
+            variant={filter === f ? "filled" : "outlined"}
+            onClick={() => setFilter(f)}
+          />
+        ))}
+      </Stack>
 
       <div className="card">
         <AsyncList loading={loading && !data} empty={orders.length === 0} emptyLabel="No party enquiries yet.">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>When</th>
-                  <th>Name</th>
-                  <th>Contact</th>
-                  <th>Event</th>
-                  <th>Guests</th>
-                  <th>Details</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>When</TableCell><TableCell>Name</TableCell><TableCell>Contact</TableCell>
+                  <TableCell>Event</TableCell><TableCell>Guests</TableCell><TableCell>Details</TableCell><TableCell>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {orders.map((o) => (
-                  <tr key={o.id}>
-                    <td className="muted">{fmtDate(o.createdAt)}</td>
-                    <td className="t-strong">{o.name}</td>
-                    <td className="muted">
-                      <div>{o.phone}</div>
-                      <div>{o.email}</div>
-                    </td>
-                    <td className="muted">
-                      <div>{o.eventDate || "—"}</div>
-                      {o.location ? <div>{o.location}</div> : null}
-                    </td>
-                    <td className="muted">{o.guests ?? "—"}</td>
-                    <td className="muted" style={{ maxWidth: 280, whiteSpace: "pre-wrap" }}>
-                      {o.message || "—"}
-                    </td>
-                    <td>
-                      <select
-                        value={o.status}
-                        onChange={(e) => changeStatus(o.id, e.target.value)}
-                        style={{
-                          padding: "7px 10px",
-                          borderRadius: 8,
-                          background: "var(--bg-soft)",
-                          border: "1px solid var(--border-strong)",
-                          color: "var(--text)",
-                          fontSize: "0.85rem",
-                        }}
-                      >
+                  <TableRow key={o.id} hover>
+                    <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(o.createdAt)}</Typography></TableCell>
+                    <TableCell><Typography fontWeight={700}>{o.name}</Typography></TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">{o.phone}</Typography>
+                      <Typography variant="caption" color="text.secondary">{o.email}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">{o.eventDate || "—"}</Typography>
+                      {o.location ? <Typography variant="caption" color="text.secondary">{o.location}</Typography> : null}
+                    </TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{o.guests ?? "—"}</Typography></TableCell>
+                    <TableCell sx={{ maxWidth: 280, whiteSpace: "pre-wrap" }}>
+                      <Typography variant="body2" color="text.secondary">{o.message || "—"}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <TextField select size="small" value={o.status} onChange={(e) => changeStatus(o.id, e.target.value)} sx={{ minWidth: 130 }}>
                         {STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {s.charAt(0) + s.slice(1).toLowerCase()}
-                          </option>
+                          <MenuItem key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</MenuItem>
                         ))}
-                      </select>
-                    </td>
-                  </tr>
+                      </TextField>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Box>
         </AsyncList>
       </div>
     </Layout>

@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import { AppBar, Box, Dialog, IconButton, Toolbar, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { CATEGORIES, CUSTOMERS, MENU_ITEMS } from "../../../graphql/queries";
-import { CREATE_MANUAL_ORDER } from "../../../graphql/mutations";
+import { CREATE_MANUAL_ORDER, UPDATE_MANUAL_ORDER } from "../../../graphql/mutations";
 import { manualOrderSchema, type ManualOrderForm } from "../../../form";
 import { ItemCatalog } from "./ItemCatalog";
 import { OrderPanel } from "./OrderPanel";
@@ -13,24 +13,28 @@ import {
   BLANK_MANUAL_ORDER,
   buildManualInput,
   computeTotals,
+  orderToManualForm,
   type CategoryOption,
   type CustomerOption,
   type MenuOption,
 } from "./types";
+import type { Order } from "../types";
 
 interface Props {
   onClose: () => void;
   onCreated: () => void;
+  editOrder?: Order;
 }
 
 /** Full-screen point-of-sale dialog: tap dishes on the left to build the
  * order on the right (walk-in/existing customer, takeaway/delivery, manual
- * pricing, back-dating and a survey link). */
-export default function ManualOrderModal({ onClose, onCreated }: Readonly<Props>) {
+ * pricing, back-dating and a survey link). Reused to edit an existing order. */
+export default function ManualOrderModal({ onClose, onCreated, editOrder }: Readonly<Props>) {
   const { data: menuData } = useQuery<{ menuItems: MenuOption[] }>(MENU_ITEMS);
   const { data: catData } = useQuery<{ categories: CategoryOption[] }>(CATEGORIES);
   const { data: custData } = useQuery<{ customers: CustomerOption[] }>(CUSTOMERS);
   const [create] = useMutation(CREATE_MANUAL_ORDER);
+  const [updateOrder] = useMutation(UPDATE_MANUAL_ORDER);
 
   const {
     control,
@@ -40,7 +44,10 @@ export default function ManualOrderModal({ onClose, onCreated }: Readonly<Props>
     setValue,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<ManualOrderForm>({ resolver: zodResolver(manualOrderSchema), defaultValues: { ...BLANK_MANUAL_ORDER } });
+  } = useForm<ManualOrderForm>({
+    resolver: zodResolver(manualOrderSchema),
+    defaultValues: editOrder ? orderToManualForm(editOrder) : { ...BLANK_MANUAL_ORDER },
+  });
   const { fields, append, remove, update } = useFieldArray({ control, name: "items" });
 
   const form = watch();
@@ -67,11 +74,13 @@ export default function ManualOrderModal({ onClose, onCreated }: Readonly<Props>
 
   async function onSave(values: ManualOrderForm) {
     try {
-      await create({ variables: { input: buildManualInput(values) } });
+      const input = buildManualInput(values);
+      if (editOrder) await updateOrder({ variables: { id: editOrder.id, input } });
+      else await create({ variables: { input } });
       onCreated();
       onClose();
     } catch (e: unknown) {
-      setError("root", { message: e instanceof Error ? e.message : "Could not create the order." });
+      setError("root", { message: e instanceof Error ? e.message : "Could not save the order." });
     }
   }
 
@@ -79,7 +88,7 @@ export default function ManualOrderModal({ onClose, onCreated }: Readonly<Props>
     <Dialog fullScreen open onClose={onClose} PaperProps={{ sx: { display: "flex", flexDirection: "column" } }}>
       <AppBar position="relative" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Toolbar>
-          <Typography variant="h6" sx={{ flex: 1 }}>New order (POS)</Typography>
+          <Typography variant="h6" sx={{ flex: 1 }}>{editOrder ? `Edit order ${editOrder.orderNumber}` : "New order (POS)"}</Typography>
           <IconButton edge="end" onClick={onClose} aria-label="Close">
             <CloseIcon />
           </IconButton>
@@ -107,6 +116,7 @@ export default function ManualOrderModal({ onClose, onCreated }: Readonly<Props>
           onCreate={handleSubmit(onSave)}
           isSubmitting={isSubmitting}
           rootError={errors.root?.message}
+          submitLabel={editOrder ? "Save changes" : "Create order"}
         />
       </Box>
     </Dialog>

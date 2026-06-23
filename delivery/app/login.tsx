@@ -7,6 +7,7 @@ import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { useAuth } from "../src/auth";
 import { brand } from "../src/theme";
 import { RHFTextField, loginSchema, type LoginForm } from "../src/form";
+import { BrandLogo } from "../src/ui";
 
 export default function Login() {
   const insets = useSafeAreaInsets();
@@ -33,7 +34,7 @@ export default function Login() {
   return (
     <YStack flex={1} backgroundColor={brand.bg} paddingTop={insets.top + 24} padding={24} justifyContent="center" gap={18}>
       <YStack alignItems="center" gap={6} marginBottom={6}>
-        <YStack width={64} height={64} borderRadius={999} backgroundColor={brand.maroonSoft} borderColor={brand.gold} borderWidth={2} />
+        <BrandLogo />
         <Text fontSize={14} color={brand.gold} marginTop={6}>Didi Bhaiya · Delivery</Text>
         <Text fontSize={26} fontWeight="800" color={brand.text}>Rider sign in</Text>
         <Text color={brand.muted}>Your assigned orders are waiting.</Text>

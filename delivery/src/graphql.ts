@@ -19,6 +19,7 @@ export const SETTINGS_LITE = gql`
   query SettingsLite {
     settings {
       brandName
+      logoUrl
       tagline
       supportPhone
       supportEmail

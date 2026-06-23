@@ -1,3 +1,22 @@
+import { useState } from "react";
+import {
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  IconButton,
+  Menu,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  Typography,
+} from "@mui/material";
+import PlaceIcon from "@mui/icons-material/Place";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { StatusBadge, inr, fmtDate } from "../../components/ui";
 import type { Order } from "./types";
 
@@ -13,6 +32,8 @@ interface OrdersTableProps {
   sortDir: "asc" | "desc";
   onSort: (key: SortKey) => void;
   onOpen: (order: Order) => void;
+  onEditPos: (order: Order) => void;
+  onChangeStatus: (order: Order) => void;
   onDelete: (order: Order) => void;
   onShowMap: (order: Order) => void;
   deletingId: string | null;
@@ -35,77 +56,127 @@ export default function OrdersTable({
   sortDir,
   onSort,
   onOpen,
+  onEditPos,
+  onChangeStatus,
   onDelete,
   onShowMap,
   deletingId,
 }: Readonly<OrdersTableProps>) {
-  const arrow = (key: SortKey) => (sortKey === key ? (sortDir === "asc" ? " ▲" : " ▼") : "");
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [menuOrder, setMenuOrder] = useState<Order | null>(null);
+
+  function openMenu(e: React.MouseEvent<HTMLElement>, o: Order) {
+    setMenuAnchor(e.currentTarget);
+    setMenuOrder(o);
+  }
+  function closeMenu() {
+    setMenuAnchor(null);
+    setMenuOrder(null);
+  }
+  function copySurvey(o: Order) {
+    if (!o.ratingToken) return;
+    navigator.clipboard.writeText(`${window.location.origin}/survey/${o.id}/${o.ratingToken}`).catch(() => undefined);
+  }
+
+  const menuDelivered = menuOrder?.status === "DELIVERED";
+
   return (
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th style={{ width: 34 }}>
-              <input type="checkbox" checked={pageAllChecked} onChange={onToggleAll} aria-label="Select all on page" />
-            </th>
+    <Box sx={{ overflowX: "auto" }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell padding="checkbox">
+              <Checkbox checked={pageAllChecked} onChange={onToggleAll} inputProps={{ "aria-label": "Select all on page" }} />
+            </TableCell>
             {COLUMNS.map((c) => (
-              <th key={c.key} style={{ cursor: "pointer" }} onClick={() => onSort(c.key)}>
-                {c.label}
-                {arrow(c.key)}
-              </th>
+              <TableCell key={c.key} sortDirection={sortKey === c.key ? sortDir : false}>
+                <TableSortLabel active={sortKey === c.key} direction={sortKey === c.key ? sortDir : "asc"} onClick={() => onSort(c.key)}>
+                  {c.label}
+                </TableSortLabel>
+              </TableCell>
             ))}
-            <th>Items</th>
-            <th>Rider</th>
-            <th>Map</th>
-            <th style={{ textAlign: "right", cursor: "pointer" }} onClick={() => onSort("total")}>
-              Total{arrow("total")}
-            </th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
+            <TableCell>Items</TableCell>
+            <TableCell>Rider</TableCell>
+            <TableCell>Map</TableCell>
+            <TableCell align="right" sortDirection={sortKey === "total" ? sortDir : false}>
+              <TableSortLabel active={sortKey === "total"} direction={sortKey === "total" ? sortDir : "asc"} onClick={() => onSort("total")}>
+                Total
+              </TableSortLabel>
+            </TableCell>
+            <TableCell align="right">Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {orders.map((o) => (
-            <tr key={o.id}>
-              <td>
-                <input
-                  type="checkbox"
+            <TableRow key={o.id} hover>
+              <TableCell padding="checkbox">
+                <Checkbox
                   checked={selected.has(o.id)}
                   onChange={() => onToggleRow(o.id)}
-                  aria-label={`Select order ${o.orderNumber}`}
+                  inputProps={{ "aria-label": `Select order ${o.orderNumber}` }}
                 />
-              </td>
-              <td>
-                <button className="link-btn t-strong" onClick={() => onOpen(o)}>
+              </TableCell>
+              <TableCell>
+                <Button variant="text" size="small" onClick={() => onOpen(o)} sx={{ p: 0, minWidth: 0, fontWeight: 700 }}>
                   {o.orderNumber}
-                </button>
-                {o.source === "POS" ? <span className="badge badge--muted" style={{ marginLeft: 6 }}>POS</span> : null}
-              </td>
-              <td>
+                </Button>
+                {o.source === "POS" ? <Chip size="small" label="POS" sx={{ ml: 0.75, height: 18 }} /> : null}
+              </TableCell>
+              <TableCell>
                 {o.user?.name ?? o.customerName ?? "—"}
-                <div className="muted" style={{ fontSize: "0.78rem" }}>{o.user?.phone ?? o.customerPhone}</div>
-              </td>
-              <td><StatusBadge status={o.status} /></td>
-              <td className="muted">{fmtDate(o.placedAt)}</td>
-              <td className="muted">{o.items.reduce((n, it) => n + it.qty, 0)} item(s)</td>
-              <td className="muted">{o.deliveryPartner?.name ?? "—"}</td>
-              <td>
+                <Typography variant="caption" display="block" color="text.secondary">
+                  {o.user?.phone ?? o.customerPhone}
+                </Typography>
+              </TableCell>
+              <TableCell><StatusBadge status={o.status} /></TableCell>
+              <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(o.placedAt)}</Typography></TableCell>
+              <TableCell><Typography variant="body2" color="text.secondary">{o.items.reduce((n, it) => n + it.qty, 0)} item(s)</Typography></TableCell>
+              <TableCell><Typography variant="body2" color="text.secondary">{o.deliveryPartner?.name ?? "—"}</Typography></TableCell>
+              <TableCell>
                 {o.address ? (
-                  <button className="btn btn-ghost btn-sm" aria-label={`Map for ${o.orderNumber}`} onClick={() => onShowMap(o)}>📍</button>
+                  <IconButton size="small" aria-label={`Map for ${o.orderNumber}`} onClick={() => onShowMap(o)}>
+                    <PlaceIcon fontSize="small" />
+                  </IconButton>
                 ) : (
-                  <span className="muted">—</span>
+                  <Typography variant="body2" color="text.secondary">—</Typography>
                 )}
-              </td>
-              <td className="t-mono" style={{ textAlign: "right" }}>{inr(o.total)}</td>
-              <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => onOpen(o)}>Edit</button>{" "}
-                <button className="btn btn-danger btn-sm" disabled={deletingId === o.id} onClick={() => onDelete(o)}>
+              </TableCell>
+              <TableCell align="right">
+                <Typography fontWeight={700} sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(o.total)}</Typography>
+              </TableCell>
+              <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                <Button size="small" onClick={() => onEditPos(o)}>Edit</Button>
+                <Button size="small" color="error" disabled={deletingId === o.id} onClick={() => onDelete(o)}>
                   {deletingId === o.id ? "…" : "Delete"}
-                </button>
-              </td>
-            </tr>
+                </Button>
+                <IconButton size="small" aria-label={`More actions for ${o.orderNumber}`} onClick={(e) => openMenu(e, o)}>
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+
+      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+        <MenuItem
+          onClick={() => {
+            if (menuOrder) onChangeStatus(menuOrder);
+            closeMenu();
+          }}
+        >
+          Change delivery status
+        </MenuItem>
+        <MenuItem
+          disabled={!menuDelivered}
+          onClick={() => {
+            if (menuOrder) copySurvey(menuOrder);
+            closeMenu();
+          }}
+        >
+          Copy survey link
+        </MenuItem>
+      </Menu>
+    </Box>
   );
 }

@@ -47,10 +47,12 @@ export default function Cart() {
                   </XStack>
                   <Text fontWeight="800" color={brand.gold} minWidth={60} textAlign="right">{inr(l.price * l.qty)}</Text>
                 </XStack>
-                <YStack gap={6}>
-                  <Text fontSize={11} color={brand.muted} fontWeight="700">Spice level</Text>
-                  <SpicePicker size="$2" value={l.spiceLevel} onChange={(level) => setSpice(l.id, level)} />
-                </YStack>
+                {l.spiceSelectable ? (
+                  <YStack gap={6}>
+                    <Text fontSize={11} color={brand.muted} fontWeight="700">Spice level</Text>
+                    <SpicePicker size="$2" value={l.spiceLevel} onChange={(level) => setSpice(l.id, level)} />
+                  </YStack>
+                ) : null}
               </YStack>
             ))}
 

@@ -84,8 +84,12 @@ describe("order resolver — guard & branch coverage", () => {
 
   it("updateOrderStatus rejects an invalid transition; rateOrder blocks non-owners; deleteOrder guards missing", async () => {
     const owner = await makeUser();
-    const order = await makeOrder(owner.id, { status: "PLACED" });
-    await expect(O.updateOrderStatus(null, { id: order.id, status: "DELIVERED" }, admin)).rejects.toThrow(/cannot move/i);
+    // Admin can now override the flow, so use an assigned rider to hit the NEXT guard.
+    const rider = await makeUser("DELIVERY");
+    const order = await makeOrder(owner.id, { status: "PLACED", deliveryPartner: rider._id });
+    await expect(
+      O.updateOrderStatus(null, { id: order.id, status: "OUT_FOR_DELIVERY" }, ctxFor(rider.id, "DELIVERY"))
+    ).rejects.toThrow(/cannot move/i);
     await expect(O.rateOrder(null, { orderId: order.id, food: 5, delivery: 5 }, ctxFor((await makeUser()).id, "CUSTOMER"))).rejects.toThrow(/not allowed/i);
     await expect(O.deleteOrder(null, { id: MISSING }, admin)).rejects.toThrow(/not found/i);
   });

@@ -8,6 +8,7 @@ import {
   UPDATE_COUPON,
   DELETE_COUPON,
 } from "../../graphql/mutations";
+import { Box, Button } from "@mui/material";
 import Layout from "../../components/Layout";
 import { AsyncList } from "../../components/ui";
 import { IPlus } from "../../components/icons";
@@ -96,12 +97,9 @@ export default function Coupons() {
 
   return (
     <Layout title="Coupons & Offers">
-      <div className="toolbar">
-        <div className="spacer" />
-        <button className="btn btn-gold" onClick={openNew}>
-          <IPlus size={16} /> New coupon
-        </button>
-      </div>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New coupon</Button>
+      </Box>
 
       <div className="card">
         <AsyncList

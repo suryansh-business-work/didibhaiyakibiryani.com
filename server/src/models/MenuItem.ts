@@ -10,7 +10,9 @@ export interface IMenuItem extends Document {
   image?: string;
   category: Types.ObjectId;
   isVeg: boolean;
-  spiceLevel: number; // 0-3
+  /** Whether customers may pick a spice level for this item (off for e.g. desserts). */
+  spiceSelectable: boolean;
+  spiceLevel: number; // 0-3 (default level)
   serves: string;
   badge: Badge;
   tags: string[];
@@ -30,6 +32,7 @@ const menuItemSchema = new Schema<IMenuItem>(
     image: { type: String },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true, index: true },
     isVeg: { type: Boolean, default: true },
+    spiceSelectable: { type: Boolean, default: true },
     spiceLevel: { type: Number, default: 0, min: 0, max: 3 },
     serves: { type: String, default: "Serves 1" },
     badge: { type: String, enum: ["NONE", "BESTSELLER", "NEW"], default: "NONE" },

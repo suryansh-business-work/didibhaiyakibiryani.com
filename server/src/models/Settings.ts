@@ -37,6 +37,8 @@ export interface ISettings extends Document {
   companyEmail: string;
   supportPhone: string;
   supportEmail: string;
+  feedbackEmail: string;
+  website: string;
   fssaiLicense: string;
   instagramUrl: string;
   facebookUrl: string;
@@ -114,6 +116,8 @@ const settingsSchema = new Schema<ISettings>(
     companyEmail: { type: String, default: "" },
     supportPhone: { type: String, default: "" },
     supportEmail: { type: String, default: "" },
+    feedbackEmail: { type: String, default: "" },
+    website: { type: String, default: "" },
     fssaiLicense: { type: String, default: "" },
     instagramUrl: { type: String, default: "" },
     facebookUrl: { type: String, default: "" },

@@ -1,4 +1,5 @@
-import { inr } from "../../components/ui";
+import { Box, Button, Chip, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { OnOffChip, inr } from "../../components/ui";
 import { TYPE_LABEL, describeCoupon, type Coupon } from "./types";
 
 interface CouponsTableProps {
@@ -7,71 +8,49 @@ interface CouponsTableProps {
   onDelete: (coupon: Coupon) => void;
 }
 
-export default function CouponsTable({
-  coupons,
-  onEdit,
-  onDelete,
-}: Readonly<CouponsTableProps>) {
+export default function CouponsTable({ coupons, onEdit, onDelete }: Readonly<CouponsTableProps>) {
   return (
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Code</th>
-            <th>Offer</th>
-            <th>Min order</th>
-            <th>Flags</th>
-            <th>Used</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
+    <Box sx={{ overflowX: "auto" }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Code</TableCell>
+            <TableCell>Offer</TableCell>
+            <TableCell>Min order</TableCell>
+            <TableCell>Flags</TableCell>
+            <TableCell>Used</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell />
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {coupons.map((c) => (
-            <tr key={c.id}>
-              <td>
-                <div className="t-strong" style={{ letterSpacing: 1 }}>
-                  {c.code}
-                </div>
-                <div className="muted" style={{ fontSize: "0.78rem" }}>
-                  {c.title}
-                </div>
-              </td>
-              <td>
-                <span className="badge badge--gold">{TYPE_LABEL[c.type]}</span>
-                <div className="muted" style={{ fontSize: "0.8rem", marginTop: 4 }}>
-                  {describeCoupon(c)}
-                </div>
-              </td>
-              <td className="muted">{c.minOrder ? inr(c.minOrder) : "—"}</td>
-              <td>
-                <div className="tags-inline">
-                  {c.firstOrderOnly && <span className="badge badge--blue">1st order</span>}
-                  {c.appOnly && <span className="badge badge--muted">App only</span>}
-                </div>
-              </td>
-              <td className="muted">
-                {c.usedCount}
-                {c.usageLimit ? ` / ${c.usageLimit}` : ""}
-              </td>
-              <td>
-                <span className={`badge ${c.isActive ? "badge--green" : "badge--muted"}`}>
-                  <span className="dot" />
-                  {c.isActive ? "Active" : "Off"}
-                </span>
-              </td>
-              <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => onEdit(c)}>
-                  Edit
-                </button>{" "}
-                <button className="btn btn-danger btn-sm" onClick={() => onDelete(c)}>
-                  Delete
-                </button>
-              </td>
-            </tr>
+            <TableRow key={c.id} hover>
+              <TableCell>
+                <Typography fontWeight={700} sx={{ letterSpacing: 1 }}>{c.code}</Typography>
+                <Typography variant="caption" color="text.secondary">{c.title}</Typography>
+              </TableCell>
+              <TableCell>
+                <Chip size="small" variant="outlined" color="primary" label={TYPE_LABEL[c.type]} />
+                <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>{describeCoupon(c)}</Typography>
+              </TableCell>
+              <TableCell><Typography variant="body2" color="text.secondary">{c.minOrder ? inr(c.minOrder) : "—"}</Typography></TableCell>
+              <TableCell>
+                <Stack direction="row" spacing={0.5}>
+                  {c.firstOrderOnly ? <Chip size="small" variant="outlined" color="info" label="1st order" /> : null}
+                  {c.appOnly ? <Chip size="small" variant="outlined" label="App only" /> : null}
+                </Stack>
+              </TableCell>
+              <TableCell><Typography variant="body2" color="text.secondary">{c.usedCount}{c.usageLimit ? ` / ${c.usageLimit}` : ""}</Typography></TableCell>
+              <TableCell><OnOffChip on={c.isActive} /></TableCell>
+              <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                <Button size="small" onClick={() => onEdit(c)}>Edit</Button>
+                <Button size="small" color="error" onClick={() => onDelete(c)}>Delete</Button>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </Box>
   );
 }

@@ -8,7 +8,7 @@ import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { useAuth } from "../src/auth";
 import { brand } from "../src/theme";
 import { RHFTextField, registerSchema, type RegisterForm } from "../src/form";
-import { BackButton } from "../src/components";
+import { BackButton, BrandLogo } from "../src/components";
 
 export default function Register() {
   const insets = useSafeAreaInsets();
@@ -62,7 +62,8 @@ export default function Register() {
 
       <YStack flex={1} padding={24} gap={16} justifyContent="center">
         <YStack alignItems="center" gap={4} marginBottom={6}>
-          <Text fontSize={26} fontWeight="800" color={brand.text}>Join the family</Text>
+          <BrandLogo />
+          <Text fontSize={26} fontWeight="800" color={brand.text} marginTop={6}>Join the family</Text>
           <Text color={brand.muted}>
             {step === "details" ? "Create an account with your email." : `Enter the code sent to ${getValues("email")}.`}
           </Text>

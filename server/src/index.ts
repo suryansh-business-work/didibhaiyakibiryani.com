@@ -12,6 +12,7 @@ import { logger } from "./utils/logger.js";
 import { connectDBWithRetry } from "./config/db.js";
 import { razorpayWebhook } from "./webhooks/razorpay.js";
 import { ratingRouter } from "./routes/rating.js";
+import { invoiceRouter } from "./routes/invoice.js";
 import { healthRouter } from "./routes/health.js";
 import { typeDefs } from "./graphql/typeDefs.js";
 import { resolvers } from "./graphql/resolvers/index.js";
@@ -61,6 +62,9 @@ async function start() {
 
   // Public post-delivery rating survey (linked from the delivered email).
   app.use(ratingRouter);
+
+  // Public token-gated invoice PDF (linked from the survey page).
+  app.use(invoiceRouter);
 
   app.use(
     "/graphql",

@@ -17,6 +17,7 @@ interface MenuItemInput {
   price: number;
   image?: string;
   categoryId: string;
+  spiceSelectable?: boolean;
   spiceLevel?: number;
   serves?: string;
   badge?: "NONE" | "BESTSELLER" | "NEW";

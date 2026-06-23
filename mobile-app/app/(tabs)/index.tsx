@@ -35,7 +35,7 @@ export default function Home() {
   );
 
   const addToCart = (it: Item) =>
-    add({ id: it.id, name: it.name, price: it.price, spiceLevel: it.spiceLevel });
+    add({ id: it.id, name: it.name, price: it.price, spiceLevel: it.spiceLevel, spiceSelectable: it.spiceSelectable });
 
   const openCart = () => router.push("/cart");
 

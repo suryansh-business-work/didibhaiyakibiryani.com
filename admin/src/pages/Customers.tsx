@@ -4,8 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { CUSTOMERS } from "../graphql/queries";
 import { UPDATE_CUSTOMER, DELETE_CUSTOMER } from "../graphql/mutations";
+import { Box, Button, Chip, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import Layout from "../components/Layout";
-import { AsyncList, Modal, inr, fmtDate } from "../components/ui";
+import { AsyncList, FormActions, Modal, inr, fmtDate } from "../components/ui";
 import { ISearch } from "../components/icons";
 import { useAlert, useConfirm } from "../components/dialog";
 import { RHFField, customerSchema, type CustomerForm } from "../form";
@@ -94,33 +95,36 @@ export default function Customers() {
 
       <div className="card">
         <AsyncList loading={loading && !data} empty={customers.length === 0} emptyLabel="No customers found.">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th><th>Contact</th><th>Joined</th><th>Orders</th>
-                  <th style={{ textAlign: "right" }}>Lifetime value</th><th></th>
-                </tr>
-              </thead>
-              <tbody>
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell><TableCell>Contact</TableCell><TableCell>Joined</TableCell>
+                  <TableCell>Orders</TableCell><TableCell align="right">Lifetime value</TableCell><TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {customers.map((c) => (
-                  <tr key={c.id}>
-                    <td className="t-strong">{c.name}</td>
-                    <td className="muted">{c.email}<div style={{ fontSize: "0.78rem" }}>{c.phone}</div></td>
-                    <td className="muted">{fmtDate(c.createdAt)}</td>
-                    <td><span className="badge badge--gold">{c.orderCount}</span></td>
-                    <td className="t-mono t-strong" style={{ textAlign: "right" }}>{inr(c.totalSpent)}</td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(c)}>Edit</button>{" "}
-                      <button className="btn btn-danger btn-sm" disabled={deletingId === c.id} onClick={() => remove(c)}>
+                  <TableRow key={c.id} hover>
+                    <TableCell><Typography fontWeight={700}>{c.name}</Typography></TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">{c.email}</Typography>
+                      <Typography variant="caption" color="text.secondary">{c.phone}</Typography>
+                    </TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(c.createdAt)}</Typography></TableCell>
+                    <TableCell><Chip size="small" variant="outlined" color="primary" label={c.orderCount} /></TableCell>
+                    <TableCell align="right"><Typography fontWeight={700} sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(c.totalSpent)}</Typography></TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                      <Button size="small" onClick={() => openEdit(c)}>Edit</Button>
+                      <Button size="small" color="error" disabled={deletingId === c.id} onClick={() => remove(c)}>
                         {deletingId === c.id ? "…" : "Delete"}
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Box>
         </AsyncList>
       </div>
 
@@ -128,17 +132,14 @@ export default function Customers() {
         <Modal
           title={`Edit ${editing.name}`}
           onClose={() => setEditing(null)}
-          footer={
-            <>
-              <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="btn btn-gold" onClick={handleSubmit(onSave)} disabled={isSubmitting}>{isSubmitting ? "Saving…" : "Save"}</button>
-            </>
-          }
+          footer={<FormActions onCancel={() => setEditing(null)} onSave={handleSubmit(onSave)} busy={isSubmitting} />}
         >
           <RHFField control={control} name="name" label="Name" error={errors.name?.message} />
           <RHFField control={control} name="phone" label="Phone" type="tel" error={errors.phone?.message} />
-          <p className="muted" style={{ fontSize: "0.8rem" }}>Email ({editing.email}) is the login id and can't be changed here.</p>
-          {errors.root && <div className="error-text">{errors.root.message}</div>}
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+            Email ({editing.email}) is the login id and can't be changed here.
+          </Typography>
+          {errors.root ? <Typography color="error" variant="body2" sx={{ mt: 1 }}>{errors.root.message}</Typography> : null}
         </Modal>
       )}
     </Layout>

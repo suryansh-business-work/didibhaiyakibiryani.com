@@ -29,9 +29,24 @@ export const UPDATE_ORDER_STATUS = gql`
   }
 `;
 
+export const SUBMIT_SURVEY = gql`
+  mutation SubmitOrderSurvey($orderId: ID!, $token: String!, $itemRatings: [ItemRatingInput!]!, $delivery: Int!, $comment: String) {
+    submitOrderSurvey(orderId: $orderId, token: $token, itemRatings: $itemRatings, delivery: $delivery, comment: $comment)
+  }
+`;
+
 export const CREATE_MANUAL_ORDER = gql`
   mutation CreateManualOrder($input: ManualOrderInput!) {
     createManualOrder(input: $input) {
+      id
+      orderNumber
+    }
+  }
+`;
+
+export const UPDATE_MANUAL_ORDER = gql`
+  mutation UpdateManualOrder($id: ID!, $input: ManualOrderInput!) {
+    updateManualOrder(id: $id, input: $input) {
       id
       orderNumber
     }

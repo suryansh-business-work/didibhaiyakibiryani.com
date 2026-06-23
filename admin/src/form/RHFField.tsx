@@ -1,4 +1,5 @@
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
+import { Checkbox, FormControlLabel, TextField } from "@mui/material";
 
 interface RHFFieldProps<T extends FieldValues> {
   control: Control<T>;
@@ -13,7 +14,7 @@ interface RHFFieldProps<T extends FieldValues> {
   multiline?: boolean;
 }
 
-/** A react-hook-form-bound input that renders an inline error under the field. */
+/** A react-hook-form-bound MUI text field with an inline error/hint. */
 export function RHFField<T extends FieldValues>({
   control,
   name,
@@ -26,40 +27,29 @@ export function RHFField<T extends FieldValues>({
   autoComplete,
   multiline,
 }: Readonly<RHFFieldProps<T>>) {
-  const errorStyle = error ? { borderColor: "var(--red)" } : undefined;
   return (
-    <div className="field">
-      <label>{label}</label>
-      <Controller
-        control={control}
-        name={name}
-        render={({ field }) =>
-          multiline ? (
-            <textarea
-              placeholder={placeholder}
-              disabled={disabled}
-              value={field.value ?? ""}
-              onChange={(e) => field.onChange(e.target.value)}
-              onBlur={field.onBlur}
-              style={errorStyle}
-            />
-          ) : (
-            <input
-              type={type}
-              placeholder={placeholder}
-              disabled={disabled}
-              autoComplete={autoComplete}
-              value={field.value ?? ""}
-              onChange={(e) => field.onChange(e.target.value)}
-              onBlur={field.onBlur}
-              style={errorStyle}
-            />
-          )
-        }
-      />
-      {hint && !error ? <div className="field-hint">{hint}</div> : null}
-      {error ? <div className="field-error">{error}</div> : null}
-    </div>
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <TextField
+          {...field}
+          value={field.value ?? ""}
+          label={label}
+          type={type}
+          placeholder={placeholder}
+          disabled={disabled}
+          autoComplete={autoComplete}
+          multiline={multiline}
+          minRows={multiline ? 3 : undefined}
+          error={Boolean(error)}
+          helperText={error ?? hint}
+          fullWidth
+          size="small"
+          margin="dense"
+        />
+      )}
+    />
   );
 }
 
@@ -69,16 +59,17 @@ interface RHFCheckboxProps<T extends FieldValues> {
   label: string;
 }
 
-/** A react-hook-form-bound checkbox. */
+/** A react-hook-form-bound MUI checkbox. */
 export function RHFCheckbox<T extends FieldValues>({ control, name, label }: Readonly<RHFCheckboxProps<T>>) {
   return (
     <Controller
       control={control}
       name={name}
       render={({ field }) => (
-        <label className="check">
-          <input type="checkbox" checked={Boolean(field.value)} onChange={(e) => field.onChange(e.target.checked)} /> {label}
-        </label>
+        <FormControlLabel
+          control={<Checkbox checked={Boolean(field.value)} onChange={(e) => field.onChange(e.target.checked)} />}
+          label={label}
+        />
       )}
     />
   );

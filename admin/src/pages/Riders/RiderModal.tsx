@@ -1,5 +1,6 @@
 import type { Control, FieldErrors } from "react-hook-form";
-import { Modal } from "../../components/ui";
+import { Typography } from "@mui/material";
+import { Modal, FormActions } from "../../components/ui";
 import { RHFField, RHFCheckbox, type RiderForm } from "../../form";
 
 interface RiderModalProps {
@@ -23,14 +24,7 @@ export default function RiderModal({
     <Modal
       title={editing ? "Edit delivery partner" : "New delivery partner"}
       onClose={onClose}
-      footer={
-        <>
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-gold" onClick={onSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Saving…" : editing ? "Save changes" : "Create rider"}
-          </button>
-        </>
-      }
+      footer={<FormActions onCancel={onClose} onSave={onSubmit} busy={isSubmitting} saveLabel={editing ? "Save changes" : "Create rider"} />}
     >
       <RHFField control={control} name="name" label="Full name" error={errors.name?.message} />
       <RHFField
@@ -54,10 +48,10 @@ export default function RiderModal({
         />
       </div>
       {editing && <RHFCheckbox control={control} name="isActive" label="Active (can sign in & receive deliveries)" />}
-      <p className="muted" style={{ fontSize: "0.8rem" }}>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
         The rider signs in at delivery.didibhaiyakibiryani.com with these credentials.
-      </p>
-      {errors.root && <div className="error-text">{errors.root.message}</div>}
+      </Typography>
+      {errors.root ? <Typography color="error" variant="body2" sx={{ mt: 1 }}>{errors.root.message}</Typography> : null}
     </Modal>
   );
 }

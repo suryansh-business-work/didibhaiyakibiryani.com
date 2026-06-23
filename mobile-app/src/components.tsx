@@ -4,6 +4,7 @@ import { Text, XStack, YStack, Button } from "tamagui";
 import Svg, { Ellipse, Circle, Path, G, Defs, RadialGradient, Stop } from "react-native-svg";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { brand } from "./theme";
+import { useSettings } from "./settings";
 
 export type IconName = ComponentProps<typeof MaterialDesignIcons>["name"];
 
@@ -29,6 +30,25 @@ export function BackButton({ onPress }: Readonly<{ onPress: () => void }>) {
     >
       <MIcon name="chevron-left" size={24} color={brand.text} />
     </Button>
+  );
+}
+
+/** Brand logo from admin settings; falls back to the maroon badge when the
+ * admin hasn't uploaded a logo yet. Used on the login / sign-up screens. */
+export function BrandLogo({ size = 64 }: Readonly<{ size?: number }>) {
+  const { logoUrl } = useSettings();
+  if (logoUrl) {
+    return (
+      <Image
+        source={logoUrl}
+        style={{ width: size, height: size, borderRadius: 999, backgroundColor: brand.maroonSoft }}
+        contentFit="cover"
+        transition={150}
+      />
+    );
+  }
+  return (
+    <YStack width={size} height={size} borderRadius={999} backgroundColor={brand.maroonSoft} borderColor={brand.gold} borderWidth={2} />
   );
 }
 

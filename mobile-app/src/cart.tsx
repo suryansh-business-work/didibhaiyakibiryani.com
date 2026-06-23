@@ -7,6 +7,7 @@ export interface CartLine {
   price: number;
   qty: number;
   spiceLevel: number;
+  spiceSelectable: boolean;
 }
 
 interface CartCtx {

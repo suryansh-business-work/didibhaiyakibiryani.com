@@ -5,7 +5,7 @@ import { evaluateCoupon, computeDeliveryFee, haversineKm } from "../../utils/pri
 import { assertOrderingAvailable } from "../../utils/ordering.js";
 import { genOrderNumber } from "../../utils/helpers.js";
 import { notifyOrderEmail } from "../../emails/notify.js";
-import { saveOrderRating } from "../../utils/rating.js";
+import { saveOrderRating, isValidStars } from "../../utils/rating.js";
 import { generateInvoicePdf } from "../../utils/invoice.js";
 import type {
   IOrder,
@@ -68,6 +68,26 @@ function badInput(message: string): GraphQLError {
   return new GraphQLError(message, { extensions: { code: "BAD_USER_INPUT" } });
 }
 
+const HEX24 = /^[a-f0-9]{24}$/i;
+
+/** Load an order for the public survey, gated by its secret ratingToken. */
+async function loadSurveyOrder(orderId: string, token: string): Promise<IOrder> {
+  if (!HEX24.test(orderId) || !token) throw badInput("This survey link is invalid or has expired.");
+  const order = await Order.findById(orderId);
+  if (!order || order.ratingToken !== token) {
+    throw badInput("This survey link is invalid or has expired.");
+  }
+  return order;
+}
+
+/** Display name for the survey: walk-in snapshot, else the registered customer. */
+async function surveyCustomerName(order: IOrder): Promise<string | null> {
+  if (order.customerName) return order.customerName;
+  if (!order.user) return null;
+  const u = await User.findById(order.user);
+  return u?.name ?? null;
+}
+
 /** Clamp an optional money amount to [0, max], rounding to whole rupees. */
 function clampMoney(value: number | undefined, max: number): number {
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return 0;
@@ -108,6 +128,40 @@ async function resolveManualCustomer(input: ManualOrderInput) {
   const customerName = input.customerName?.trim();
   if (!customerName) throw badInput("Enter a customer name or pick an existing customer.");
   return { user: undefined, customerName, customerPhone: input.customerPhone?.trim() || undefined };
+}
+
+/** Compute the order fields shared by manual create + update (POS). */
+async function buildManualOrderFields(input: ManualOrderInput) {
+  const isDelivery = input.orderType === "DELIVERY";
+  if (isDelivery && !(input.address?.line1?.trim() && input.address?.city?.trim())) {
+    throw badInput("Delivery orders need an address (at least a street line and city).");
+  }
+  const items = await buildManualItems(input.items);
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const discount = clampMoney(input.discount, subtotal);
+  const deliveryFee = isDelivery ? clampMoney(input.deliveryFee, Number.MAX_SAFE_INTEGER) : 0;
+  const total = Math.max(0, subtotal - discount) + deliveryFee;
+  const customer = await resolveManualCustomer(input);
+  const status = input.status ?? "PLACED";
+  const placedAt = input.placedAt ? new Date(input.placedAt) : new Date();
+  if (Number.isNaN(placedAt.getTime())) throw badInput("Invalid order date.");
+  const paymentStatus = input.paymentStatus ?? (status === "DELIVERED" ? "PAID" : "PENDING");
+  return {
+    ...customer,
+    items,
+    subtotal,
+    discount,
+    deliveryFee,
+    total,
+    status,
+    orderType: input.orderType,
+    paymentMethod: input.paymentMethod ?? "COD",
+    paymentStatus,
+    address: isDelivery ? input.address : undefined,
+    surveyUrl: input.surveyUrl?.trim() || undefined,
+    notes: input.notes?.trim() || undefined,
+    placedAt,
+  };
 }
 
 // Allowed forward transitions for order status.
@@ -177,6 +231,25 @@ export const orderResolvers = {
       const settings = await getOrCreateSettings();
       const pdf = await generateInvoicePdf(order, settings);
       return pdf.toString("base64");
+    },
+
+    // Public — the no-login feedback survey reads the order via its token.
+    surveyOrder: async (_: unknown, { orderId, token }: { orderId: string; token: string }) => {
+      const order = await loadSurveyOrder(orderId, token);
+      return {
+        orderNumber: order.orderNumber,
+        customerName: await surveyCustomerName(order),
+        items: order.items,
+        subtotal: order.subtotal,
+        discount: order.discount,
+        deliveryFee: order.deliveryFee,
+        total: order.total,
+        status: order.status,
+        placedAt: order.placedAt,
+        alreadyRated: Boolean(order.rating),
+        canRate: order.status === "DELIVERED" && !order.rating,
+        rating: order.rating ?? null,
+      };
     },
   },
 
@@ -287,43 +360,31 @@ export const orderResolvers = {
 
     createManualOrder: async (_: unknown, { input }: { input: ManualOrderInput }, ctx: Context) => {
       requireRole(ctx, "ADMIN", "STAFF");
-
-      const isDelivery = input.orderType === "DELIVERY";
-      if (isDelivery && !(input.address?.line1?.trim() && input.address?.city?.trim())) {
-        throw badInput("Delivery orders need an address (at least a street line and city).");
-      }
-
-      const items = await buildManualItems(input.items);
-      const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
-      const discount = clampMoney(input.discount, subtotal);
-      const deliveryFee = isDelivery ? clampMoney(input.deliveryFee, Number.MAX_SAFE_INTEGER) : 0;
-      const total = Math.max(0, subtotal - discount) + deliveryFee;
-
-      const customer = await resolveManualCustomer(input);
-      const status = input.status ?? "PLACED";
-      const placedAt = input.placedAt ? new Date(input.placedAt) : new Date();
-      if (Number.isNaN(placedAt.getTime())) throw badInput("Invalid order date.");
-      const paymentStatus = input.paymentStatus ?? (status === "DELIVERED" ? "PAID" : "PENDING");
-
+      const fields = await buildManualOrderFields(input);
       return Order.create({
         orderNumber: genOrderNumber(),
-        ...customer,
-        items,
-        subtotal,
-        discount,
-        deliveryFee,
-        total,
-        status,
-        orderType: input.orderType,
         source: "POS",
-        paymentMethod: input.paymentMethod ?? "COD",
-        paymentStatus,
-        address: isDelivery ? input.address : undefined,
-        statusHistory: [{ status, at: placedAt }],
-        surveyUrl: input.surveyUrl?.trim() || undefined,
-        notes: input.notes?.trim() || undefined,
-        placedAt,
+        statusHistory: [{ status: fields.status, at: fields.placedAt }],
+        ...fields,
       });
+    },
+
+    updateManualOrder: async (
+      _: unknown,
+      { id, input }: { id: string; input: ManualOrderInput },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+      const order = await Order.findById(id);
+      if (!order) throw new GraphQLError("Order not found.");
+      const fields = await buildManualOrderFields(input);
+      const prevStatus = order.status;
+      Object.assign(order, fields);
+      if (prevStatus !== fields.status) {
+        order.statusHistory.push({ status: fields.status, at: new Date() });
+      }
+      await order.save();
+      return order;
     },
 
     cancelOrder: async (_: unknown, { id }: { id: string }, ctx: Context) => {
@@ -355,7 +416,10 @@ export const orderResolvers = {
       const order = await Order.findById(id);
       if (!order) throw new GraphQLError("Order not found.");
       assertRiderCanUpdate(order, u, status);
-      if (!NEXT[order.status].includes(status)) {
+      // Admin/staff may set any status (e.g. revert an accidental "delivered");
+      // riders stay restricted to the forward delivery flow.
+      const isStaff = u.role === "ADMIN" || u.role === "STAFF";
+      if (!isStaff && !NEXT[order.status].includes(status)) {
         throw new GraphQLError(
           `Cannot move an order from ${order.status} to ${status}.`,
           { extensions: { code: "BAD_USER_INPUT" } }
@@ -385,6 +449,27 @@ export const orderResolvers = {
         throw new GraphQLError("Not allowed.", { extensions: { code: "FORBIDDEN" } });
       }
       return saveOrderRating(order, args.food, args.delivery, args.comment);
+    },
+
+    // Public — token-gated survey submission (per-item food + separate delivery).
+    submitOrderSurvey: async (
+      _: unknown,
+      args: {
+        orderId: string;
+        token: string;
+        itemRatings: { name: string; rating: number }[];
+        delivery: number;
+        comment?: string;
+      }
+    ) => {
+      const order = await loadSurveyOrder(args.orderId, args.token);
+      if (!args.itemRatings?.length) throw badInput("Please rate at least one item.");
+      if (args.itemRatings.some((r) => !isValidStars(r.rating))) {
+        throw badInput("Item ratings must be between 1 and 5 stars.");
+      }
+      const food = Math.round(args.itemRatings.reduce((s, r) => s + r.rating, 0) / args.itemRatings.length);
+      await saveOrderRating(order, food, args.delivery, args.comment, args.itemRatings);
+      return true;
     },
 
     deleteOrder: async (_: unknown, { id }: { id: string }, ctx: Context) => {

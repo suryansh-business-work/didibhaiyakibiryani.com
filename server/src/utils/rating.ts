@@ -20,7 +20,8 @@ export async function saveOrderRating(
   order: IOrder,
   food: number,
   delivery: number,
-  comment?: string
+  comment?: string,
+  itemRatings?: { name: string; rating: number }[]
 ): Promise<IOrder> {
   if (order.status !== "DELIVERED") {
     throw bad("You can rate an order once it has been delivered.");
@@ -36,6 +37,7 @@ export async function saveOrderRating(
     food,
     delivery,
     comment: comment?.trim() || undefined,
+    items: itemRatings?.length ? itemRatings : undefined,
     ratedAt: new Date(),
   };
   await order.save();

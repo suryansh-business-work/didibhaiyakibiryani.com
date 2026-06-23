@@ -1,9 +1,22 @@
 import type { ReactNode } from "react";
-import { YStack, XStack, Text, Button, Spinner as TamaguiSpinner } from "tamagui";
+import { useQuery } from "@apollo/client";
+import { YStack, XStack, Text, Button, Image, Spinner as TamaguiSpinner } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { useAuth } from "./auth";
+import { SETTINGS_LITE } from "./graphql";
 import { brand, STATUS_META } from "./theme";
+
+/** Brand logo from admin settings; falls back to the maroon badge until a
+ * logo is uploaded. Self-fetching so it works on the pre-login screen. */
+export function BrandLogo({ size = 64 }: Readonly<{ size?: number }>) {
+  const { data } = useQuery<{ settings?: { logoUrl?: string } }>(SETTINGS_LITE);
+  const logoUrl = data?.settings?.logoUrl;
+  if (logoUrl) {
+    return <Image source={{ uri: logoUrl, width: size, height: size }} width={size} height={size} borderRadius={999} backgroundColor={brand.maroonSoft} />;
+  }
+  return <YStack width={size} height={size} borderRadius={999} backgroundColor={brand.maroonSoft} borderColor={brand.gold} borderWidth={2} />;
+}
 
 export function RiderHeader({ title }: Readonly<{ title: string }>) {
   const insets = useSafeAreaInsets();

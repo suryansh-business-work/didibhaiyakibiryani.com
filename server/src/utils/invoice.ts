@@ -8,19 +8,53 @@ const MUTED = "#777777";
 
 const money = (n: number): string => `Rs. ${Math.round(n).toLocaleString("en-IN")}`;
 
-function header(doc: PDFKit.PDFDocument, s: ISettings): void {
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(20).text(s.brandName);
-  doc.fillColor(GOLD).font("Helvetica").fontSize(10).text(s.tagline);
-  doc.moveDown(0.5);
+/** Ask ImageKit for a PNG (pdfkit only embeds PNG/JPEG, not WebP/SVG). */
+function pngLogoUrl(url: string): string {
+  if (!url.includes("imagekit.io")) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}tr=w-160,h-160,f-png`;
+}
+
+/** Fetch the brand logo bytes for the invoice header; null if none / unreachable. */
+async function loadLogo(settings: ISettings): Promise<Buffer | null> {
+  const url = settings.logoUrl?.trim();
+  if (!url) return null;
+  try {
+    const res = await fetch(pngLogoUrl(url));
+    if (!res.ok) return null;
+    return Buffer.from(await res.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+function header(doc: PDFKit.PDFDocument, s: ISettings, logo: Buffer | null): void {
+  const top = doc.y;
+  if (logo) {
+    try {
+      doc.image(logo, 50, top, { fit: [46, 46] });
+    } catch {
+      doc.x = 50;
+    }
+  }
+  const x = logo ? 106 : 50;
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(20).text(s.brandName, x, top);
+  doc.fillColor(GOLD).font("Helvetica").fontSize(10).text(s.tagline, x);
+  // Drop below the logo before the company block (no-op when text already past).
+  if (logo) doc.y = Math.max(doc.y, top + 50);
+  doc.moveDown(0.3);
+  doc.x = 50;
   doc.fillColor(MUTED).fontSize(9);
   if (s.gstLegalName) doc.text(`Legal name: ${s.gstLegalName}`);
   else if (s.companyName) doc.text(s.companyName);
   if (s.companyAddress) doc.text(s.companyAddress);
   if (s.gstNumber) doc.text(`GSTIN: ${s.gstNumber}`);
   // if (s.fssaiLicense) doc.text(`FSSAI Lic. No.: ${s.fssaiLicense}`);
+  if (s.website) doc.text(s.website);
   if (s.supportEmail || s.supportPhone) {
-    doc.text([s.supportEmail, s.supportPhone].filter(Boolean).join(" · "));
+    doc.text(["Support", s.supportEmail, s.supportPhone].filter(Boolean).join(" · "));
   }
+  if (s.feedbackEmail) doc.text(`Feedback: ${s.feedbackEmail}`);
   doc.moveDown(1);
   doc.strokeColor(GOLD).lineWidth(1.2).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
   doc.moveDown(1);
@@ -132,6 +166,7 @@ export async function generateInvoicePdf(order: IOrder, settings: ISettings): Pr
   const qr = surveyUrl
     ? await QRCode.toBuffer(surveyUrl, { width: 140, margin: 1, color: { dark: DARK, light: "#ffffff" } })
     : null;
+  const logo = await loadLogo(settings);
 
   return new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 50 });
@@ -140,7 +175,7 @@ export async function generateInvoicePdf(order: IOrder, settings: ISettings): Pr
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    header(doc, settings);
+    header(doc, settings, logo);
     meta(doc, order);
     itemsTable(doc, order);
     totals(doc, order);

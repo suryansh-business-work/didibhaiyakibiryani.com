@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../../auth";
+import BrandLogo from "../../components/BrandLogo";
 import RecoverAccess from "./RecoverAccess";
 import { RHFField, adminLoginSchema, type AdminLoginForm } from "../../form";
 
@@ -28,7 +29,7 @@ export default function Login() {
     <div className="login-wrap">
       <form className="login-card" onSubmit={handleSubmit(onSubmit)}>
         <div className="brand">
-          <span className="brand__badge" />
+          <BrandLogo size={44} />
           <div>
             <div className="brand__name">Didi Bhaiya ki Biryani</div>
             <div className="brand__sub">Admin Console</div>

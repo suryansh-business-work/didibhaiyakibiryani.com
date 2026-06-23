@@ -4,8 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { RIDERS } from "../../graphql/queries";
 import { CREATE_STAFF_USER, UPDATE_STAFF_USER, DELETE_STAFF_USER } from "../../graphql/mutations";
+import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
-import { AsyncList } from "../../components/ui";
+import { AsyncList, OnOffChip } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
 import RiderModal from "./RiderModal";
@@ -106,43 +107,41 @@ export default function Riders() {
 
   return (
     <Layout title="Delivery partners">
-      <div className="toolbar">
-        <p className="muted" style={{ margin: 0 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
+        <Typography variant="body2" color="text.secondary">
           Riders sign in on the delivery portal to pick up and deliver assigned orders.
-        </p>
-        <div className="spacer" />
-        <button className="btn btn-gold" onClick={openNew}><IPlus size={16} /> New rider</button>
-      </div>
+        </Typography>
+        <Box sx={{ flex: 1 }} />
+        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New rider</Button>
+      </Box>
 
       <div className="card">
         <AsyncList loading={loading && !data} empty={riders.length === 0} emptyLabel="No delivery partners yet — create the first one.">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th></th></tr>
-              </thead>
-              <tbody>
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell><TableCell>Email</TableCell><TableCell>Phone</TableCell><TableCell>Status</TableCell><TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {riders.map((r) => (
-                  <tr key={r.id}>
-                    <td className="t-strong">{r.name}</td>
-                    <td className="muted">{r.email}</td>
-                    <td className="muted">{r.phone ?? "—"}</td>
-                    <td>
-                      <span className={`badge ${r.isActive ? "badge--green" : "badge--muted"}`}>
-                        <span className="dot" />{r.isActive ? "Active" : "Disabled"}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(r)}>Edit</button>{" "}
-                      <button className="btn btn-danger btn-sm" disabled={deletingId === r.id} onClick={() => remove(r)}>
+                  <TableRow key={r.id} hover>
+                    <TableCell><Typography fontWeight={700}>{r.name}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{r.email}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{r.phone ?? "—"}</Typography></TableCell>
+                    <TableCell><OnOffChip on={r.isActive} offLabel="Disabled" /></TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                      <Button size="small" onClick={() => openEdit(r)}>Edit</Button>
+                      <Button size="small" color="error" disabled={deletingId === r.id} onClick={() => remove(r)}>
                         {deletingId === r.id ? "Deleting…" : "Delete"}
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Box>
         </AsyncList>
       </div>
 

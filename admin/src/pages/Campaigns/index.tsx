@@ -2,12 +2,20 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { CAMPAIGNS } from "../../graphql/queries";
 import { SEND_CAMPAIGN } from "../../graphql/mutations";
+import { Box, Button, Chip, type ChipProps, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
 import { AsyncList, fmtDate } from "../../components/ui";
 import { useConfirm } from "../../components/dialog";
 import { IPlus } from "../../components/icons";
 import CampaignModal from "./CampaignModal";
-import { BLANK_FORM, STATUS_BADGE, type CampaignForm, type CampaignRow } from "./types";
+import { BLANK_FORM, type CampaignForm, type CampaignRow } from "./types";
+
+const STATUS_COLOR: Record<string, ChipProps["color"]> = {
+  SENT: "success",
+  SENDING: "info",
+  FAILED: "error",
+  DRAFT: "default",
+};
 
 export default function Campaigns() {
   const { data, loading, refetch } = useQuery<{ campaigns: CampaignRow[] }>(CAMPAIGNS, {
@@ -58,44 +66,37 @@ export default function Campaigns() {
 
   return (
     <Layout title="Email & WhatsApp Campaigns">
-      <div className="toolbar">
-        <div className="spacer" />
-        <button className="btn btn-gold" onClick={() => { setErr(""); setOpen(true); }}>
-          <IPlus size={16} /> New campaign
-        </button>
-      </div>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={() => { setErr(""); setOpen(true); }}>New campaign</Button>
+      </Box>
 
       <div className="card">
         <AsyncList loading={loading && !data} empty={campaigns.length === 0} emptyLabel="No campaigns yet.">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Campaign</th><th>Channel</th><th>Status</th>
-                  <th>Audience</th><th>Sent / Failed</th><th>When</th>
-                </tr>
-              </thead>
-              <tbody>
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Campaign</TableCell><TableCell>Channel</TableCell><TableCell>Status</TableCell>
+                  <TableCell>Audience</TableCell><TableCell>Sent / Failed</TableCell><TableCell>When</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {campaigns.map((c) => (
-                  <tr key={c.id}>
-                    <td>
-                      <div className="t-strong">{c.name}</div>
-                      <div className="muted" style={{ fontSize: "0.78rem" }}>{c.subject}</div>
-                    </td>
-                    <td className="muted">{c.channel}</td>
-                    <td>
-                      <span className={`badge ${STATUS_BADGE[c.status] ?? "badge--muted"}`}>
-                        <span className="dot" />{c.status}
-                      </span>
-                    </td>
-                    <td className="muted">{c.audienceCount}</td>
-                    <td className="muted">{c.sentCount} / {c.failedCount}</td>
-                    <td className="muted">{fmtDate(c.sentAt ?? c.createdAt)}</td>
-                  </tr>
+                  <TableRow key={c.id} hover>
+                    <TableCell>
+                      <Typography fontWeight={700}>{c.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">{c.subject}</Typography>
+                    </TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{c.channel}</Typography></TableCell>
+                    <TableCell><Chip size="small" variant="outlined" color={STATUS_COLOR[c.status] ?? "default"} label={c.status} /></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{c.audienceCount}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{c.sentCount} / {c.failedCount}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(c.sentAt ?? c.createdAt)}</Typography></TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Box>
         </AsyncList>
       </div>
 

@@ -1,3 +1,5 @@
+import { Box, FormControlLabel, Switch as MuiSwitch, Typography } from "@mui/material";
+
 interface SwitchProps {
   checked: boolean;
   onChange: (next: boolean) => void;
@@ -6,31 +8,30 @@ interface SwitchProps {
   disabled?: boolean;
 }
 
-/** Accessible toggle switch (checkbox semantics, switch visuals). */
-export default function Switch({
-  checked,
-  onChange,
-  label,
-  hint,
-  disabled,
-}: Readonly<SwitchProps>) {
+/** Labelled MUI toggle with an optional hint line, used in settings pages. */
+export default function Switch({ checked, onChange, label, hint, disabled }: Readonly<SwitchProps>) {
   return (
-    <label className={`switch-row ${disabled ? "switch-row--disabled" : ""}`}>
-      <span>
-        <span className="switch-label">{label}</span>
-        {hint && <span className="switch-hint">{hint}</span>}
-      </span>
-      <span className={`switch ${checked ? "switch--on" : ""}`}>
-        <input
-          type="checkbox"
-          role="switch"
-          aria-checked={checked}
-          checked={checked}
-          disabled={disabled}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-        <span className="switch__thumb" />
-      </span>
-    </label>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 2,
+        py: 1.25,
+        borderBottom: 1,
+        borderColor: "divider",
+        "&:last-of-type": { borderBottom: 0 },
+      }}
+    >
+      <Box>
+        <Typography fontWeight={700}>{label}</Typography>
+        {hint ? <Typography variant="caption" color="text.secondary">{hint}</Typography> : null}
+      </Box>
+      <FormControlLabel
+        sx={{ m: 0 }}
+        label=""
+        control={<MuiSwitch checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />}
+      />
+    </Box>
   );
 }

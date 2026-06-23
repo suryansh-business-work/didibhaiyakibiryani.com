@@ -13,6 +13,7 @@ export interface Item {
   description?: string;
   price: number;
   image?: string;
+  spiceSelectable: boolean;
   spiceLevel: number;
   serves: string;
   badge: string;
@@ -28,8 +29,9 @@ export const BLANK_FORM: MenuForm = {
   price: 0,
   image: "",
   categoryId: "",
+  spiceSelectable: true,
   spiceLevel: 0,
-  serves: "Serves 1",
+  serves: "1",
   badge: "NONE",
   tags: "",
   isAvailable: true,
@@ -40,3 +42,17 @@ export const BADGE_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
   { value: "BESTSELLER", label: "Bestseller" },
   { value: "NEW", label: "New" },
 ];
+
+/** Default spice level options (index = stored level). */
+export const SPICE_OPTIONS: ReadonlyArray<{ value: number; label: string }> = [
+  { value: 0, label: "Mild" },
+  { value: 1, label: "Medium" },
+  { value: 2, label: "Spicy" },
+  { value: 3, label: "Fiery" },
+];
+
+/** "Serves N" dropdown — 1 to 10 people. */
+export const SERVES_OPTIONS: ReadonlyArray<{ value: string; label: string }> = Array.from({ length: 10 }, (_, i) => ({
+  value: String(i + 1),
+  label: i === 0 ? "1 person" : `${i + 1} people`,
+}));

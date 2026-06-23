@@ -10,7 +10,7 @@ import { brand, inr } from "../../src/theme";
 import { FoodThumb, Badge, Stars, BackButton, SpicePicker } from "../../src/components";
 
 interface Item {
-  id: string; name: string; description?: string; price: number; image?: string; spiceLevel: number;
+  id: string; name: string; description?: string; price: number; image?: string; spiceSelectable: boolean; spiceLevel: number;
   serves: string; badge: string; isAvailable: boolean; rating: number; ratingCount: number;
   category?: { name: string } | null;
 }
@@ -58,11 +58,13 @@ export default function ItemDetail() {
           <Text fontSize={14} color={brand.dim} lineHeight={22}>{it.description}</Text>
         </YStack>
 
-        {/* Spice selector */}
-        <YStack gap={10}>
-          <Text fontWeight="800" color={brand.text}>Spice level</Text>
-          <SpicePicker value={chosenSpice} onChange={setSpice} />
-        </YStack>
+        {/* Spice selector — only when this item allows it */}
+        {it.spiceSelectable ? (
+          <YStack gap={10}>
+            <Text fontWeight="800" color={brand.text}>Spice level</Text>
+            <SpicePicker value={chosenSpice} onChange={setSpice} />
+          </YStack>
+        ) : null}
 
         {/* Quantity */}
         <XStack alignItems="center" justifyContent="space-between" backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={14} padding={14}>
@@ -87,7 +89,7 @@ export default function ItemDetail() {
           disabled={!it.isAvailable}
           pressStyle={{ opacity: 0.9, scale: 0.98 }}
           onPress={() => {
-            add({ id: it.id, name: it.name, price: it.price, spiceLevel: chosenSpice }, qty);
+            add({ id: it.id, name: it.name, price: it.price, spiceLevel: chosenSpice, spiceSelectable: it.spiceSelectable }, qty);
             router.push("/cart");
           }}
         >

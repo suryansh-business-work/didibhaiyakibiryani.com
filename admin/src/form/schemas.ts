@@ -95,6 +95,7 @@ export const menuItemSchema = z.object({
   image: z.string().optional(),
   price: z.coerce.number().positive("Enter a price above 0"),
   categoryId: z.string().min(1, "Pick a category"),
+  spiceSelectable: z.boolean(),
   spiceLevel: z.coerce.number().int().min(0).max(3),
   serves: z.string().optional(),
   badge: z.enum(["NONE", "BESTSELLER", "NEW"]),

@@ -21,6 +21,8 @@ export const DASHBOARD = gql`
       pendingOrders
       totalCustomers
       avgOrderValue
+      avgRating
+      ratingCount
       topItems {
         name
         qty
@@ -63,9 +65,11 @@ export const ORDERS = gql`
       placedAt
       notes
       surveyUrl
+      ratingToken
       customerName
       customerPhone
       user {
+        id
         name
         phone
         email
@@ -99,6 +103,10 @@ export const ORDERS = gql`
         food
         delivery
         comment
+        items {
+          name
+          rating
+        }
       }
     }
   }
@@ -183,6 +191,7 @@ export const MENU_ITEMS = gql`
       description
       price
       image
+      spiceSelectable
       spiceLevel
       serves
       badge
@@ -228,6 +237,38 @@ export const INVOICE_PDF = gql`
   }
 `;
 
+export const SURVEY_ORDER = gql`
+  query SurveyOrder($orderId: ID!, $token: String!) {
+    surveyOrder(orderId: $orderId, token: $token) {
+      orderNumber
+      customerName
+      subtotal
+      discount
+      deliveryFee
+      total
+      status
+      placedAt
+      alreadyRated
+      canRate
+      items {
+        name
+        price
+        qty
+        spiceLevel
+      }
+      rating {
+        food
+        delivery
+        comment
+        items {
+          name
+          rating
+        }
+      }
+    }
+  }
+`;
+
 export const CUSTOMERS = gql`
   query Customers($search: String) {
     customers(search: $search) {
@@ -263,6 +304,8 @@ export const SETTINGS_CORE_FIELDS = `
   companyEmail
   supportPhone
   supportEmail
+  feedbackEmail
+  website
   fssaiLicense
   instagramUrl
   facebookUrl

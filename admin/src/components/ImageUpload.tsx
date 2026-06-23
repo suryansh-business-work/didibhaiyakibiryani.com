@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useMutation } from "@apollo/client";
+import { Box, Button, Typography } from "@mui/material";
 import { UPLOAD_IMAGE } from "../graphql/mutations";
 
 const MAX_FILE_BYTES = 7 * 1024 * 1024; // matches the server-side limit
@@ -22,12 +23,7 @@ function readAsDataUrl(file: File): Promise<string> {
 }
 
 /** Picks a local image and uploads it to ImageKit via the server. */
-export default function ImageUpload({
-  folder,
-  currentUrl,
-  onUploaded,
-  label = "Image",
-}: Readonly<ImageUploadProps>) {
+export default function ImageUpload({ folder, currentUrl, onUploaded, label = "Image" }: Readonly<ImageUploadProps>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [upload, { loading }] = useMutation(UPLOAD_IMAGE);
   const [error, setError] = useState("");
@@ -45,9 +41,7 @@ export default function ImageUpload({
     }
     try {
       const dataUrl = await readAsDataUrl(file);
-      const { data } = await upload({
-        variables: { file: dataUrl, fileName: file.name, folder },
-      });
+      const { data } = await upload({ variables: { file: dataUrl, fileName: file.name, folder } });
       onUploaded(data.uploadImage.url);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Upload failed — please try again.");
@@ -55,36 +49,27 @@ export default function ImageUpload({
   }
 
   return (
-    <div className="field">
-      <label>{label}</label>
-      <div className="upload-row">
+    <Box sx={{ my: 1.5 }}>
+      <Typography variant="body2" fontWeight={700} color="text.secondary" gutterBottom>{label}</Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         {currentUrl ? (
-          <img src={currentUrl} alt="" className="upload-preview" />
+          <Box component="img" src={currentUrl} alt="" sx={{ width: 72, height: 72, borderRadius: 1.5, objectFit: "cover", border: 1, borderColor: "divider" }} />
         ) : (
-          <div className="upload-preview upload-preview--empty">No image</div>
+          <Box sx={{ width: 72, height: 72, borderRadius: 1.5, display: "grid", placeItems: "center", border: 1, borderColor: "divider", color: "text.secondary", fontSize: "0.7rem" }}>
+            No image
+          </Box>
         )}
-        <div>
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            disabled={loading}
-            onClick={() => inputRef.current?.click()}
-          >
+        <Box>
+          <Button variant="outlined" size="small" disabled={loading} onClick={() => inputRef.current?.click()}>
             {loading ? "Uploading…" : "Upload image"}
-          </button>
-          <div className="muted" style={{ fontSize: "0.75rem", marginTop: 6 }}>
+          </Button>
+          <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.75 }}>
             JPG / PNG / WebP · max 7 MB · served via ImageKit CDN
-          </div>
-        </div>
-      </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={(e) => onPick(e.target.files?.[0])}
-      />
-      {error && <div className="error-text">{error}</div>}
-    </div>
+          </Typography>
+        </Box>
+      </Box>
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => onPick(e.target.files?.[0])} />
+      {error ? <Typography color="error" variant="caption" sx={{ mt: 1, display: "block" }}>{error}</Typography> : null}
+    </Box>
   );
 }

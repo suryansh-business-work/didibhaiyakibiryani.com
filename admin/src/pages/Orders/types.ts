@@ -37,14 +37,15 @@ export interface Order {
   placedAt: string;
   notes?: string;
   surveyUrl?: string;
+  ratingToken?: string;
   customerName?: string;
   customerPhone?: string;
-  user?: { name: string; phone?: string; email: string } | null;
+  user?: { id: string; name: string; phone?: string; email: string } | null;
   address?: OrderAddress | null;
   items: OrderItem[];
   statusHistory: { status: string; at: string; note?: string }[];
   deliveryPartner?: Rider | null;
-  rating?: { food: number; delivery: number; comment?: string } | null;
+  rating?: { food: number; delivery: number; comment?: string; items?: { name: string; rating: number }[] } | null;
 }
 
 export const FILTERS = [
@@ -73,6 +74,16 @@ export const LABEL: Record<string, string> = {
   DELIVERED: "Mark delivered",
   CANCELLED: "Cancel",
 };
+
+/** The order lifecycle in sequence (1–6) for status pickers. */
+export const STATUS_SEQUENCE: ReadonlyArray<{ value: string; label: string }> = [
+  { value: "PLACED", label: "1 · Placed" },
+  { value: "CONFIRMED", label: "2 · Confirmed" },
+  { value: "PREPARING", label: "3 · Preparing" },
+  { value: "OUT_FOR_DELIVERY", label: "4 · Out for delivery" },
+  { value: "DELIVERED", label: "5 · Delivered" },
+  { value: "CANCELLED", label: "6 · Cancelled" },
+];
 
 export interface LatLng {
   lat: number;

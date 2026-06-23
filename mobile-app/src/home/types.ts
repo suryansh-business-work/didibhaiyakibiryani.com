@@ -4,6 +4,7 @@ export interface Item {
   description?: string;
   price: number;
   image?: string;
+  spiceSelectable: boolean;
   spiceLevel: number;
   serves: string;
   badge: string;

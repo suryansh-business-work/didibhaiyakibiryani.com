@@ -15,7 +15,7 @@ const STRING_FIELDS = new Set([
   "consumerAppName", "consumerSplashUrl", "consumerIconUrl",
   "deliveryAppName", "deliverySplashUrl", "deliveryIconUrl",
   "companyName", "companyAddress", "companyPhone", "companyEmail",
-  "supportPhone", "supportEmail", "fssaiLicense",
+  "supportPhone", "supportEmail", "feedbackEmail", "website", "fssaiLicense",
   "instagramUrl", "facebookUrl", "youtubeUrl",
   "storeOpenTime", "storeCloseTime", "storeTimezone",
   "gstLegalName", "gstNumber", "surveyUrl",

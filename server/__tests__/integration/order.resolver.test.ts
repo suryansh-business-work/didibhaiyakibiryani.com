@@ -12,7 +12,7 @@ vi.mock("../../src/utils/mailer.js", () => ({
 vi.mock("../../src/emails/notify.js", () => ({ notifyOrderEmail: vi.fn() }));
 
 import { orderResolvers } from "../../src/graphql/resolvers/order";
-import { MenuItem, Coupon, Settings, SETTINGS_KEY, getOrCreateSettings } from "../../src/models/index.js";
+import { Order, MenuItem, Coupon, Settings, SETTINGS_KEY, getOrCreateSettings } from "../../src/models/index.js";
 
 useTestDb();
 const M = orderResolvers.Mutation;
@@ -101,8 +101,18 @@ describe("order resolver — queries / lifecycle", () => {
     const delivered = await M.updateOrderStatus(null, { id: order.id, status: "DELIVERED" }, riderCtx);
     expect(delivered.paymentStatus).toBe("PAID");
 
+    // Admin/staff can override the flow (e.g. fix an accidental delivery).
     const order2 = await makeOrder(user.id, { status: "PLACED" });
-    await expect(M.updateOrderStatus(null, { id: order2.id, status: "DELIVERED" }, ctxFor("admin", "ADMIN"))).rejects.toThrow(/Cannot move/i);
+    const jumped = await M.updateOrderStatus(null, { id: order2.id, status: "DELIVERED" }, ctxFor("admin", "ADMIN"));
+    expect(jumped.status).toBe("DELIVERED");
+    const reverted = await M.updateOrderStatus(null, { id: order2.id, status: "OUT_FOR_DELIVERY" }, ctxFor("admin", "ADMIN"));
+    expect(reverted.status).toBe("OUT_FOR_DELIVERY");
+
+    // A rider still can't skip the forward flow (NEXT enforced).
+    const rider2 = await makeUser("DELIVERY");
+    const order3 = await makeOrder(user.id, { status: "PREPARING", deliveryPartner: rider2._id });
+    await expect(M.updateOrderStatus(null, { id: order3.id, status: "DELIVERED" }, ctxFor(rider2.id, "DELIVERY"))).rejects.toThrow(/Cannot move/i);
+
     const otherRider = await makeUser("DELIVERY");
     await expect(M.updateOrderStatus(null, { id: order2.id, status: "OUT_FOR_DELIVERY" }, ctxFor(otherRider.id, "DELIVERY"))).rejects.toThrow(/not assigned to you/i);
   });
@@ -255,6 +265,46 @@ describe("order resolver — createManualOrder (POS)", () => {
     await expect(M.createManualOrder(null, I({}), ctxFor("cust", "CUSTOMER"))).rejects.toThrow();
   });
 
+  it("updateManualOrder edits items/total and appends a status change", async () => {
+    const item = await makeItem();
+    const order = await M.createManualOrder(
+      null,
+      { input: { orderType: "TAKEAWAY", customerName: "Ravi", items: [{ menuItemId: item.id, qty: 1 }], status: "PLACED" } },
+      admin
+    );
+    const historyLen = order.statusHistory.length;
+    const updated = await M.updateManualOrder(
+      null,
+      {
+        id: order.id,
+        input: {
+          orderType: "TAKEAWAY",
+          customerName: "Ravi Kumar",
+          items: [{ name: "Special", price: 250, qty: 2 }],
+          status: "DELIVERED",
+        },
+      },
+      admin
+    );
+    expect(updated.customerName).toBe("Ravi Kumar");
+    expect(updated.subtotal).toBe(500);
+    expect(updated.total).toBe(500);
+    expect(updated.status).toBe("DELIVERED");
+    expect(updated.statusHistory.length).toBe(historyLen + 1);
+
+    // No status change → history unchanged
+    const again = await M.updateManualOrder(
+      null,
+      { id: order.id, input: { orderType: "TAKEAWAY", customerName: "Ravi Kumar", items: [{ name: "Special", price: 250, qty: 2 }], status: "DELIVERED" } },
+      admin
+    );
+    expect(again.statusHistory.length).toBe(historyLen + 1);
+
+    await expect(
+      M.updateManualOrder(null, { id: new Types.ObjectId().toString(), input: { orderType: "TAKEAWAY", customerName: "X", items: [{ menuItemId: item.id, qty: 1 }] } }, admin)
+    ).rejects.toThrow(/not found/i);
+  });
+
   it("invoicePdf returns a base64 PDF (admin/staff only)", async () => {
     const user = await makeUser();
     const order = await makeOrder(user.id, { surveyUrl: "https://forms.gle/xyz" });
@@ -266,5 +316,83 @@ describe("order resolver — createManualOrder (POS)", () => {
 
   it("Order.user resolver returns null for walk-in orders", async () => {
     expect(await orderResolvers.Order.user({ user: undefined })).toBeNull();
+  });
+});
+
+describe("order resolver — survey (public, token-gated)", () => {
+  it("surveyOrder returns order details for a valid token", async () => {
+    const user = await makeUser("CUSTOMER", { name: "Asha" });
+    const order = await makeOrder(user.id, { status: "DELIVERED" });
+    const s = await Q.surveyOrder(null, { orderId: order.id, token: order.ratingToken });
+    expect(s.orderNumber).toBe(order.orderNumber);
+    expect(s.customerName).toBe("Asha");
+    expect(s.canRate).toBe(true);
+    expect(s.alreadyRated).toBe(false);
+    expect(s.items.length).toBeGreaterThan(0);
+  });
+
+  it("uses the walk-in snapshot name and reflects a submitted rating", async () => {
+    const item = await makeItem();
+    const order = await M.createManualOrder(
+      null,
+      { input: { orderType: "TAKEAWAY", customerName: "Ravi", items: [{ menuItemId: item.id, qty: 1 }], status: "DELIVERED" } },
+      ctxFor("admin", "ADMIN")
+    );
+    expect(
+      await M.submitOrderSurvey(null, {
+        orderId: order.id,
+        token: order.ratingToken,
+        itemRatings: [{ name: "Veg Biryani", rating: 5 }],
+        delivery: 4,
+        comment: "Great",
+      })
+    ).toBe(true);
+    const s = await Q.surveyOrder(null, { orderId: order.id, token: order.ratingToken });
+    expect(s.customerName).toBe("Ravi");
+    expect(s.alreadyRated).toBe(true);
+    expect(s.canRate).toBe(false);
+    expect(s.rating?.food).toBe(5);
+    expect(s.rating?.items?.[0]?.rating).toBe(5);
+  });
+
+  it("returns no name for orders with no / deleted customer", async () => {
+    const noUser = await Order.create({
+      orderNumber: `DDB-NU${Math.random().toString(36).slice(2, 7)}`,
+      items: [{ name: "X", price: 10, qty: 1 }],
+      subtotal: 10,
+      total: 10,
+      address: { line1: "1", city: "B", pincode: "1" },
+    });
+    expect((await Q.surveyOrder(null, { orderId: noUser.id, token: noUser.ratingToken })).customerName).toBeNull();
+    const ghost = await makeOrder(new Types.ObjectId().toString());
+    expect((await Q.surveyOrder(null, { orderId: ghost.id, token: ghost.ratingToken })).customerName).toBeNull();
+  });
+
+  it("rejects a bad id, wrong token and empty token", async () => {
+    const order = await makeOrder((await makeUser()).id);
+    await expect(Q.surveyOrder(null, { orderId: "not-an-id", token: "x" })).rejects.toThrow(/invalid/i);
+    await expect(Q.surveyOrder(null, { orderId: order.id, token: "wrong" })).rejects.toThrow(/invalid/i);
+    await expect(Q.surveyOrder(null, { orderId: order.id, token: "" })).rejects.toThrow(/invalid/i);
+    await expect(Q.surveyOrder(null, { orderId: new Types.ObjectId().toString(), token: "x" })).rejects.toThrow(/invalid/i);
+  });
+
+  it("submitOrderSurvey saves per-item ratings once and guards bad input", async () => {
+    const user = await makeUser();
+    const delivered = await makeOrder(user.id, { status: "DELIVERED" });
+    const items = [{ name: "Veg Biryani", rating: 4 }];
+    expect(await M.submitOrderSurvey(null, { orderId: delivered.id, token: delivered.ratingToken, itemRatings: items, delivery: 5 })).toBe(true);
+    await expect(
+      M.submitOrderSurvey(null, { orderId: delivered.id, token: delivered.ratingToken, itemRatings: items, delivery: 5 })
+    ).rejects.toThrow(/already been rated/i);
+
+    const placed = await makeOrder(user.id, { status: "PLACED" });
+    await expect(M.submitOrderSurvey(null, { orderId: placed.id, token: placed.ratingToken, itemRatings: items, delivery: 5 })).rejects.toThrow(/delivered/i);
+    await expect(M.submitOrderSurvey(null, { orderId: placed.id, token: "wrong", itemRatings: items, delivery: 5 })).rejects.toThrow(/invalid/i);
+
+    const fresh = await makeOrder(user.id, { status: "DELIVERED" });
+    await expect(M.submitOrderSurvey(null, { orderId: fresh.id, token: fresh.ratingToken, itemRatings: [], delivery: 5 })).rejects.toThrow(/at least one item/i);
+    await expect(
+      M.submitOrderSurvey(null, { orderId: fresh.id, token: fresh.ratingToken, itemRatings: [{ name: "X", rating: 9 }], delivery: 5 })
+    ).rejects.toThrow(/between 1 and 5/i);
   });
 });

@@ -5,6 +5,7 @@ import { APP_SETTINGS } from "./graphql";
 /** Admin-managed runtime settings every screen can rely on. */
 export interface AppSettings {
   brandName: string;
+  logoUrl: string;
   tagline: string;
   storeOpenTime: string;
   storeCloseTime: string;
@@ -21,6 +22,7 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   brandName: "Didi Bhaiya ki Biryani",
+  logoUrl: "",
   tagline: "Har bite, yaad rahe!",
   storeOpenTime: "11:00",
   storeCloseTime: "23:00",

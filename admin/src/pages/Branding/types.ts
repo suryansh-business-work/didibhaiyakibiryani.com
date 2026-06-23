@@ -19,6 +19,8 @@ export interface SettingsData {
   companyEmail: string;
   supportPhone: string;
   supportEmail: string;
+  feedbackEmail: string;
+  website: string;
   fssaiLicense: string;
   instagramUrl: string;
   facebookUrl: string;
@@ -49,6 +51,8 @@ export const BLANK_FORM: SettingsForm = {
   companyEmail: "",
   supportPhone: "",
   supportEmail: "",
+  feedbackEmail: "",
+  website: "",
   fssaiLicense: "",
   instagramUrl: "",
   facebookUrl: "",
@@ -126,7 +130,8 @@ export const SECTIONS: SectionDef[] = [
       { key: "companyName", label: "Company name" },
       { key: "companyAddress", label: "Address" },
       { key: "companyPhone", label: "Phone", type: "tel" },
-      { key: "companyEmail", label: "Email", type: "email" }
+      { key: "companyEmail", label: "Email", type: "email" },
+      { key: "website", label: "Website", type: "url" },
     ],
   },
   {
@@ -134,6 +139,7 @@ export const SECTIONS: SectionDef[] = [
     fields: [
       { key: "supportPhone", label: "Support phone", type: "tel" },
       { key: "supportEmail", label: "Support email", type: "email" },
+      { key: "feedbackEmail", label: "Feedback email", type: "email" },
     ],
   },
   {
