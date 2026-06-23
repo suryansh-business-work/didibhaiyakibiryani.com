@@ -23,7 +23,6 @@ interface Props {
   setOrderType: (v: OrderType) => void;
   onQty: (index: number, delta: number) => void;
   onRemove: (index: number) => void;
-  onAddCustom: () => void;
   onCreate: () => void;
   isSubmitting: boolean;
   rootError?: string;
@@ -43,7 +42,7 @@ function Row({ k, v, strong }: Readonly<{ k: string; v: string; strong?: boolean
 export function OrderPanel(props: Readonly<Props>) {
   const {
     control, errors, watch, setValue, customers, fields, totals,
-    isDelivery, orderType, setOrderType, onQty, onRemove, onAddCustom, onCreate, isSubmitting, rootError,
+    isDelivery, orderType, setOrderType, onQty, onRemove, onCreate, isSubmitting, rootError,
     submitLabel = "Create order",
   } = props;
   return (
@@ -54,8 +53,7 @@ export function OrderPanel(props: Readonly<Props>) {
       <Fulfilment control={control} errors={errors} isDelivery={isDelivery} orderType={orderType} setOrderType={setOrderType} />
       <Divider sx={{ my: 1.5 }} />
       <Box sx={{ flex: 1, overflowY: "auto", pr: 0.5 }}>
-        <OrderLines control={control} errors={errors} fields={fields} watch={watch} onQty={onQty} onRemove={onRemove} />
-        <Button size="small" onClick={onAddCustom} sx={{ mt: 1 }}>+ Add custom item</Button>
+        <OrderLines fields={fields} watch={watch} onQty={onQty} onRemove={onRemove} />
         <OrderOptions control={control} />
       </Box>
       <Divider sx={{ my: 1.5 }} />

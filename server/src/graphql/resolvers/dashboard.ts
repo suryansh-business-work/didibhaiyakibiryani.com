@@ -69,9 +69,11 @@ export const dashboardResolvers = {
           { $match: { status: { $ne: "CANCELLED" } } },
           { $unwind: "$items" },
           {
+            // Group by dish name so the same dish isn't split across different
+            // (or missing) menuItem ids.
             $group: {
-              _id: "$items.menuItem",
-              name: { $first: "$items.name" },
+              _id: "$items.name",
+              menuItemId: { $first: "$items.menuItem" },
               qty: { $sum: "$items.qty" },
               revenue: { $sum: { $multiply: ["$items.price", "$items.qty"] } },
             },
@@ -146,8 +148,8 @@ export const dashboardResolvers = {
           count: d.count,
         })),
         topItems: topItemsAgg.map((t) => ({
-          menuItemId: t._id,
-          name: t.name,
+          menuItemId: t.menuItemId,
+          name: t._id,
           qty: t.qty,
           revenue: t.revenue,
         })),

@@ -61,10 +61,6 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
     else append({ menuItemId: m.id, name: m.name, price: m.price, qty: 1, spiceLevel: 0 });
   }
 
-  function addCustom() {
-    append({ menuItemId: "", name: "", price: 0, qty: 1, spiceLevel: 0 });
-  }
-
   function changeQty(index: number, delta: number) {
     const items = getValues("items");
     const next = Number(items[index].qty) + delta;
@@ -112,7 +108,6 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
           setOrderType={(v) => setValue("orderType", v)}
           onQty={changeQty}
           onRemove={remove}
-          onAddCustom={addCustom}
           onCreate={handleSubmit(onSave)}
           isSubmitting={isSubmitting}
           rootError={errors.root?.message}

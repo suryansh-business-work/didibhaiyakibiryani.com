@@ -36,6 +36,7 @@ interface OrdersTableProps {
   onOpen: (order: Order) => void;
   onEditPos: (order: Order) => void;
   onChangeStatus: (order: Order) => void;
+  onGenerateMessage: (order: Order) => void;
   onDelete: (order: Order) => void;
   onShowMap: (order: Order) => void;
   deletingId: string | null;
@@ -80,6 +81,7 @@ export default function OrdersTable({
   onOpen,
   onEditPos,
   onChangeStatus,
+  onGenerateMessage,
   onDelete,
   onShowMap,
   deletingId,
@@ -220,6 +222,14 @@ export default function OrdersTable({
           }}
         >
           Change delivery status
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuOrder) onGenerateMessage(menuOrder);
+            closeMenu();
+          }}
+        >
+          Generate survey message
         </MenuItem>
         <MenuItem
           disabled={!menuDelivered}

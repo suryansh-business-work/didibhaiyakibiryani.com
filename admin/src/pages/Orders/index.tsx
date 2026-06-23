@@ -12,6 +12,7 @@ import OrderMap from "./OrderMap";
 import OrdersTable, { type SortKey } from "./OrdersTable";
 import ManualOrderModal from "./ManualOrderModal";
 import LockedOrderEdit from "./LockedOrderEdit";
+import SurveyMessageDialog from "./SurveyMessageDialog";
 import { FILTERS, type Order, type Rider } from "./types";
 
 const PAGE_SIZE = 15;
@@ -29,6 +30,7 @@ export default function Orders() {
   const [posOpen, setPosOpen] = useState(false);
   const [editPos, setEditPos] = useState<Order | null>(null);
   const [statusOrder, setStatusOrder] = useState<Order | null>(null);
+  const [messageOrder, setMessageOrder] = useState<Order | null>(null);
 
   // Delivered orders are locked from full editing — route them (and the
   // "Change delivery status" action) to the status-only dialog.
@@ -226,6 +228,7 @@ export default function Orders() {
             onOpen={setActive}
             onEditPos={openEdit}
             onChangeStatus={setStatusOrder}
+            onGenerateMessage={setMessageOrder}
             onDelete={removeOne}
             onShowMap={setMapOrder}
             deletingId={deletingId}
@@ -262,6 +265,7 @@ export default function Orders() {
           }}
         />
       )}
+      {messageOrder && <SurveyMessageDialog order={messageOrder} onClose={() => setMessageOrder(null)} />}
       {(posOpen || editPos) && (
         <ManualOrderModal
           key={editPos?.id ?? "new"}
