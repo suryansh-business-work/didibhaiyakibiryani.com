@@ -6,7 +6,16 @@ import { assertOrderingAvailable } from "../../utils/ordering.js";
 import { genOrderNumber } from "../../utils/helpers.js";
 import { notifyOrderEmail } from "../../emails/notify.js";
 import { saveOrderRating } from "../../utils/rating.js";
-import type { IOrder, ISettings, OrderStatus } from "../../models/index.js";
+import { generateInvoicePdf } from "../../utils/invoice.js";
+import type {
+  IOrder,
+  IOrderItem,
+  ISettings,
+  OrderStatus,
+  OrderType,
+  PaymentMethod,
+  PaymentStatus,
+} from "../../models/index.js";
 
 interface CartItemInput {
   menuItemId: string;
@@ -29,6 +38,76 @@ interface PlaceOrderInput {
   couponCode?: string;
   paymentMethod?: "COD" | "ONLINE";
   notes?: string;
+}
+
+interface ManualOrderItemInput {
+  menuItemId?: string;
+  name?: string;
+  price?: number;
+  qty: number;
+  spiceLevel?: number;
+}
+interface ManualOrderInput {
+  userId?: string;
+  customerName?: string;
+  customerPhone?: string;
+  orderType: OrderType;
+  items: ManualOrderItemInput[];
+  address?: AddressInput;
+  discount?: number;
+  deliveryFee?: number;
+  paymentMethod?: PaymentMethod;
+  paymentStatus?: PaymentStatus;
+  status?: OrderStatus;
+  placedAt?: string | Date;
+  surveyUrl?: string;
+  notes?: string;
+}
+
+function badInput(message: string): GraphQLError {
+  return new GraphQLError(message, { extensions: { code: "BAD_USER_INPUT" } });
+}
+
+/** Clamp an optional money amount to [0, max], rounding to whole rupees. */
+function clampMoney(value: number | undefined, max: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return 0;
+  return Math.min(Math.round(value), max);
+}
+
+/** Resolve POS line items: catalogue items price from the DB, custom lines as
+ * typed by staff. POS deliberately ignores `isAvailable` (staff override). */
+async function buildManualItems(items: ManualOrderItemInput[]): Promise<IOrderItem[]> {
+  if (!items?.length) throw badInput("Add at least one item.");
+  const ids = items.filter((i) => i.menuItemId).map((i) => i.menuItemId as string);
+  const dbItems = ids.length ? await MenuItem.find({ _id: { $in: ids } }) : [];
+  const map = new Map(dbItems.map((d) => [d.id, d]));
+
+  return items.map((ci) => {
+    if (!Number.isInteger(ci.qty) || ci.qty < 1) throw badInput("Each item needs a quantity of at least 1.");
+    if (ci.menuItemId) {
+      const dbItem = map.get(ci.menuItemId);
+      if (!dbItem) throw badInput("A selected menu item no longer exists.");
+      return { menuItem: dbItem._id, name: dbItem.name, price: dbItem.price, qty: ci.qty, spiceLevel: ci.spiceLevel ?? dbItem.spiceLevel };
+    }
+    const name = ci.name?.trim();
+    if (!name) throw badInput("Custom items need a name.");
+    if (typeof ci.price !== "number" || !Number.isFinite(ci.price) || ci.price < 0) {
+      throw badInput("Custom items need a valid price.");
+    }
+    return { name, price: ci.price, qty: ci.qty, spiceLevel: ci.spiceLevel ?? 0 };
+  });
+}
+
+/** Attach an existing customer, or take a walk-in name/phone snapshot. */
+async function resolveManualCustomer(input: ManualOrderInput) {
+  if (input.userId) {
+    const u = await User.findById(input.userId);
+    if (!u) throw badInput("Selected customer not found.");
+    return { user: u.id as string, customerName: u.name, customerPhone: u.phone };
+  }
+  const customerName = input.customerName?.trim();
+  if (!customerName) throw badInput("Enter a customer name or pick an existing customer.");
+  return { user: undefined, customerName, customerPhone: input.customerPhone?.trim() || undefined };
 }
 
 // Allowed forward transitions for order status.
@@ -89,6 +168,15 @@ export const orderResolvers = {
       requireRole(ctx, "ADMIN", "STAFF", "DELIVERY");
       const filter = status ? { status } : {};
       return Order.find(filter).sort({ placedAt: -1 }).limit(200).exec();
+    },
+
+    invoicePdf: async (_: unknown, { orderId }: { orderId: string }, ctx: Context) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+      const order = await Order.findById(orderId);
+      if (!order) throw new GraphQLError("Order not found.");
+      const settings = await getOrCreateSettings();
+      const pdf = await generateInvoicePdf(order, settings);
+      return pdf.toString("base64");
     },
   },
 
@@ -195,6 +283,47 @@ export const orderResolvers = {
 
       notifyOrderEmail(order, "CONFIRMED");
       return order;
+    },
+
+    createManualOrder: async (_: unknown, { input }: { input: ManualOrderInput }, ctx: Context) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+
+      const isDelivery = input.orderType === "DELIVERY";
+      if (isDelivery && !(input.address?.line1?.trim() && input.address?.city?.trim())) {
+        throw badInput("Delivery orders need an address (at least a street line and city).");
+      }
+
+      const items = await buildManualItems(input.items);
+      const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+      const discount = clampMoney(input.discount, subtotal);
+      const deliveryFee = isDelivery ? clampMoney(input.deliveryFee, Number.MAX_SAFE_INTEGER) : 0;
+      const total = Math.max(0, subtotal - discount) + deliveryFee;
+
+      const customer = await resolveManualCustomer(input);
+      const status = input.status ?? "PLACED";
+      const placedAt = input.placedAt ? new Date(input.placedAt) : new Date();
+      if (Number.isNaN(placedAt.getTime())) throw badInput("Invalid order date.");
+      const paymentStatus = input.paymentStatus ?? (status === "DELIVERED" ? "PAID" : "PENDING");
+
+      return Order.create({
+        orderNumber: genOrderNumber(),
+        ...customer,
+        items,
+        subtotal,
+        discount,
+        deliveryFee,
+        total,
+        status,
+        orderType: input.orderType,
+        source: "POS",
+        paymentMethod: input.paymentMethod ?? "COD",
+        paymentStatus,
+        address: isDelivery ? input.address : undefined,
+        statusHistory: [{ status, at: placedAt }],
+        surveyUrl: input.surveyUrl?.trim() || undefined,
+        notes: input.notes?.trim() || undefined,
+        placedAt,
+      });
     },
 
     cancelOrder: async (_: unknown, { id }: { id: string }, ctx: Context) => {

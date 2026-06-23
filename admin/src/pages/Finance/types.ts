@@ -7,6 +7,7 @@ export interface FinanceSettingsData {
   gstLegalName: string;
   gstNumber: string;
   fssaiLicense: string;
+  surveyUrl: string;
   codEnabled: boolean;
   onlineEnabled: boolean;
   updatedAt?: string;
@@ -23,6 +24,7 @@ export const BLANK_FINANCE: FinanceForm = {
   gstLegalName: "",
   gstNumber: "",
   fssaiLicense: "",
+  surveyUrl: "",
   codEnabled: true,
   onlineEnabled: true,
 };
@@ -37,6 +39,7 @@ export function settingsToFinanceForm(s: Partial<FinanceSettingsData>): FinanceF
     gstLegalName: s.gstLegalName ?? "",
     gstNumber: s.gstNumber ?? "",
     fssaiLicense: s.fssaiLicense ?? "",
+    surveyUrl: s.surveyUrl ?? "",
     codEnabled: s.codEnabled ?? true,
     onlineEnabled: s.onlineEnabled ?? true,
   };
@@ -58,9 +61,15 @@ export const DELIVERY_COST_FIELDS: NumberFieldDef[] = [
 ];
 
 interface TextFieldDef {
-  key: "gstLegalName" | "gstNumber" | "fssaiLicense";
+  key: "gstLegalName" | "gstNumber" | "fssaiLicense" | "surveyUrl";
   label: string;
   placeholder?: string;
 }
 
-export const COMPLIANCE_FIELDS: TextFieldDef[] = [];
+export const COMPLIANCE_FIELDS: TextFieldDef[] = [
+  {
+    key: "surveyUrl",
+    label: "Feedback survey link (printed on invoices)",
+    placeholder: "https://forms.gle/…",
+  },
+];

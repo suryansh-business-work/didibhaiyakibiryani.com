@@ -1,4 +1,5 @@
 import PDFDocument from "pdfkit";
+import QRCode from "qrcode";
 import type { IOrder, ISettings } from "../models/index.js";
 
 const GOLD = "#b9852f";
@@ -25,21 +26,48 @@ function header(doc: PDFKit.PDFDocument, s: ISettings): void {
   doc.moveDown(1);
 }
 
+function partyBlock(doc: PDFKit.PDFDocument, order: IOrder): void {
+  const a = order.address;
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(10);
+  if (a) {
+    doc.text("Billed & delivered to:");
+    doc.font("Helvetica").fillColor(MUTED);
+    if (order.customerName) doc.text(order.customerName);
+    doc.text(`${a.line1}${a.line2 ? `, ${a.line2}` : ""}`);
+    doc.text(`${a.city}${a.pincode ? ` — ${a.pincode}` : ""}${a.phone ? ` · ${a.phone}` : ""}`);
+    return;
+  }
+  doc.text("Billed to:");
+  doc.font("Helvetica").fillColor(MUTED);
+  doc.text([order.customerName, order.customerPhone].filter(Boolean).join(" · ") || "Walk-in customer");
+}
+
 function meta(doc: PDFKit.PDFDocument, order: IOrder): void {
   const placed = new Date(order.placedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
   doc.fillColor(DARK).font("Helvetica-Bold").fontSize(14).text("TAX INVOICE");
   doc.font("Helvetica").fontSize(10).fillColor(MUTED);
   doc.text(`Invoice / Order no: ${order.orderNumber}`);
   doc.text(`Order date: ${placed}`);
+  doc.text(`Fulfilment: ${order.orderType === "TAKEAWAY" ? "Takeaway / counter" : "Delivery"}`);
   const pay = order.paymentMethod === "COD" ? "Cash on delivery" : "Paid online";
   doc.text(`Payment: ${pay} (${order.paymentStatus})`);
   doc.moveDown(0.6);
-  const a = order.address;
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(10).text("Billed & delivered to:");
-  doc.font("Helvetica").fillColor(MUTED);
-  doc.text(`${a.line1}${a.line2 ? `, ${a.line2}` : ""}`);
-  doc.text(`${a.city} — ${a.pincode}${a.phone ? ` · ${a.phone}` : ""}`);
+  partyBlock(doc, order);
   doc.moveDown(1);
+}
+
+/** Effective survey link: per-order override, else the global Settings default. */
+function effectiveSurveyUrl(order: IOrder, settings: ISettings): string {
+  return order.surveyUrl?.trim() || settings.surveyUrl?.trim() || "";
+}
+
+function surveySection(doc: PDFKit.PDFDocument, url: string, qr: Buffer): void {
+  doc.moveDown(1.2);
+  const top = doc.y;
+  doc.image(qr, 50, top, { width: 68 });
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(10).text("Share your feedback", 128, top + 8);
+  doc.fillColor(MUTED).font("Helvetica").fontSize(9).text("Scan the code or visit:", 128, doc.y);
+  doc.fillColor(GOLD).text(url, 128, doc.y, { link: url, underline: true, width: 400 });
 }
 
 function itemsTable(doc: PDFKit.PDFDocument, order: IOrder): void {
@@ -100,6 +128,11 @@ function totals(doc: PDFKit.PDFDocument, order: IOrder): void {
 
 /** Render the order invoice as a single-page A4 PDF buffer. */
 export async function generateInvoicePdf(order: IOrder, settings: ISettings): Promise<Buffer> {
+  const surveyUrl = effectiveSurveyUrl(order, settings);
+  const qr = surveyUrl
+    ? await QRCode.toBuffer(surveyUrl, { width: 140, margin: 1, color: { dark: DARK, light: "#ffffff" } })
+    : null;
+
   return new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 50 });
     const chunks: Buffer[] = [];
@@ -111,6 +144,7 @@ export async function generateInvoicePdf(order: IOrder, settings: ISettings): Pr
     meta(doc, order);
     itemsTable(doc, order);
     totals(doc, order);
+    if (qr) surveySection(doc, surveyUrl, qr);
 
     doc.end();
   });

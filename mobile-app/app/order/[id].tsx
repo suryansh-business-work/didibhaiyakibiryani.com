@@ -15,7 +15,7 @@ interface Order {
   id: string; orderNumber: string; status: string; subtotal: number; discount: number;
   deliveryFee: number; total: number; couponCode?: string; paymentMethod: string; placedAt: string;
   items: { name: string; price: number; qty: number; spiceLevel?: number }[];
-  address: { line1: string; line2?: string; city: string; pincode: string; phone?: string };
+  address?: { line1: string; line2?: string; city: string; pincode: string; phone?: string } | null;
   statusHistory: { status: string; at: string }[];
   rating?: OrderRating | null;
 }
@@ -113,10 +113,16 @@ export default function OrderTracking() {
 
         {/* Address */}
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} padding={16} gap={4}>
-          <Text fontWeight="800" color={brand.text}>Delivering to</Text>
-          <Text color={brand.dim}>{o.address.line1}{o.address.line2 ? `, ${o.address.line2}` : ""}</Text>
-          <Text color={brand.muted}>{o.address.city} — {o.address.pincode}</Text>
-          {o.address.phone ? <Text color={brand.muted}>{o.address.phone}</Text> : null}
+          <Text fontWeight="800" color={brand.text}>{o.address ? "Delivering to" : "Fulfilment"}</Text>
+          {o.address ? (
+            <>
+              <Text color={brand.dim}>{o.address.line1}{o.address.line2 ? `, ${o.address.line2}` : ""}</Text>
+              <Text color={brand.muted}>{o.address.city} — {o.address.pincode}</Text>
+              {o.address.phone ? <Text color={brand.muted}>{o.address.phone}</Text> : null}
+            </>
+          ) : (
+            <Text color={brand.muted}>Takeaway / counter order</Text>
+          )}
         </YStack>
 
         {/* Order support box */}

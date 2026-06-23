@@ -341,7 +341,10 @@
       "PowerShell(foreach \\($p in 'C:\\\\m\\\\node_modules','C:\\\\m\\\\android','C:\\\\d\\\\node_modules','C:\\\\d\\\\android'\\) { if \\(Test-Path $p\\) { Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue } }; Write-Output \\('FreeGB: ' + [math]::Round\\(\\(Get-PSDrive C\\).Free/1GB,2\\)\\))",
       "PowerShell(Write-Output \\('FreeGB: ' + [math]::Round\\(\\(Get-PSDrive C\\).Free/1GB,2\\)\\); $src='C:\\\\Users\\\\Suryansh\\\\Desktop\\\\Projects\\\\didibhaiyakibiryani.com\\\\delivery'; if \\(Test-Path 'C:\\\\d\\\\android'\\) { Remove-Item 'C:\\\\d\\\\android' -Recurse -Force -ErrorAction SilentlyContinue }; robocopy $src 'C:\\\\d' /E /NFL /NDL /NJH /NJS /R:1 /W:1 /XD \"$src\\\\android\\\\build\" \"$src\\\\android\\\\.gradle\" \"$src\\\\.expo\" \"$src\\\\dist\" \"$src\\\\.tamagui\" | Out-Null; Write-Output \\(\"robocopy exit \" + $LASTEXITCODE\\); Test-Path 'C:\\\\d\\\\android\\\\keystore.properties'; Test-Path 'C:\\\\d\\\\node_modules\\\\@react-native-vector-icons\\\\material-design-icons\\\\package.json')",
       "PowerShell(npm --prefix mobile-app run typecheck)",
-      "PowerShell(npm --prefix mobile-app test)"
+      "PowerShell(npm --prefix mobile-app test)",
+      "PowerShell(npm --prefix server run typecheck)",
+      "PowerShell(npm --prefix \"c:\\\\Users\\\\Suryansh\\\\Desktop\\\\Projects\\\\didibhaiyakibiryani.com\\\\server\" run typecheck)",
+      "PowerShell(npm --prefix \"c:\\\\Users\\\\Suryansh\\\\Desktop\\\\Projects\\\\didibhaiyakibiryani.com\\\\server\" test -- __tests__/integration/order.resolver.test.ts __tests__/unit/invoice.test.ts __tests__/unit/settings.test.ts __tests__/integration/schema.test.ts)"
     ],
     "deny": [],
     "ask": [],

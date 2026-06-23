@@ -56,6 +56,8 @@ export interface ISettings extends Document {
   // Finance — invoice / compliance
   gstLegalName: string;
   gstNumber: string;
+  /** External feedback-survey link printed on invoices (per-order can override). */
+  surveyUrl: string;
   // Finance — payment options
   codEnabled: boolean;
   onlineEnabled: boolean;
@@ -127,6 +129,7 @@ const settingsSchema = new Schema<ISettings>(
     storeLng: { type: Number, default: 0 },
     gstLegalName: { type: String, default: "" },
     gstNumber: { type: String, default: "" },
+    surveyUrl: { type: String, default: "" },
     codEnabled: { type: Boolean, default: true },
     onlineEnabled: { type: Boolean, default: true },
     supportSubjects: {

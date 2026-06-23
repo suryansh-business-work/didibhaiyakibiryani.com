@@ -29,6 +29,15 @@ export const UPDATE_ORDER_STATUS = gql`
   }
 `;
 
+export const CREATE_MANUAL_ORDER = gql`
+  mutation CreateManualOrder($input: ManualOrderInput!) {
+    createManualOrder(input: $input) {
+      id
+      orderNumber
+    }
+  }
+`;
+
 export const CREATE_CATEGORY = gql`
   mutation CreateCategory($input: CategoryInput!) {
     createCategory(input: $input) {

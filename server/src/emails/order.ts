@@ -40,7 +40,10 @@ export function orderConfirmedEmail(
   trackUrl: string
 ): EmailContent {
   const payLabel = order.paymentMethod === "COD" ? "Cash on delivery" : "Paid online";
-  const addr = `${order.address.line1}${order.address.line2 ? `, ${order.address.line2}` : ""}, ${order.address.city} — ${order.address.pincode}`;
+  const a = order.address;
+  const addr = a
+    ? `${a.line1}${a.line2 ? `, ${a.line2}` : ""}, ${a.city} — ${a.pincode}`
+    : "Takeaway / counter";
   const body = cardSection(`
     <mj-text color="#f5ece0" font-size="18px" font-weight="700">Order confirmed — ${order.orderNumber} 🍛</mj-text>
     <mj-text color="#cdbfb0">Thanks ${name}! Your biryani is headed for the dum. Here's your invoice:</mj-text>

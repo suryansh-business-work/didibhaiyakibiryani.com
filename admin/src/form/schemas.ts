@@ -102,7 +102,57 @@ export const menuItemSchema = z.object({
   isAvailable: z.boolean(),
 });
 
+export const manualOrderItemSchema = z
+  .object({
+    menuItemId: z.string().optional(),
+    name: z.string().optional(),
+    price: z.coerce.number().min(0),
+    qty: z.coerce.number().int().positive("Qty must be at least 1"),
+    spiceLevel: z.coerce.number().int().min(0).max(3),
+  })
+  .superRefine((it, ctx) => {
+    if (it.menuItemId) return;
+    if (!it.name?.trim()) ctx.addIssue({ code: "custom", path: ["name"], message: "Name required" });
+    if (!(it.price > 0)) ctx.addIssue({ code: "custom", path: ["price"], message: "Price above 0" });
+  });
+
+export const manualOrderSchema = z
+  .object({
+    orderType: z.enum(["DELIVERY", "TAKEAWAY"]),
+    customerMode: z.enum(["WALKIN", "EXISTING"]),
+    userId: z.string().optional(),
+    customerName: z.string().optional(),
+    customerPhone: z.string().optional(),
+    items: z.array(manualOrderItemSchema).min(1, "Add at least one item"),
+    line1: z.string().optional(),
+    line2: z.string().optional(),
+    city: z.string().optional(),
+    pincode: z.string().optional(),
+    phone: z.string().optional(),
+    discount: z.coerce.number().min(0),
+    deliveryFee: z.coerce.number().min(0),
+    paymentMethod: z.enum(["COD", "ONLINE"]),
+    paymentStatus: z.enum(["PENDING", "PAID", "FAILED", "REFUNDED"]),
+    status: z.enum(["PLACED", "CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"]),
+    placedAt: z.string().optional(),
+    surveyUrl: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .superRefine((d, ctx) => {
+    if (d.customerMode === "EXISTING" && !d.userId) {
+      ctx.addIssue({ code: "custom", path: ["userId"], message: "Pick a customer" });
+    }
+    if (d.customerMode === "WALKIN" && !d.customerName?.trim()) {
+      ctx.addIssue({ code: "custom", path: ["customerName"], message: "Enter a customer name" });
+    }
+    if (d.orderType !== "DELIVERY") return;
+    if (!d.line1?.trim()) ctx.addIssue({ code: "custom", path: ["line1"], message: "Street line required" });
+    if (!d.city?.trim()) ctx.addIssue({ code: "custom", path: ["city"], message: "City required" });
+  });
+
 export type CouponForm = z.infer<typeof couponSchema>;
+export type ManualOrderForm = z.infer<typeof manualOrderSchema>;
+export type ManualOrderItemForm = z.infer<typeof manualOrderItemSchema>;
 export type MenuForm = z.infer<typeof menuItemSchema>;
 export type AdminLoginForm = z.infer<typeof adminLoginSchema>;
 export type RecoverForm = z.infer<typeof recoverSchema>;

@@ -78,17 +78,22 @@ export default function OrdersTable({
                 <button className="link-btn t-strong" onClick={() => onOpen(o)}>
                   {o.orderNumber}
                 </button>
+                {o.source === "POS" ? <span className="badge badge--muted" style={{ marginLeft: 6 }}>POS</span> : null}
               </td>
               <td>
-                {o.user?.name ?? "—"}
-                <div className="muted" style={{ fontSize: "0.78rem" }}>{o.user?.phone}</div>
+                {o.user?.name ?? o.customerName ?? "—"}
+                <div className="muted" style={{ fontSize: "0.78rem" }}>{o.user?.phone ?? o.customerPhone}</div>
               </td>
               <td><StatusBadge status={o.status} /></td>
               <td className="muted">{fmtDate(o.placedAt)}</td>
               <td className="muted">{o.items.reduce((n, it) => n + it.qty, 0)} item(s)</td>
               <td className="muted">{o.deliveryPartner?.name ?? "—"}</td>
               <td>
-                <button className="btn btn-ghost btn-sm" aria-label={`Map for ${o.orderNumber}`} onClick={() => onShowMap(o)}>📍</button>
+                {o.address ? (
+                  <button className="btn btn-ghost btn-sm" aria-label={`Map for ${o.orderNumber}`} onClick={() => onShowMap(o)}>📍</button>
+                ) : (
+                  <span className="muted">—</span>
+                )}
               </td>
               <td className="t-mono" style={{ textAlign: "right" }}>{inr(o.total)}</td>
               <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>

@@ -11,6 +11,7 @@ import {
   riderEditSchema,
   couponSchema,
   menuItemSchema,
+  manualOrderSchema,
 } from "../schemas";
 
 function errs(schema: ZodTypeAny, value: unknown): Record<string, string> {
@@ -122,5 +123,75 @@ describe("menuItemSchema", () => {
     expect(errs(menuItemSchema, { ...base, name: "" }).name).toBe("Name is required");
     expect(errs(menuItemSchema, { ...base, price: 0 }).price).toBe("Enter a price above 0");
     expect(errs(menuItemSchema, { ...base, categoryId: "" }).categoryId).toBe("Pick a category");
+  });
+});
+
+describe("manualOrderSchema", () => {
+  const base = {
+    orderType: "TAKEAWAY",
+    customerMode: "WALKIN",
+    userId: "",
+    customerName: "Ravi",
+    customerPhone: "",
+    items: [{ menuItemId: "m1", name: "", price: 0, qty: 1, spiceLevel: 0 }],
+    line1: "",
+    line2: "",
+    city: "",
+    pincode: "",
+    phone: "",
+    discount: 0,
+    deliveryFee: 0,
+    paymentMethod: "COD",
+    paymentStatus: "PAID",
+    status: "DELIVERED",
+    placedAt: "",
+    surveyUrl: "",
+    notes: "",
+  };
+
+  it("accepts a takeaway walk-in with a menu line", () => {
+    expect(ok(manualOrderSchema, base)).toBe(true);
+  });
+
+  it("accepts a delivery order for an existing customer with an address and a custom line", () => {
+    expect(
+      ok(manualOrderSchema, {
+        ...base,
+        orderType: "DELIVERY",
+        customerMode: "EXISTING",
+        userId: "u1",
+        customerName: "",
+        items: [{ menuItemId: "", name: "Special Platter", price: 450, qty: 2, spiceLevel: 1 }],
+        line1: "5 Park Rd",
+        city: "Bengaluru",
+        deliveryFee: 30,
+      })
+    ).toBe(true);
+  });
+
+  it("requires at least one item", () => {
+    expect(errs(manualOrderSchema, { ...base, items: [] }).items).toBe("Add at least one item");
+  });
+
+  it("flags a missing walk-in name and a missing existing-customer id", () => {
+    expect(errs(manualOrderSchema, { ...base, customerName: "" }).customerName).toBe("Enter a customer name");
+    expect(errs(manualOrderSchema, { ...base, customerMode: "EXISTING", customerName: "", userId: "" }).userId).toBe(
+      "Pick a customer"
+    );
+  });
+
+  it("requires a street line and city for delivery orders", () => {
+    const e = errs(manualOrderSchema, { ...base, orderType: "DELIVERY" });
+    expect(e.line1).toBe("Street line required");
+    expect(e.city).toBe("City required");
+  });
+
+  it("requires a name and price on custom (off-menu) lines", () => {
+    const e = errs(manualOrderSchema, {
+      ...base,
+      items: [{ menuItemId: "", name: "", price: 0, qty: 1, spiceLevel: 0 }],
+    });
+    expect(e["items.0.name"]).toBe("Name required");
+    expect(e["items.0.price"]).toBe("Price above 0");
   });
 });

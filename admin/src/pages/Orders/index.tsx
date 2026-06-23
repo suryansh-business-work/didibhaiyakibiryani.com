@@ -4,10 +4,12 @@ import { ORDERS, RIDERS } from "../../graphql/queries";
 import { ASSIGN_RIDER, UPDATE_ORDER_STATUS, DELETE_ORDER, DELETE_ORDERS } from "../../graphql/mutations";
 import Layout from "../../components/Layout";
 import { AsyncList } from "../../components/ui";
+import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
 import OrderDetail from "./OrderDetail";
 import OrderMap from "./OrderMap";
 import OrdersTable, { type SortKey } from "./OrdersTable";
+import ManualOrderModal from "./ManualOrderModal";
 import { FILTERS, type Order, type Rider } from "./types";
 
 const PAGE_SIZE = 15;
@@ -22,6 +24,7 @@ export default function Orders() {
   const [active, setActive] = useState<Order | null>(null);
   const [mapOrder, setMapOrder] = useState<Order | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [posOpen, setPosOpen] = useState(false);
 
   const { data, loading, refetch } = useQuery<{ orders: Order[] }>(ORDERS, {
     variables: { status: filter === "ALL" ? null : filter },
@@ -185,6 +188,9 @@ export default function Orders() {
           onChange={(e) => onSearch(e.target.value)}
           style={{ minWidth: 220 }}
         />
+        <button className="btn btn-gold" onClick={() => setPosOpen(true)}>
+          <IPlus size={16} /> New order (POS)
+        </button>
       </div>
 
       {selected.size > 0 && (
@@ -236,6 +242,14 @@ export default function Orders() {
         />
       )}
       {mapOrder && <OrderMap order={mapOrder} onClose={() => setMapOrder(null)} />}
+      {posOpen && (
+        <ManualOrderModal
+          onClose={() => setPosOpen(false)}
+          onCreated={() => {
+            refetch().catch(() => undefined);
+          }}
+        />
+      )}
     </Layout>
   );
 }

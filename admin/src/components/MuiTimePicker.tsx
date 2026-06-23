@@ -1,19 +1,4 @@
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
-
-/** Dark MUI theme that matches the admin palette (custom CSS variables). */
-const theme = createTheme({
-  palette: {
-    mode: "dark",
-    primary: { main: "#e4b65c" },
-    background: { paper: "#1d150d", default: "#120c08" },
-    text: { primary: "#f5ece0", secondary: "#b9ad9e" },
-  },
-  shape: { borderRadius: 9 },
-  typography: { fontFamily: '"Mulish", system-ui, sans-serif' },
-});
 
 /** "HH:mm" (24h, how store hours are stored) → a Date for the picker. */
 function hhmmToDate(value: string): Date | null {
@@ -41,17 +26,13 @@ interface MuiTimePickerProps {
  */
 export default function MuiTimePicker({ label, value, onChange }: Readonly<MuiTimePickerProps>) {
   return (
-    <ThemeProvider theme={theme}>
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <TimePicker
-          label={label}
-          value={hhmmToDate(value)}
-          onChange={(d) => {
-            if (d instanceof Date && !Number.isNaN(d.getTime())) onChange(dateToHhmm(d));
-          }}
-          slotProps={{ textField: { size: "small", fullWidth: true } }}
-        />
-      </LocalizationProvider>
-    </ThemeProvider>
+    <TimePicker
+      label={label}
+      value={hhmmToDate(value)}
+      onChange={(d) => {
+        if (d instanceof Date && !Number.isNaN(d.getTime())) onChange(dateToHhmm(d));
+      }}
+      slotProps={{ textField: { size: "small", fullWidth: true } }}
+    />
   );
 }

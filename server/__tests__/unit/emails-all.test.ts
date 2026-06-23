@@ -82,6 +82,12 @@ describe("marketing + order emails", () => {
   it("ratingUrlFor builds a token URL", () => {
     expect(ratingUrlFor(order)).toContain("tok123");
   });
+  it("orderConfirmedEmail handles a takeaway order with no address", () => {
+    const takeaway = { ...order, address: undefined } as unknown as IOrder;
+    const c = orderConfirmedEmail(DEFAULT_BRAND, "Asha", takeaway, "https://track.test");
+    expect(c.mjml).toContain("Takeaway / counter");
+  });
+
   it("orderConfirmedEmail includes the order number", () => {
     const c = orderConfirmedEmail(DEFAULT_BRAND, "Asha", order, "https://track.test");
     assertEmail(c);

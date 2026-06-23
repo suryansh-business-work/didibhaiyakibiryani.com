@@ -1,6 +1,19 @@
 import type { ReactNode } from "react";
+import { useLazyQuery } from "@apollo/client";
+import { INVOICE_PDF } from "../../graphql/queries";
 import { Modal, StatusBadge, inr, fmtDate } from "../../components/ui";
 import { LABEL, NEXT, type Order, type Rider } from "./types";
+
+/** Decode a base64 PDF payload and trigger a browser download. */
+function downloadBase64Pdf(b64: string, filename: string): void {
+  const bytes = Uint8Array.from(atob(b64), (c) => c.codePointAt(0) ?? 0);
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 interface OrderDetailProps {
   order: Order;
@@ -23,33 +36,54 @@ export default function OrderDetail({
 }: Readonly<OrderDetailProps>) {
   const active = order;
   const canAssign = !["DELIVERED", "CANCELLED"].includes(active.status);
+  const [fetchInvoice, { loading: invoiceLoading, error: invoiceError }] = useLazyQuery<{ invoicePdf: string }>(
+    INVOICE_PDF,
+    { fetchPolicy: "network-only" }
+  );
+
+  async function onDownloadInvoice() {
+    const { data } = await fetchInvoice({ variables: { orderId: active.id } });
+    if (data?.invoicePdf) downloadBase64Pdf(data.invoicePdf, `invoice-${active.orderNumber}.pdf`);
+  }
+
+  const customerName = active.user?.name ?? active.customerName ?? "Walk-in customer";
+  const customerMeta = [active.user?.phone ?? active.customerPhone, active.user?.email].filter(Boolean).join(" · ");
 
   return (
     <Modal title={`Order ${active.orderNumber}`} onClose={onClose}>
       <div className="row-between" style={{ marginBottom: 14 }}>
-        <StatusBadge status={active.status} />
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <StatusBadge status={active.status} />
+          {active.source === "POS" ? <span className="badge badge--muted">POS</span> : null}
+          {active.orderType === "TAKEAWAY" ? <span className="badge badge--muted">Takeaway</span> : null}
+        </div>
         <span className="muted">{fmtDate(active.placedAt)}</span>
       </div>
 
       <Section label="Customer">
-        <div>{active.user?.name}</div>
-        <div className="muted">
-          {active.user?.phone} · {active.user?.email}
-        </div>
+        <div>{customerName}</div>
+        {customerMeta ? <div className="muted">{customerMeta}</div> : null}
       </Section>
 
-      <Section label="Deliver to">
-        <div>
-          {active.address.line1}
-          {active.address.line2 ? `, ${active.address.line2}` : ""}
-        </div>
-        <div className="muted">
-          {active.address.city} — {active.address.pincode}
-        </div>
-        <button className="btn btn-ghost btn-sm" style={{ marginTop: 8 }} onClick={() => onShowMap(active)}>
-          📍 View on Google Map
-        </button>
-      </Section>
+      {active.address ? (
+        <Section label="Deliver to">
+          <div>
+            {active.address.line1}
+            {active.address.line2 ? `, ${active.address.line2}` : ""}
+          </div>
+          <div className="muted">
+            {active.address.city}
+            {active.address.pincode ? ` — ${active.address.pincode}` : ""}
+          </div>
+          <button className="btn btn-ghost btn-sm" style={{ marginTop: 8 }} onClick={() => onShowMap(active)}>
+            📍 View on Google Map
+          </button>
+        </Section>
+      ) : (
+        <Section label="Fulfilment">
+          <div className="muted">Takeaway / counter sale — no delivery address.</div>
+        </Section>
+      )}
 
       <Section label="Items">
         <table>
@@ -74,6 +108,13 @@ export default function OrderDetail({
         )}
         <Row k="Delivery" v={active.deliveryFee === 0 ? "Free" : inr(active.deliveryFee)} />
         <Row k="Total" v={inr(active.total)} strong />
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        <button className="btn btn-ghost btn-sm" onClick={onDownloadInvoice} disabled={invoiceLoading}>
+          {invoiceLoading ? "Preparing…" : "⬇ Download invoice (PDF)"}
+        </button>
+        {invoiceError ? <div className="field-error">Could not generate the invoice. Try again.</div> : null}
       </div>
 
       {active.rating && (

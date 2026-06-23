@@ -55,11 +55,16 @@ export const ORDERS = gql`
       discount
       deliveryFee
       status
+      orderType
+      source
       paymentMethod
       paymentStatus
       couponCode
       placedAt
       notes
+      surveyUrl
+      customerName
+      customerPhone
       user {
         name
         phone
@@ -217,6 +222,12 @@ export const COUPONS = gql`
   }
 `;
 
+export const INVOICE_PDF = gql`
+  query InvoicePdf($orderId: ID!) {
+    invoicePdf(orderId: $orderId)
+  }
+`;
+
 export const CUSTOMERS = gql`
   query Customers($search: String) {
     customers(search: $search) {
@@ -274,6 +285,7 @@ export const SETTINGS_CORE_FIELDS = `
   storeLng
   gstLegalName
   gstNumber
+  surveyUrl
   codEnabled
   onlineEnabled
   supportSubjects

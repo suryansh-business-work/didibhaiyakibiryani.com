@@ -35,6 +35,16 @@ export const typeDefs = /* GraphQL */ `
     ONLINE
   }
 
+  enum OrderType {
+    DELIVERY
+    TAKEAWAY
+  }
+
+  enum OrderSource {
+    APP
+    POS
+  }
+
   enum PaymentStatus {
     PENDING
     PAID
@@ -205,6 +215,8 @@ export const typeDefs = /* GraphQL */ `
     id: ID!
     orderNumber: String!
     user: User
+    customerName: String
+    customerPhone: String
     items: [OrderItem!]!
     subtotal: Float!
     discount: Float!
@@ -212,12 +224,15 @@ export const typeDefs = /* GraphQL */ `
     total: Float!
     couponCode: String
     status: OrderStatus!
+    orderType: OrderType!
+    source: OrderSource!
     paymentMethod: PaymentMethod!
     paymentStatus: PaymentStatus!
-    address: OrderAddress!
+    address: OrderAddress
     deliveryPartner: User
     statusHistory: [StatusEvent!]!
     rating: OrderRating
+    surveyUrl: String
     notes: String
     placedAt: DateTime!
   }
@@ -356,6 +371,35 @@ export const typeDefs = /* GraphQL */ `
     notes: String
   }
 
+  # POS line item: either a catalogue item (menuItemId, price from DB) or a
+  # custom off-menu line (name + price supplied by staff).
+  input ManualOrderItemInput {
+    menuItemId: ID
+    name: String
+    price: Float
+    qty: Int!
+    spiceLevel: Int
+  }
+
+  # Staff-entered (POS) order. Bypasses store-hours/payment-enabled checks and
+  # supports walk-ins, takeaway, manual pricing and back-dating.
+  input ManualOrderInput {
+    userId: ID
+    customerName: String
+    customerPhone: String
+    orderType: OrderType!
+    items: [ManualOrderItemInput!]!
+    address: AddressInput
+    discount: Float
+    deliveryFee: Float
+    paymentMethod: PaymentMethod
+    paymentStatus: PaymentStatus
+    status: OrderStatus
+    placedAt: DateTime
+    surveyUrl: String
+    notes: String
+  }
+
   # ─────────────── Queries ───────────────
   type MaintenanceFlags {
     website: Boolean!
@@ -410,6 +454,7 @@ export const typeDefs = /* GraphQL */ `
     storeLng: Float!
     gstLegalName: String!
     gstNumber: String!
+    surveyUrl: String!
     codEnabled: Boolean!
     onlineEnabled: Boolean!
     supportSubjects: [String!]!
@@ -452,6 +497,7 @@ export const typeDefs = /* GraphQL */ `
     storeLng: Float
     gstLegalName: String
     gstNumber: String
+    surveyUrl: String
     codEnabled: Boolean
     onlineEnabled: Boolean
     supportSubjects: [String!]
@@ -629,6 +675,7 @@ export const typeDefs = /* GraphQL */ `
     myOrders: [Order!]!
     order(id: ID!): Order
     orders(status: OrderStatus): [Order!]! # admin/staff
+    invoicePdf(orderId: ID!): String! # admin/staff — base64-encoded themed PDF
 
     riders: [User!]! # admin/staff
     deliveryQueue: [Order!]! # DELIVERY: my active assigned orders
@@ -688,6 +735,7 @@ export const typeDefs = /* GraphQL */ `
 
     # Orders
     placeOrder(input: PlaceOrderInput!): Order!
+    createManualOrder(input: ManualOrderInput!): Order! # admin/staff — POS
     cancelOrder(id: ID!): Order!
     updateOrderStatus(id: ID!, status: OrderStatus!, note: String): Order! # admin/staff
     rateOrder(orderId: ID!, food: Int!, delivery: Int!, comment: String): Order!

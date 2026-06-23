@@ -119,3 +119,152 @@ describe("order resolver — queries / lifecycle", () => {
     expect(await orderResolvers.Order.deliveryPartner({ deliveryPartner: undefined })).toBeNull();
   });
 });
+
+describe("order resolver — createManualOrder (POS)", () => {
+  const admin = ctxFor("admin", "ADMIN");
+
+  it("creates a walk-in takeaway order (no account, no address)", async () => {
+    const item = await makeItem();
+    const order = await M.createManualOrder(
+      null,
+      {
+        input: {
+          orderType: "TAKEAWAY",
+          customerName: "Ravi Kumar",
+          customerPhone: "9812345670",
+          items: [{ menuItemId: item.id, qty: 2 }],
+          surveyUrl: "  https://forms.gle/abc  ",
+          notes: "  extra raita  ",
+        },
+      },
+      admin
+    );
+    expect(order.source).toBe("POS");
+    expect(order.orderType).toBe("TAKEAWAY");
+    expect(order.user).toBeUndefined();
+    expect(order.address).toBeUndefined();
+    expect(order.customerName).toBe("Ravi Kumar");
+    expect(order.deliveryFee).toBe(0);
+    expect(order.subtotal).toBe(398);
+    expect(order.total).toBe(398);
+    expect(order.status).toBe("PLACED");
+    expect(order.paymentStatus).toBe("PENDING");
+    expect(order.surveyUrl).toBe("https://forms.gle/abc");
+    expect(order.notes).toBe("extra raita");
+  });
+
+  it("creates a back-dated delivered order for an existing customer (marks PAID, snapshots name)", async () => {
+    const user = await makeUser("CUSTOMER", { name: "Asha", phone: "9000000001" });
+    const item = await makeItem();
+    const placed = new Date("2026-05-01T10:00:00Z");
+    const order = await M.createManualOrder(
+      null,
+      {
+        input: {
+          orderType: "DELIVERY",
+          userId: user.id,
+          items: [{ menuItemId: item.id, qty: 1, spiceLevel: 3 }],
+          address: { line1: "5 Park Rd", city: "Bengaluru", pincode: "560002" },
+          deliveryFee: 40,
+          discount: 25,
+          status: "DELIVERED",
+          placedAt: placed.toISOString(),
+        },
+      },
+      ctxFor("staff", "STAFF")
+    );
+    expect(order.user?.toString()).toBe(user.id);
+    expect(order.customerName).toBe("Asha");
+    expect(order.customerPhone).toBe("9000000001");
+    expect(order.paymentStatus).toBe("PAID");
+    expect(order.deliveryFee).toBe(40);
+    expect(order.discount).toBe(25);
+    expect(order.total).toBe(199 - 25 + 40);
+    expect(order.placedAt.getTime()).toBe(placed.getTime());
+    expect(order.statusHistory[0]?.status).toBe("DELIVERED");
+    expect(order.items[0]?.spiceLevel).toBe(3);
+  });
+
+  it("supports custom off-menu line items and clamps discount to subtotal", async () => {
+    const order = await M.createManualOrder(
+      null,
+      {
+        input: {
+          orderType: "TAKEAWAY",
+          customerName: "Walk-in",
+          items: [
+            { name: "Special Platter", price: 450, qty: 1, spiceLevel: 2 },
+            { name: "Raita", price: 40, qty: 1 },
+          ],
+          discount: 999,
+          paymentStatus: "PAID",
+        },
+      },
+      admin
+    );
+    expect(order.items[0]?.name).toBe("Special Platter");
+    expect(order.items[0]?.price).toBe(450);
+    expect(order.items[0]?.spiceLevel).toBe(2);
+    expect(order.items[1]?.spiceLevel).toBe(0);
+    expect(order.subtotal).toBe(490);
+    expect(order.discount).toBe(490);
+    expect(order.total).toBe(0);
+    expect(order.paymentStatus).toBe("PAID");
+  });
+
+  it("clamps negative / non-finite money to zero", async () => {
+    const item = await makeItem();
+    const order = await M.createManualOrder(
+      null,
+      {
+        input: {
+          orderType: "DELIVERY",
+          customerName: "X",
+          items: [{ menuItemId: item.id, qty: 1 }],
+          address: { line1: "1", city: "B", pincode: "1" },
+          deliveryFee: Number.POSITIVE_INFINITY,
+          discount: -5,
+        },
+      },
+      admin
+    );
+    expect(order.deliveryFee).toBe(0);
+    expect(order.discount).toBe(0);
+  });
+
+  it("rejects invalid inputs", async () => {
+    const item = await makeItem();
+    const I = (over: Record<string, unknown>) => ({
+      input: { orderType: "TAKEAWAY", customerName: "X", items: [{ menuItemId: item.id, qty: 1 }], ...over },
+    });
+    await expect(M.createManualOrder(null, I({ items: [] }), admin)).rejects.toThrow(/at least one item/i);
+    await expect(M.createManualOrder(null, I({ orderType: "DELIVERY" }), admin)).rejects.toThrow(/need an address/i);
+    await expect(M.createManualOrder(null, I({ customerName: undefined }), admin)).rejects.toThrow(/customer name/i);
+    await expect(M.createManualOrder(null, I({ items: [{ menuItemId: item.id, qty: 0 }] }), admin)).rejects.toThrow(/quantity/i);
+    await expect(M.createManualOrder(null, I({ items: [{ menuItemId: item.id, qty: 1.5 }] }), admin)).rejects.toThrow(/quantity/i);
+    await expect(
+      M.createManualOrder(null, I({ items: [{ menuItemId: new Types.ObjectId().toString(), qty: 1 }] }), admin)
+    ).rejects.toThrow(/no longer exists/i);
+    await expect(M.createManualOrder(null, I({ items: [{ price: 100, qty: 1 }] }), admin)).rejects.toThrow(/need a name/i);
+    await expect(M.createManualOrder(null, I({ items: [{ name: "Y", qty: 1 }] }), admin)).rejects.toThrow(/valid price/i);
+    await expect(M.createManualOrder(null, I({ items: [{ name: "Z", price: -5, qty: 1 }] }), admin)).rejects.toThrow(/valid price/i);
+    await expect(
+      M.createManualOrder(null, I({ userId: new Types.ObjectId().toString(), customerName: undefined }), admin)
+    ).rejects.toThrow(/customer not found/i);
+    await expect(M.createManualOrder(null, I({ placedAt: "not-a-date" }), admin)).rejects.toThrow(/invalid order date/i);
+    await expect(M.createManualOrder(null, I({}), ctxFor("cust", "CUSTOMER"))).rejects.toThrow();
+  });
+
+  it("invoicePdf returns a base64 PDF (admin/staff only)", async () => {
+    const user = await makeUser();
+    const order = await makeOrder(user.id, { surveyUrl: "https://forms.gle/xyz" });
+    const b64 = await Q.invoicePdf(null, { orderId: order.id }, admin);
+    expect(Buffer.from(b64, "base64").subarray(0, 5).toString("utf8")).toBe("%PDF-");
+    await expect(Q.invoicePdf(null, { orderId: new Types.ObjectId().toString() }, admin)).rejects.toThrow(/not found/i);
+    await expect(Q.invoicePdf(null, { orderId: order.id }, ctxFor("cust", "CUSTOMER"))).rejects.toThrow();
+  });
+
+  it("Order.user resolver returns null for walk-in orders", async () => {
+    expect(await orderResolvers.Order.user({ user: undefined })).toBeNull();
+  });
+});

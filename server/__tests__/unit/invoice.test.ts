@@ -50,4 +50,46 @@ describe("generateInvoicePdf", () => {
     const pdf = await generateInvoicePdf(noDiscount, minimal);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
   });
+
+  it("renders a takeaway walk-in order (no address) with a per-order survey QR", async () => {
+    const takeaway = {
+      ...order,
+      orderType: "TAKEAWAY",
+      address: undefined,
+      customerName: "Ravi",
+      customerPhone: "9812345670",
+      surveyUrl: "https://forms.gle/abc",
+    } as unknown as IOrder;
+    const pdf = await generateInvoicePdf(takeaway, settings);
+    expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
+  });
+
+  it("falls back to the global survey url and a walk-in label when no name", async () => {
+    const s2 = { ...settings, surveyUrl: "https://forms.gle/global" } as ISettings;
+    const walkin = {
+      ...order,
+      orderType: "TAKEAWAY",
+      address: undefined,
+      customerName: undefined,
+      customerPhone: undefined,
+    } as unknown as IOrder;
+    const pdf = await generateInvoicePdf(walkin, s2);
+    expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
+  });
+
+  it("renders a POS delivery order showing the customer name", async () => {
+    const posDelivery = { ...order, customerName: "Asha", surveyUrl: "https://forms.gle/x" } as IOrder;
+    const pdf = await generateInvoicePdf(posDelivery, settings);
+    expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
+  });
+
+  it("renders a delivery order with a bare address (no line2 / pincode / phone)", async () => {
+    const bare = {
+      ...order,
+      customerName: undefined,
+      address: { line1: "Plot 9", city: "Bengaluru" },
+    } as unknown as IOrder;
+    const pdf = await generateInvoicePdf(bare, settings);
+    expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
+  });
 });

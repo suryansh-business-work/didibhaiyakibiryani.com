@@ -21,7 +21,10 @@ export type {
   IOrder,
   IOrderItem,
   IOrderRating,
+  IOrderAddress,
   OrderStatus,
+  OrderType,
+  OrderSource,
   PaymentMethod,
   PaymentStatus,
 } from "./Order.js";

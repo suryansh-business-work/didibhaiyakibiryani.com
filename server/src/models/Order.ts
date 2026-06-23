@@ -11,6 +11,10 @@ export type OrderStatus =
 
 export type PaymentMethod = "COD" | "ONLINE";
 export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+/** How the order is fulfilled. Counter sales have no delivery leg. */
+export type OrderType = "DELIVERY" | "TAKEAWAY";
+/** Where the order originated: the customer app/site, or a staff POS entry. */
+export type OrderSource = "APP" | "POS";
 
 export interface IOrderItem {
   menuItem?: Types.ObjectId;
@@ -47,7 +51,11 @@ export interface IOrderRating {
 
 export interface IOrder extends Document {
   orderNumber: string;
-  user: Types.ObjectId;
+  /** Optional: walk-in POS sales may have no registered customer. */
+  user?: Types.ObjectId;
+  /** Snapshot of the buyer for POS/walk-in orders without an account. */
+  customerName?: string;
+  customerPhone?: string;
   items: IOrderItem[];
   subtotal: number;
   discount: number;
@@ -55,14 +63,19 @@ export interface IOrder extends Document {
   total: number;
   couponCode?: string;
   status: OrderStatus;
+  orderType: OrderType;
+  source: OrderSource;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
-  address: IOrderAddress;
+  /** Optional: takeaway / counter sales have no delivery address. */
+  address?: IOrderAddress;
   deliveryPartner?: Types.ObjectId;
   statusHistory: IStatusEvent[];
   rating?: IOrderRating;
   /** Secret used by the public (no-login) rating survey link. */
   ratingToken: string;
+  /** External feedback-survey link printed on this order's invoice. */
+  surveyUrl?: string;
   notes?: string;
   placedAt: Date;
   createdAt: Date;
@@ -116,7 +129,9 @@ const orderRatingSchema = new Schema<IOrderRating>(
 const orderSchema = new Schema<IOrder>(
   {
     orderNumber: { type: String, required: true, unique: true, index: true },
-    user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    user: { type: Schema.Types.ObjectId, ref: "User", index: true },
+    customerName: { type: String },
+    customerPhone: { type: String },
     items: { type: [orderItemSchema], required: true },
     subtotal: { type: Number, required: true },
     discount: { type: Number, default: 0 },
@@ -129,13 +144,16 @@ const orderSchema = new Schema<IOrder>(
       default: "PLACED",
       index: true,
     },
+    orderType: { type: String, enum: ["DELIVERY", "TAKEAWAY"], default: "DELIVERY" },
+    source: { type: String, enum: ["APP", "POS"], default: "APP", index: true },
     paymentMethod: { type: String, enum: ["COD", "ONLINE"], default: "COD" },
     paymentStatus: {
       type: String,
       enum: ["PENDING", "PAID", "FAILED", "REFUNDED"],
       default: "PENDING",
     },
-    address: { type: orderAddressSchema, required: true },
+    address: { type: orderAddressSchema },
+    surveyUrl: { type: String },
     deliveryPartner: { type: Schema.Types.ObjectId, ref: "User", index: true },
     statusHistory: { type: [statusEventSchema], default: [] },
     rating: { type: orderRatingSchema, default: undefined },
