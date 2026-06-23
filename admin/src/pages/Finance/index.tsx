@@ -48,14 +48,14 @@ export default function Finance() {
 
   if (loading && !data) {
     return (
-      <Layout title="Finance">
+      <Layout title="Finance Settings">
         <Spinner />
       </Layout>
     );
   }
 
   return (
-    <Layout title="Finance">
+    <Layout title="Finance Settings">
       <div className="card" style={{ padding: 18, marginBottom: 16 }}>
         <h3 style={{ marginBottom: 12 }}>Delivery cost</h3>
         <div className="field-row">

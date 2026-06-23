@@ -151,3 +151,16 @@ export const IMessage = ({ size }: P) => (
     <path d="M8 9.5h8M8 13h5" />
   </svg>
 );
+export const IWallet = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v0H5a2 2 0 0 0-2 2v0" />
+    <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+    <circle cx="16.5" cy="13" r="1.3" />
+  </svg>
+);
+export const IReceipt = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M5 3v18l2-1.3 2 1.3 2-1.3 2 1.3 2-1.3 2 1.3V3l-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3Z" />
+    <path d="M9 8h6M9 12h6" />
+  </svg>
+);

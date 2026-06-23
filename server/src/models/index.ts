@@ -13,6 +13,8 @@ export { Banner } from "./Banner.js";
 export { Society } from "./Society.js";
 export { PartyOrder } from "./PartyOrder.js";
 export { Lead } from "./Lead.js";
+export { ExpenseSource } from "./ExpenseSource.js";
+export { Expense } from "./Expense.js";
 
 export type { IUser, IAddress, Role } from "./User.js";
 export type { ICategory } from "./Category.js";
@@ -39,3 +41,5 @@ export type { IBanner } from "./Banner.js";
 export type { ISociety } from "./Society.js";
 export type { IPartyOrder, PartyOrderStatus } from "./PartyOrder.js";
 export type { ILead } from "./Lead.js";
+export type { IExpenseSource, ExpenseSourceType } from "./ExpenseSource.js";
+export type { IExpense } from "./Expense.js";

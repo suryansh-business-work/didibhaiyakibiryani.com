@@ -138,6 +138,34 @@ export const typeDefs = /* GraphQL */ `
     createdAt: DateTime!
   }
 
+  enum ExpenseSourceType {
+    PERSON
+    ACCOUNT
+  }
+
+  type ExpenseSource {
+    id: ID!
+    type: ExpenseSourceType!
+    name: String!
+    phone: String
+    email: String
+    bankName: String
+    accountNumber: String
+    ifsc: String
+    note: String
+    isActive: Boolean!
+    createdAt: DateTime!
+  }
+
+  type Expense {
+    id: ID!
+    source: ExpenseSource
+    title: String!
+    amount: Float!
+    note: String
+    createdAt: DateTime!
+  }
+
   enum PartyOrderStatus {
     NEW
     CONTACTED
@@ -374,6 +402,25 @@ export const typeDefs = /* GraphQL */ `
     pincode: String
     sortOrder: Int
     isActive: Boolean
+  }
+
+  input ExpenseSourceInput {
+    type: ExpenseSourceType!
+    name: String!
+    phone: String
+    email: String
+    bankName: String
+    accountNumber: String
+    ifsc: String
+    note: String
+    isActive: Boolean
+  }
+
+  input ExpenseInput {
+    sourceId: ID!
+    title: String!
+    amount: Float!
+    note: String
   }
 
   input PartyOrderInput {
@@ -717,6 +764,9 @@ export const typeDefs = /* GraphQL */ `
     societies(activeOnly: Boolean): [Society!]!
     partyOrders(status: PartyOrderStatus): [PartyOrder!]! # admin/staff
 
+    expenseSources(activeOnly: Boolean): [ExpenseSource!]! # admin
+    expenses: [Expense!]! # admin
+
     categories(activeOnly: Boolean): [Category!]!
     menuItems(categoryId: ID, search: String, availableOnly: Boolean): [MenuItem!]!
     menuItem(id: ID, slug: String): MenuItem
@@ -786,6 +836,14 @@ export const typeDefs = /* GraphQL */ `
     createSociety(input: SocietyInput!): Society!
     updateSociety(id: ID!, input: SocietyInput!): Society!
     deleteSociety(id: ID!): Boolean!
+
+    # Finance — expense sources & expenses (admin)
+    createExpenseSource(input: ExpenseSourceInput!): ExpenseSource!
+    updateExpenseSource(id: ID!, input: ExpenseSourceInput!): ExpenseSource!
+    deleteExpenseSource(id: ID!): Boolean!
+    createExpense(input: ExpenseInput!): Expense!
+    updateExpense(id: ID!, input: ExpenseInput!): Expense!
+    deleteExpense(id: ID!): Boolean!
 
     # Party order enquiries
     submitPartyOrder(input: PartyOrderInput!, captchaId: String!, captchaAnswer: String!): Boolean! # public, captcha-gated

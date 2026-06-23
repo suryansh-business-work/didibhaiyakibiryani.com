@@ -19,6 +19,8 @@ import {
   IClock,
   IPalette,
   IPlug,
+  IWallet,
+  IReceipt,
 } from "./icons";
 
 export interface NavItem {
@@ -40,10 +42,17 @@ export const NAV_GROUPS: ReadonlyArray<NavGroup> = [
     label: "Sales",
     items: [
       { to: "/orders", label: "Orders", icon: IOrders },
-      { to: "/payments", label: "Payments", icon: IRupee },
-      { to: "/finance", label: "Finance", icon: IBank },
       { to: "/party-orders", label: "Party Orders", icon: IParty },
       { to: "/coupons", label: "Coupons", icon: ITag },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { to: "/finance", label: "Finance Settings", icon: IBank },
+      { to: "/payments", label: "Payments", icon: IRupee },
+      { to: "/expense-sources", label: "Expense Sources", icon: IWallet },
+      { to: "/expenses", label: "Manage Expenses", icon: IReceipt },
     ],
   },
   {

@@ -39,6 +39,38 @@ export const societySchema = z.object({
   isActive: z.boolean(),
 });
 
+export const expenseSourceSchema = z
+  .object({
+    type: z.enum(["PERSON", "ACCOUNT"]),
+    name: z.string().trim().min(1, "Name is required"),
+    phone: z.string().optional(),
+    email: z.string().trim().optional().refine((v) => !v || EMAIL_RE.test(v), "Enter a valid email"),
+    bankName: z.string().optional(),
+    accountNumber: z.string().optional(),
+    ifsc: z.string().optional(),
+    note: z.string().optional(),
+    isActive: z.boolean(),
+  })
+  .superRefine((d, ctx) => {
+    if (d.type === "PERSON" && !d.phone?.trim()) {
+      ctx.addIssue({ code: "custom", path: ["phone"], message: "Phone is required" });
+    }
+    if (d.type !== "ACCOUNT") return;
+    if (!d.bankName?.trim()) {
+      ctx.addIssue({ code: "custom", path: ["bankName"], message: "Bank name is required" });
+    }
+    if (!d.accountNumber?.trim()) {
+      ctx.addIssue({ code: "custom", path: ["accountNumber"], message: "Account number is required" });
+    }
+  });
+
+export const expenseSchema = z.object({
+  sourceId: z.string().min(1, "Select an expense source"),
+  title: z.string().trim().min(1, "Title is required"),
+  amount: z.coerce.number().positive("Enter an amount above 0"),
+  note: z.string().optional(),
+});
+
 export const sliderSchema = z.object({
   imageUrl: z.string().min(1, "Upload an image for the slide"),
   title: z.string().optional(),
@@ -193,6 +225,8 @@ export type AdminLoginForm = z.infer<typeof adminLoginSchema>;
 export type RecoverForm = z.infer<typeof recoverSchema>;
 export type CategoryForm = z.infer<typeof categorySchema>;
 export type SocietyForm = z.infer<typeof societySchema>;
+export type ExpenseSourceForm = z.infer<typeof expenseSourceSchema>;
+export type ExpenseForm = z.infer<typeof expenseSchema>;
 export type SliderForm = z.infer<typeof sliderSchema>;
 export type CustomerForm = z.infer<typeof customerSchema>;
 export type ProfileForm = z.infer<typeof profileSchema>;

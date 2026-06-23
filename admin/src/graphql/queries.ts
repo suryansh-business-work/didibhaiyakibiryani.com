@@ -176,6 +176,40 @@ export const SOCIETIES = gql`
   }
 `;
 
+export const EXPENSE_SOURCES = gql`
+  query ExpenseSources {
+    expenseSources {
+      id
+      type
+      name
+      phone
+      email
+      bankName
+      accountNumber
+      ifsc
+      note
+      isActive
+    }
+  }
+`;
+
+export const EXPENSES = gql`
+  query Expenses {
+    expenses {
+      id
+      title
+      amount
+      note
+      createdAt
+      source {
+        id
+        type
+        name
+      }
+    }
+  }
+`;
+
 export const LEADS = gql`
   query Leads($search: String) {
     leads(search: $search) {

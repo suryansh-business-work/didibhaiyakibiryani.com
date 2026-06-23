@@ -12,6 +12,8 @@ import {
   couponSchema,
   menuItemSchema,
   manualOrderSchema,
+  expenseSourceSchema,
+  expenseSchema,
 } from "../schemas";
 
 function errs(schema: ZodTypeAny, value: unknown): Record<string, string> {
@@ -123,6 +125,39 @@ describe("menuItemSchema", () => {
     expect(errs(menuItemSchema, { ...base, name: "" }).name).toBe("Name is required");
     expect(errs(menuItemSchema, { ...base, price: 0 }).price).toBe("Enter a price above 0");
     expect(errs(menuItemSchema, { ...base, categoryId: "" }).categoryId).toBe("Pick a category");
+  });
+});
+
+describe("expenseSourceSchema", () => {
+  const person = { type: "PERSON", name: "Ramesh", phone: "9990001111", email: "", bankName: "", accountNumber: "", ifsc: "", note: "", isActive: true };
+  const account = { type: "ACCOUNT", name: "Cash A/c", phone: "", email: "", bankName: "HDFC", accountNumber: "1234567890", ifsc: "", note: "", isActive: true };
+
+  it("accepts a person with a phone and an account with bank + number", () => {
+    expect(ok(expenseSourceSchema, person)).toBe(true);
+    expect(ok(expenseSourceSchema, account)).toBe(true);
+  });
+  it("requires a phone for a person and bank + number for an account", () => {
+    expect(errs(expenseSourceSchema, { ...person, phone: "" }).phone).toBe("Phone is required");
+    const e = errs(expenseSourceSchema, { ...account, bankName: "", accountNumber: "" });
+    expect(e.bankName).toBe("Bank name is required");
+    expect(e.accountNumber).toBe("Account number is required");
+  });
+  it("flags an invalid email and a missing name", () => {
+    expect(errs(expenseSourceSchema, { ...person, email: "nope" }).email).toBe("Enter a valid email");
+    expect(errs(expenseSourceSchema, { ...person, name: "" }).name).toBe("Name is required");
+  });
+});
+
+describe("expenseSchema", () => {
+  it("requires a source, title and a positive (coerced) amount", () => {
+    const r = expenseSchema.safeParse({ sourceId: "s1", title: "Vegetables", amount: "250", note: "" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.amount).toBe(250);
+    expect(errs(expenseSchema, { sourceId: "", title: "", amount: 0 })).toEqual({
+      sourceId: "Select an expense source",
+      title: "Title is required",
+      amount: "Enter an amount above 0",
+    });
   });
 });
 

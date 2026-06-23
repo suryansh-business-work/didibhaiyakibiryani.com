@@ -113,6 +113,46 @@ export const DELETE_SOCIETY = gql`
   }
 `;
 
+export const CREATE_EXPENSE_SOURCE = gql`
+  mutation CreateExpenseSource($input: ExpenseSourceInput!) {
+    createExpenseSource(input: $input) {
+      id
+    }
+  }
+`;
+export const UPDATE_EXPENSE_SOURCE = gql`
+  mutation UpdateExpenseSource($id: ID!, $input: ExpenseSourceInput!) {
+    updateExpenseSource(id: $id, input: $input) {
+      id
+    }
+  }
+`;
+export const DELETE_EXPENSE_SOURCE = gql`
+  mutation DeleteExpenseSource($id: ID!) {
+    deleteExpenseSource(id: $id)
+  }
+`;
+
+export const CREATE_EXPENSE = gql`
+  mutation CreateExpense($input: ExpenseInput!) {
+    createExpense(input: $input) {
+      id
+    }
+  }
+`;
+export const UPDATE_EXPENSE = gql`
+  mutation UpdateExpense($id: ID!, $input: ExpenseInput!) {
+    updateExpense(id: $id, input: $input) {
+      id
+    }
+  }
+`;
+export const DELETE_EXPENSE = gql`
+  mutation DeleteExpense($id: ID!) {
+    deleteExpense(id: $id)
+  }
+`;
+
 export const DELETE_ORDER = gql`
   mutation DeleteOrder($id: ID!) {
     deleteOrder(id: $id)

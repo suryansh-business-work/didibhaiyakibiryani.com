@@ -17,6 +17,7 @@ import { bannerResolvers } from "./banner.js";
 import { societyResolvers } from "./society.js";
 import { partyResolvers } from "./party.js";
 import { leadResolvers } from "./lead.js";
+import { expenseResolvers } from "./expense.js";
 
 export const resolvers = {
   DateTime,
@@ -38,6 +39,7 @@ export const resolvers = {
     ...societyResolvers.Query,
     ...partyResolvers.Query,
     ...leadResolvers.Query,
+    ...expenseResolvers.Query,
   },
 
   Mutation: {
@@ -59,6 +61,7 @@ export const resolvers = {
     ...societyResolvers.Mutation,
     ...partyResolvers.Mutation,
     ...leadResolvers.Mutation,
+    ...expenseResolvers.Mutation,
   },
 
   // Field resolvers
