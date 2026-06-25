@@ -245,25 +245,52 @@ describe("dashboard / delivery / payment / passwordReset / integrations", () => 
     expect(stats.periodComplimentary).toBe(0);
   });
 
-  it("complimentaryItems lists the free lines given (range + all-time)", async () => {
+  it("profitItems breaks down per-dish profit and excludes complimentary lines", async () => {
     const cust = await makeUser();
-    const at = new Date("2026-04-10T10:00:00.000Z");
     await makeOrder(cust.id, {
       status: "DELIVERED",
-      placedAt: at,
       items: [
-        { name: "Biryani", price: 200, qty: 1 },
-        { name: "Lassi", price: 60, qty: 2, complimentary: true },
+        { name: "Biryani", price: 200, qty: 2, makingCost: 50 },
+        { name: "Roti", price: 30, qty: 3 },
+        { name: "Lassi", price: 60, qty: 1, complimentary: true },
       ],
     });
-    const from = new Date("2026-04-01T00:00:00.000Z");
-    const to = new Date("2026-04-30T23:59:59.999Z");
-    const ranged = await dashboardResolvers.Query.complimentaryItems(null, { from, to }, admin);
-    expect(ranged).toHaveLength(1);
-    expect(ranged[0]).toMatchObject({ name: "Lassi", qty: 2, value: 120, orderNumber: expect.any(String) });
-    // No-args path (default {} + no date bounds) returns it too.
-    const allTime = await dashboardResolvers.Query.complimentaryItems(null, undefined, admin);
-    expect(allTime).toHaveLength(1);
+    const rows = await dashboardResolvers.Query.profitItems(null, undefined, admin);
+    const find = (n: string) => rows.find((r: { name: string }) => r.name === n);
+    expect(find("Biryani")).toMatchObject({ price: 200, makingCost: 50, qty: 2, profit: 300 });
+    expect(find("Roti")).toMatchObject({ makingCost: 0, profit: 90 });
+    expect(find("Lassi")).toBeUndefined();
+  });
+
+  it("complimentaryItemsPage searches, sorts and paginates the free items", async () => {
+    const cust = await makeUser();
+    await makeOrder(cust.id, {
+      status: "DELIVERED",
+      placedAt: new Date("2026-06-10T10:00:00.000Z"),
+      items: [{ name: "Lassi", price: 60, qty: 2, complimentary: true }],
+    });
+    await makeOrder(cust.id, {
+      status: "DELIVERED",
+      placedAt: new Date("2026-06-11T10:00:00.000Z"),
+      items: [{ name: "Brownie", price: 90, qty: 1, complimentary: true }],
+    });
+    const Q = dashboardResolvers.Query;
+
+    const searched = await Q.complimentaryItemsPage(null, { search: "Lassi", sortBy: "value", sortDir: "ASC", limit: 10, offset: 0 }, admin);
+    expect(searched.total).toBe(1);
+    expect(searched.items[0]).toMatchObject({ name: "Lassi", qty: 2, value: 120 });
+
+    const all = await Q.complimentaryItemsPage(null, undefined, admin);
+    expect(all.total).toBe(2);
+    expect(all.items).toHaveLength(2);
+
+    const paged = await Q.complimentaryItemsPage(null, { limit: 1, offset: 1 }, admin);
+    expect(paged.total).toBe(2);
+    expect(paged.items).toHaveLength(1);
+
+    const empty = await Q.complimentaryItemsPage(null, { from: new Date("2030-01-01"), to: new Date("2030-12-31"), sortBy: "bogus" }, admin);
+    expect(empty.total).toBe(0);
+    expect(empty.items).toHaveLength(0);
   });
 
   it("myDeliveries honours default + capped limits", async () => {

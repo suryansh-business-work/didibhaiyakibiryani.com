@@ -4,6 +4,7 @@ import { Spinner } from "./components/ui";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
+import ComplimentaryItems from "./pages/ComplimentaryItems";
 import Menu from "./pages/Menu";
 import Categories from "./pages/Categories";
 import Slider from "./pages/Slider";
@@ -43,6 +44,7 @@ export default function App() {
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/" element={<Protected><Dashboard /></Protected>} />
       <Route path="/orders" element={<Protected><Orders /></Protected>} />
+      <Route path="/complimentary" element={<Protected><ComplimentaryItems /></Protected>} />
       <Route path="/menu" element={<Protected><Menu /></Protected>} />
       <Route path="/categories" element={<Protected><Categories /></Protected>} />
       <Route path="/slider" element={<Protected><Slider /></Protected>} />

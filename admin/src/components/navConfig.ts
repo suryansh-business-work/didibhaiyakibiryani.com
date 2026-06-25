@@ -44,6 +44,7 @@ export const NAV_GROUPS: ReadonlyArray<NavGroup> = [
       { to: "/orders", label: "Orders", icon: IOrders },
       { to: "/party-orders", label: "Party Orders", icon: IParty },
       { to: "/coupons", label: "Coupons", icon: ITag },
+      { to: "/complimentary", label: "Complimentary", icon: IRupee },
     ],
   },
   {

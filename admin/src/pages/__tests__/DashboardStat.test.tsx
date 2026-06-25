@@ -84,4 +84,11 @@ describe("PeriodSummary", () => {
     fireEvent.click(screen.getByRole("button"));
     expect(onComplimentaryClick).toHaveBeenCalledTimes(1);
   });
+
+  it("invokes onProfitClick when the Profit tile is clicked", () => {
+    const onProfitClick = vi.fn();
+    render(<PeriodSummary s={base} onProfitClick={onProfitClick} />);
+    fireEvent.click(screen.getByRole("button"));
+    expect(onProfitClick).toHaveBeenCalledTimes(1);
+  });
 });

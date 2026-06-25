@@ -60,14 +60,29 @@ export const DASHBOARD = gql`
   }
 `;
 
-export const COMPLIMENTARY_ITEMS = gql`
-  query ComplimentaryItems($from: DateTime, $to: DateTime) {
-    complimentaryItems(from: $from, to: $to) {
-      orderNumber
+export const PROFIT_ITEMS = gql`
+  query ProfitItems($from: DateTime, $to: DateTime) {
+    profitItems(from: $from, to: $to) {
       name
+      price
+      makingCost
       qty
-      value
-      placedAt
+      profit
+    }
+  }
+`;
+
+export const COMPLIMENTARY_ITEMS_PAGE = gql`
+  query ComplimentaryItemsPage($from: DateTime, $to: DateTime, $search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
+    complimentaryItemsPage(from: $from, to: $to, search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
+      total
+      items {
+        orderNumber
+        name
+        qty
+        value
+        placedAt
+      }
     }
   }
 `;

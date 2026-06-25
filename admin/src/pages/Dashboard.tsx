@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@apollo/client";
 import { Box, Rating, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { startOfDay, endOfDay } from "date-fns";
@@ -8,7 +9,7 @@ import { Spinner, StatusBadge, inr, fmtDate } from "../components/ui";
 import { IOrders, IRupee, IClock, IUsers } from "../components/icons";
 import DashboardFilter, { rangeForPreset, type Preset, type DateRange } from "./DashboardFilter";
 import { Stat, PeriodSummary } from "./DashboardStat";
-import ComplimentaryDialog from "./ComplimentaryDialog";
+import ProfitDialog from "./ProfitDialog";
 
 interface TopItem { name: string; qty: number; revenue: number; }
 interface DishRating { name: string; rating: number; count: number; }
@@ -34,10 +35,11 @@ function customRange(from: Date | null, to: Date | null): DateRange {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [preset, setPreset] = useState<Preset>("month");
   const [customFrom, setCustomFrom] = useState<Date | null>(null);
   const [customTo, setCustomTo] = useState<Date | null>(null);
-  const [compOpen, setCompOpen] = useState(false);
+  const [profitOpen, setProfitOpen] = useState(false);
 
   const range = useMemo<DateRange>(
     () => (preset === "custom" ? customRange(customFrom, customTo) : rangeForPreset(preset)),
@@ -62,9 +64,10 @@ export default function Dashboard() {
         loading={loading && !data}
         error={error?.message}
         stats={data?.dashboardStats}
-        onComplimentaryClick={() => setCompOpen(true)}
+        onProfitClick={() => setProfitOpen(true)}
+        onComplimentaryClick={() => navigate("/complimentary")}
       />
-      {compOpen && <ComplimentaryDialog range={range} onClose={() => setCompOpen(false)} />}
+      {profitOpen && <ProfitDialog range={range} onClose={() => setProfitOpen(false)} />}
     </Layout>
   );
 }
@@ -73,8 +76,9 @@ function DashboardContent({
   loading,
   error,
   stats,
+  onProfitClick,
   onComplimentaryClick,
-}: Readonly<{ loading: boolean; error?: string; stats?: Stats; onComplimentaryClick: () => void }>) {
+}: Readonly<{ loading: boolean; error?: string; stats?: Stats; onProfitClick: () => void; onComplimentaryClick: () => void }>) {
   if (loading) {
     return <Spinner label="Crunching numbers…" />;
   }
@@ -91,14 +95,18 @@ function DashboardContent({
   if (!stats) {
     return null;
   }
-  return <Body s={stats} onComplimentaryClick={onComplimentaryClick} />;
+  return <Body s={stats} onProfitClick={onProfitClick} onComplimentaryClick={onComplimentaryClick} />;
 }
 
-function Body({ s, onComplimentaryClick }: Readonly<{ s: Stats; onComplimentaryClick: () => void }>) {
+function Body({
+  s,
+  onProfitClick,
+  onComplimentaryClick,
+}: Readonly<{ s: Stats; onProfitClick: () => void; onComplimentaryClick: () => void }>) {
   const maxRev = Math.max(1, ...s.revenueByDay.map((d) => d.revenue));
   return (
     <>
-      <PeriodSummary s={s} onComplimentaryClick={onComplimentaryClick} />
+      <PeriodSummary s={s} onProfitClick={onProfitClick} onComplimentaryClick={onComplimentaryClick} />
 
       <div className="stat-grid section-gap">
         <Stat label="Today's revenue" value={inr(s.todayRevenue)} sub={`${s.todayOrders} orders today`} icon={<IRupee />} />

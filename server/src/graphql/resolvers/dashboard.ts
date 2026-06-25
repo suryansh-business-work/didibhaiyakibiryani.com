@@ -1,4 +1,5 @@
 import { GraphQLError } from "graphql";
+import type { PipelineStage } from "mongoose";
 import { Order, User, MenuItem, Review, Expense } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
 import { paginate, type PageArgs } from "../../utils/pagination.js";
@@ -252,14 +253,53 @@ export const dashboardResolvers = {
       };
     },
 
-    complimentaryItems: async (
+    profitItems: async (_: unknown, { from, to }: { from?: Date; to?: Date } = {}, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      const range = dateRangeFilter(from, to, "placedAt");
+      return Order.aggregate([
+        { $match: { status: { $in: REVENUE_STATUSES }, ...range } },
+        { $unwind: "$items" },
+        // Free items have ₹0 revenue and are reported in the complimentary view.
+        { $match: { "items.complimentary": { $ne: true } } },
+        {
+          $group: {
+            _id: "$items.name",
+            price: { $first: "$items.price" },
+            makingCost: { $first: { $ifNull: ["$items.makingCost", 0] } },
+            qty: { $sum: "$items.qty" },
+            profit: {
+              $sum: {
+                $multiply: [{ $subtract: ["$items.price", { $ifNull: ["$items.makingCost", 0] }] }, "$items.qty"],
+              },
+            },
+          },
+        },
+        { $project: { _id: 0, name: "$_id", price: 1, makingCost: 1, qty: 1, profit: 1 } },
+        { $sort: { profit: -1 } },
+      ]);
+    },
+
+    complimentaryItemsPage: async (
       _: unknown,
-      { from, to }: { from?: Date; to?: Date } = {},
+      {
+        from,
+        to,
+        search,
+        sortBy,
+        sortDir,
+        limit,
+        offset,
+      }: { from?: Date; to?: Date; search?: string; sortBy?: string; sortDir?: "ASC" | "DESC"; limit?: number; offset?: number } = {},
       ctx: Context
     ) => {
       requireRole(ctx, "ADMIN");
       const range = dateRangeFilter(from, to, "placedAt");
-      return Order.aggregate([
+      const sortAllow = ["placedAt", "name", "value", "qty"];
+      const sortField = sortBy && sortAllow.includes(sortBy) ? sortBy : "placedAt";
+      const dir = sortDir === "ASC" ? 1 : -1;
+      const lim = Math.min(Math.max(limit ?? 20, 1), 200);
+      const off = Math.max(offset ?? 0, 0);
+      const pipeline: PipelineStage[] = [
         { $match: { status: { $in: REVENUE_STATUSES }, "items.complimentary": true, ...range } },
         { $unwind: "$items" },
         { $match: { "items.complimentary": true } },
@@ -273,8 +313,21 @@ export const dashboardResolvers = {
             placedAt: 1,
           },
         },
-        { $sort: { placedAt: -1 } },
-      ]);
+      ];
+      const term = search?.trim();
+      if (term) {
+        const rx = { $regex: term, $options: "i" };
+        pipeline.push({ $match: { $or: [{ orderNumber: rx }, { name: rx }] } });
+      }
+      pipeline.push({
+        $facet: {
+          items: [{ $sort: { [sortField]: dir } }, { $skip: off }, { $limit: lim }],
+          total: [{ $count: "n" }],
+        },
+      });
+      const result = await Order.aggregate(pipeline);
+      const facet = result[0] as { items: unknown[]; total: Array<{ n: number }> };
+      return { items: facet.items, total: facet.total[0]?.n ?? 0 };
     },
   },
 

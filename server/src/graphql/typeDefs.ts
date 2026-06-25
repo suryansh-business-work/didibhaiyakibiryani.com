@@ -342,6 +342,20 @@ export const typeDefs = /* GraphQL */ `
     placedAt: DateTime!
   }
 
+  type ComplimentaryItemsPage {
+    items: [ComplimentaryItem!]!
+    total: Int!
+  }
+
+  # Per-dish profit breakdown (menu finance) for the dashboard Profit drill-down.
+  type ProfitItem {
+    name: String!
+    price: Float!
+    makingCost: Float!
+    qty: Int!
+    profit: Float!
+  }
+
   type DishRating {
     name: String!
     rating: Float!
@@ -881,7 +895,8 @@ export const typeDefs = /* GraphQL */ `
     customers(search: String): [User!]! # admin
     leads(search: String): [Lead!]! # admin — non-signup contacts
     dashboardStats(from: DateTime, to: DateTime): DashboardStats! # admin
-    complimentaryItems(from: DateTime, to: DateTime): [ComplimentaryItem!]! # admin — free items given in range
+    profitItems(from: DateTime, to: DateTime): [ProfitItem!]! # admin — per-dish profit breakdown
+    complimentaryItemsPage(from: DateTime, to: DateTime, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): ComplimentaryItemsPage! # admin
 
     integrationSettings: IntegrationSettings! # admin: SMTP / ImageKit config (secrets masked)
 

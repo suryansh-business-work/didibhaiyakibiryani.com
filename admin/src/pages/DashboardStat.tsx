@@ -37,7 +37,11 @@ export function Stat({
 }
 
 /** Headline card for the selected date range: orders, revenue, profit, expenses, complimentary. */
-export function PeriodSummary({ s, onComplimentaryClick }: Readonly<{ s: PeriodStats; onComplimentaryClick?: () => void }>) {
+export function PeriodSummary({
+  s,
+  onProfitClick,
+  onComplimentaryClick,
+}: Readonly<{ s: PeriodStats; onProfitClick?: () => void; onComplimentaryClick?: () => void }>) {
   const profitColor = s.periodProfit >= 0 ? "#16a34a" : "#dc2626";
   return (
     <div className="card section-gap" style={{ padding: 20 }}>
@@ -48,9 +52,10 @@ export function PeriodSummary({ s, onComplimentaryClick }: Readonly<{ s: PeriodS
         <Stat
           label="Profit"
           value={inr(s.periodProfit)}
-          sub="Revenue − cost (menu finance)"
+          sub="Per-item profit · tap to view"
           icon={<span style={{ color: profitColor }}>₹</span>}
           valueColor={profitColor}
+          onClick={onProfitClick}
         />
         <Stat label="Expenses" value={inr(s.periodExpenses)} sub="Tracked separately" icon={<IRupee />} />
         <Stat label="Complimentary" value={inr(s.periodComplimentary)} sub="Free items given · tap to view" icon={<IRupee />} onClick={onComplimentaryClick} />
