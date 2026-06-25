@@ -25,7 +25,6 @@ import Expenses from "./pages/Expenses";
 import Store from "./pages/Store";
 import Riders from "./pages/Riders";
 import Support from "./pages/Support";
-import Survey from "./pages/Survey";
 import type { ReactNode } from "react";
 
 function Protected({ children }: Readonly<{ children: ReactNode }>) {
@@ -39,8 +38,8 @@ export default function App() {
   const { user } = useAuth();
   return (
     <Routes>
-      {/* Public, no-login feedback survey (shared with customers). */}
-      <Route path="/survey/:orderId/:token" element={<Survey />} />
+      {/* The customer survey + live tracking now live in their own public apps
+          (survey./track. subdomains), keyed by order number. */}
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/" element={<Protected><Dashboard /></Protected>} />
       <Route path="/orders" element={<Protected><Orders /></Protected>} />

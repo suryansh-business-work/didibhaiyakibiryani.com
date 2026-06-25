@@ -17,6 +17,8 @@ URLS=(
 # DNS-gated required URLs (our apps): enforced as soon as the record resolves.
 CANDIDATE_URLS=(
   "https://delivery.didibhaiyakibiryani.com"
+  "https://survey.didibhaiyakibiryani.com"
+  "https://track.didibhaiyakibiryani.com"
 )
 for url in "${CANDIDATE_URLS[@]}"; do
   host="${url#https://}"

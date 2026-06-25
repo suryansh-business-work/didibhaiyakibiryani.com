@@ -32,7 +32,7 @@ export default function SurveyTemplate() {
   const website = data?.settings?.website || "didibhaiyakibiryani.com";
   const preview = fillSurveyTemplate(text, {
     name: "Asha",
-    surveyLink: `${window.location.origin}/survey/0/sample`,
+    surveyLink: "https://survey.didibhaiyakibiryani.com/DDB-1234",
     orderNumber: "DDB-1234",
     brandName,
     website,

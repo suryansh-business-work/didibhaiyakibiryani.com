@@ -79,8 +79,8 @@ describe("marketing + order emails", () => {
     assertEmail(marketingEmail(DEFAULT_BRAND, "Big offer", "Body text", { label: "Go", url: "https://x.test" }));
     assertEmail(marketingEmail(DEFAULT_BRAND, "No CTA", "Body text"));
   });
-  it("ratingUrlFor builds a token URL", () => {
-    expect(ratingUrlFor(order)).toContain("tok123");
+  it("ratingUrlFor builds a survey link keyed by order number", () => {
+    expect(ratingUrlFor(order)).toContain("DDB-1001");
   });
   it("orderConfirmedEmail handles a takeaway order with no address", () => {
     const takeaway = { ...order, address: undefined } as unknown as IOrder;

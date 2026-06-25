@@ -103,6 +103,7 @@ const ORDER_FIELDS = `
   notes
   surveyUrl
   ratingToken
+  trackingUrl
   customerName
   customerPhone
   customerOrderCount

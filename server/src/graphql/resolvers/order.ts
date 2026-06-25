@@ -5,7 +5,9 @@ import { paginate, type PageArgs } from "../../utils/pagination.js";
 import { evaluateCoupon, computeDeliveryFee, haversineKm } from "../../utils/pricing.js";
 import { assertOrderingAvailable } from "../../utils/ordering.js";
 import { genOrderNumber } from "../../utils/helpers.js";
-import { notifyOrderEmail } from "../../emails/notify.js";
+import { notifyOrderEmail, notifyOrderTrackingWhatsApp } from "../../emails/notify.js";
+import { trackingUrlFor } from "../../utils/links.js";
+import { liveState } from "../../utils/orderTracking.js";
 import { saveOrderRating, isValidStars } from "../../utils/rating.js";
 import { generateInvoicePdf } from "../../utils/invoice.js";
 import type {
@@ -57,6 +59,7 @@ interface ManualOrderInput {
   orderType: OrderType;
   items: ManualOrderItemInput[];
   address?: AddressInput;
+  deliveryPartner?: string;
   discount?: number;
   deliveryFee?: number;
   paymentMethod?: PaymentMethod;
@@ -71,15 +74,13 @@ function badInput(message: string): GraphQLError {
   return new GraphQLError(message, { extensions: { code: "BAD_USER_INPUT" } });
 }
 
-const HEX24 = /^[a-f0-9]{24}$/i;
-
-/** Load an order for the public survey, gated by its secret ratingToken. */
-async function loadSurveyOrder(orderId: string, token: string): Promise<IOrder> {
-  if (!HEX24.test(orderId) || !token) throw badInput("This survey link is invalid or has expired.");
-  const order = await Order.findById(orderId);
-  if (!order || order.ratingToken !== token) {
-    throw badInput("This survey link is invalid or has expired.");
-  }
+/** Load an order for the public survey/track pages by its short order number.
+ * The order number is the only key (no secret token) — see SURVEY/TRACK apps. */
+async function loadOrderByNumber(orderNumber: string): Promise<IOrder> {
+  const num = orderNumber?.trim();
+  if (!num) throw badInput("This link is invalid or has expired.");
+  const order = await Order.findOne({ orderNumber: num });
+  if (!order) throw badInput("This link is invalid or has expired.");
   return order;
 }
 
@@ -122,6 +123,18 @@ async function buildManualItems(items: ManualOrderItemInput[]): Promise<IOrderIt
   });
 }
 
+/** Resolve & validate the rider assigned at POS time. Only delivery orders carry
+ * a partner; takeaway clears it. The rider's app picks the order up from its
+ * polled queue once the order reaches an active status. */
+async function resolveManualRider(input: ManualOrderInput) {
+  if (input.orderType !== "DELIVERY" || !input.deliveryPartner) return undefined;
+  const rider = await User.findById(input.deliveryPartner);
+  if (!rider || rider.role !== "DELIVERY") {
+    throw badInput("Selected user is not a delivery partner.");
+  }
+  return rider._id;
+}
+
 /** Attach an existing customer, or take a walk-in name/phone snapshot. */
 async function resolveManualCustomer(input: ManualOrderInput) {
   if (input.userId) {
@@ -153,6 +166,7 @@ async function buildManualOrderFields(input: ManualOrderInput) {
   const deliveryFee = isDelivery ? clampMoney(input.deliveryFee, Number.MAX_SAFE_INTEGER) : 0;
   const total = Math.max(0, subtotal - discount) + deliveryFee;
   const customer = await resolveManualCustomer(input);
+  const deliveryPartner = await resolveManualRider(input);
   const status = input.status ?? "PLACED";
   const placedAt = input.placedAt ? new Date(input.placedAt) : new Date();
   if (Number.isNaN(placedAt.getTime())) throw badInput("Invalid order date.");
@@ -169,6 +183,7 @@ async function buildManualOrderFields(input: ManualOrderInput) {
     paymentMethod: input.paymentMethod ?? "COD",
     paymentStatus,
     address: isDelivery ? input.address : undefined,
+    deliveryPartner,
     surveyUrl: input.surveyUrl?.trim() || undefined,
     notes: input.notes?.trim() || undefined,
     placedAt,
@@ -259,9 +274,9 @@ export const orderResolvers = {
       return pdf.toString("base64");
     },
 
-    // Public — the no-login feedback survey reads the order via its token.
-    surveyOrder: async (_: unknown, { orderId, token }: { orderId: string; token: string }) => {
-      const order = await loadSurveyOrder(orderId, token);
+    // Public — the no-login feedback survey, keyed by the short order number.
+    surveyOrder: async (_: unknown, { orderNumber }: { orderNumber: string }) => {
+      const order = await loadOrderByNumber(orderNumber);
       return {
         orderNumber: order.orderNumber,
         customerName: await surveyCustomerName(order),
@@ -275,6 +290,28 @@ export const orderResolvers = {
         alreadyRated: Boolean(order.rating),
         canRate: order.status === "DELIVERED" && !order.rating,
         rating: order.rating ?? null,
+      };
+    },
+
+    // Public — the no-login live tracking page, keyed by the short order number.
+    trackOrder: async (_: unknown, { orderNumber }: { orderNumber: string }) => {
+      const order = await loadOrderByNumber(orderNumber);
+      const rider = order.deliveryPartner ? await User.findById(order.deliveryPartner) : null;
+      const { destination, rider: riderFix, etaMinutes } = liveState(order, rider);
+      return {
+        orderNumber: order.orderNumber,
+        customerName: await surveyCustomerName(order),
+        status: order.status,
+        statusHistory: order.statusHistory,
+        items: order.items,
+        total: order.total,
+        deliveryFee: order.deliveryFee,
+        paymentMethod: order.paymentMethod,
+        address: order.address ?? null,
+        destination,
+        rider: riderFix,
+        etaMinutes,
+        placedAt: order.placedAt,
       };
     },
   },
@@ -383,6 +420,7 @@ export const orderResolvers = {
       }
 
       notifyOrderEmail(order, "CONFIRMED");
+      notifyOrderTrackingWhatsApp(order);
       return order;
     },
 
@@ -479,18 +517,17 @@ export const orderResolvers = {
       return saveOrderRating(order, args.food, args.delivery, args.comment);
     },
 
-    // Public — token-gated survey submission (per-item food + separate delivery).
+    // Public — survey submission keyed by order number (per-item food + delivery).
     submitOrderSurvey: async (
       _: unknown,
       args: {
-        orderId: string;
-        token: string;
+        orderNumber: string;
         itemRatings: { name: string; rating: number }[];
         delivery: number;
         comment?: string;
       }
     ) => {
-      const order = await loadSurveyOrder(args.orderId, args.token);
+      const order = await loadOrderByNumber(args.orderNumber);
       if (!args.itemRatings?.length) throw badInput("Please rate at least one item.");
       if (args.itemRatings.some((r) => !isValidStars(r.rating))) {
         throw badInput("Item ratings must be between 1 and 5 stars.");
@@ -517,6 +554,7 @@ export const orderResolvers = {
   },
 
   Order: {
+    trackingUrl: (parent: { orderNumber: string }) => trackingUrlFor(parent),
     user: (parent: { user: unknown }) => {
       const usr = parent.user as { name?: string } | string | null;
       /* v8 ignore next 2 -- populated-vs-id paths both exercised; null short-circuit is defensive */

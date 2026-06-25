@@ -23,7 +23,7 @@ import {
   type MenuOption,
   type SocietyOption,
 } from "./types";
-import type { Order } from "../types";
+import type { Order, Rider } from "../types";
 
 interface DeliverySettingsData {
   settings: { minDeliveryCost: number; freeDeliveryAbove: number };
@@ -33,12 +33,13 @@ interface Props {
   onClose: () => void;
   onCreated: () => void;
   editOrder?: Order;
+  riders: Rider[];
 }
 
 /** Full-screen point-of-sale dialog: tap dishes on the left to build the
  * order on the right (walk-in/existing customer, takeaway/delivery, manual
  * pricing, back-dating and a survey link). Reused to edit an existing order. */
-export default function ManualOrderModal({ onClose, onCreated, editOrder }: Readonly<Props>) {
+export default function ManualOrderModal({ onClose, onCreated, editOrder, riders }: Readonly<Props>) {
   const { data: menuData } = useQuery<{ menuItems: MenuOption[] }>(MENU_ITEMS);
   const { data: catData } = useQuery<{ categories: CategoryOption[] }>(CATEGORIES);
   const { data: custData } = useQuery<{ customers: CustomerOption[] }>(CUSTOMERS);
@@ -150,6 +151,7 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
           customers={custData?.customers ?? []}
           leads={leadData?.leads ?? []}
           societies={socData?.societies ?? []}
+          riders={riders}
           coupons={activeCoupons}
           fields={fields}
           totals={totals}

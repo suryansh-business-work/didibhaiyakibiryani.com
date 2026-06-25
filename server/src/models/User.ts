@@ -22,6 +22,10 @@ export interface IUser extends Document {
   role: Role;
   addresses: IAddress[];
   isActive: boolean;
+  /** Rider live position (DELIVERY role) — last reported GPS for order tracking. */
+  lastLat?: number;
+  lastLng?: number;
+  lastLocationAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +58,9 @@ const userSchema = new Schema<IUser>(
     },
     addresses: [addressSchema],
     isActive: { type: Boolean, default: true },
+    lastLat: Number,
+    lastLng: Number,
+    lastLocationAt: Date,
   },
   { timestamps: true }
 );

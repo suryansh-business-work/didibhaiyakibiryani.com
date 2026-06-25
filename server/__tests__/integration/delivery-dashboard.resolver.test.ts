@@ -4,7 +4,7 @@ import { useTestDb, ctxFor } from "../helpers/db";
 import { makeUser, makeOrder } from "../helpers/fixtures";
 import { deliveryResolvers } from "../../src/graphql/resolvers/delivery";
 import { dashboardResolvers } from "../../src/graphql/resolvers/dashboard";
-import { Review, MenuItem } from "../../src/models/index.js";
+import { Review, MenuItem, User } from "../../src/models/index.js";
 
 useTestDb();
 const adminCtx = ctxFor("admin1", "ADMIN");
@@ -13,13 +13,35 @@ describe("delivery resolver", () => {
   it("riders / queue / myDeliveries", async () => {
     const rider = await makeUser("DELIVERY");
     const cust = await makeUser("CUSTOMER");
+    // A freshly-assigned PLACED order must already be in the rider's queue.
+    await makeOrder(cust.id, { status: "PLACED", deliveryPartner: rider._id });
     await makeOrder(cust.id, { status: "OUT_FOR_DELIVERY", deliveryPartner: rider._id });
     await makeOrder(cust.id, { status: "DELIVERED", deliveryPartner: rider._id });
 
     expect((await deliveryResolvers.Query.riders(null, null, adminCtx)).length).toBe(1);
     const riderCtx = ctxFor(rider.id, "DELIVERY");
-    expect((await deliveryResolvers.Query.deliveryQueue(null, null, riderCtx)).length).toBe(1);
+    // PLACED + OUT_FOR_DELIVERY are active; DELIVERED drops to the earnings list.
+    expect((await deliveryResolvers.Query.deliveryQueue(null, null, riderCtx)).length).toBe(2);
     expect((await deliveryResolvers.Query.myDeliveries(null, { limit: 10 }, riderCtx)).length).toBe(1);
+  });
+
+  it("updateRiderLocation stores the rider's GPS and is role- + input-gated", async () => {
+    const rider = await makeUser("DELIVERY");
+    const riderCtx = ctxFor(rider.id, "DELIVERY");
+    expect(await deliveryResolvers.Mutation.updateRiderLocation(null, { lat: 18.52, lng: 73.85 }, riderCtx)).toBe(true);
+    const fresh = await User.findById(rider.id).exec();
+    expect(fresh?.lastLat).toBe(18.52);
+    expect(fresh?.lastLng).toBe(73.85);
+    expect(fresh?.lastLocationAt).toBeInstanceOf(Date);
+
+    // Non-delivery roles cannot push location.
+    await expect(
+      deliveryResolvers.Mutation.updateRiderLocation(null, { lat: 1, lng: 2 }, ctxFor("c", "CUSTOMER"))
+    ).rejects.toThrow();
+    // Non-finite coordinates are rejected.
+    await expect(
+      deliveryResolvers.Mutation.updateRiderLocation(null, { lat: Number.NaN, lng: 2 }, riderCtx)
+    ).rejects.toThrow(/invalid coordinates/i);
   });
 
   it("assignDeliveryPartner validation + success", async () => {

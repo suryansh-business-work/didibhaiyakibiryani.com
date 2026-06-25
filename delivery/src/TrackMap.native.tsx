@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as Location from "expo-location";
 import { YStack, Text } from "tamagui";
 import {
@@ -46,9 +46,14 @@ function pickCenter(rider: LatLng | null, dests: ReadonlyArray<MapMarker>): LatL
   return dests[0]?.position ?? DEFAULT_CENTER;
 }
 
-export default function TrackMap({ orders }: Readonly<{ orders: ReadonlyArray<QueueOrder> }>) {
+type OnLocation = (lat: number, lng: number) => void;
+
+export default function TrackMap({ orders, onLocation }: Readonly<{ orders: ReadonlyArray<QueueOrder>; onLocation?: OnLocation }>) {
   const [rider, setRider] = useState<LatLng | null>(null);
   const [denied, setDenied] = useState(false);
+  // Latest callback in a ref so the location watcher is set up only once.
+  const cbRef = useRef(onLocation);
+  cbRef.current = onLocation;
 
   useEffect(() => {
     let watcher: Location.LocationSubscription | undefined;
@@ -61,14 +66,21 @@ export default function TrackMap({ orders }: Readonly<{ orders: ReadonlyArray<Qu
         }
         return;
       }
-      watcher = await Location.watchPositionAsync(
+      const sub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, distanceInterval: 15 },
         (loc) => {
           if (active) {
-            setRider({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+            const lat = loc.coords.latitude;
+            const lng = loc.coords.longitude;
+            setRider({ lat, lng });
+            cbRef.current?.(lat, lng);
           }
         },
       );
+      // The component may have unmounted while we awaited the watcher — if so,
+      // remove the just-created subscription immediately to avoid a leak.
+      if (active) watcher = sub;
+      else sub.remove();
     })().catch(() => {
       if (active) {
         setDenied(true);

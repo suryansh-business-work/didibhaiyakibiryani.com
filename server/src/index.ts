@@ -11,7 +11,6 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import { logger } from "./utils/logger.js";
 import { connectDBWithRetry } from "./config/db.js";
 import { razorpayWebhook } from "./webhooks/razorpay.js";
-import { ratingRouter } from "./routes/rating.js";
 import { invoiceRouter } from "./routes/invoice.js";
 import { healthRouter } from "./routes/health.js";
 import { typeDefs } from "./graphql/typeDefs.js";
@@ -60,10 +59,9 @@ async function start() {
     razorpayWebhook
   );
 
-  // Public post-delivery rating survey (linked from the delivered email).
-  app.use(ratingRouter);
-
-  // Public token-gated invoice PDF (linked from the survey page).
+  // Public token-gated invoice PDF (download link). The customer survey + live
+  // tracking pages are now standalone React apps (survey./track. subdomains)
+  // that read the public surveyOrder/trackOrder GraphQL queries by order number.
   app.use(invoiceRouter);
 
   app.use(

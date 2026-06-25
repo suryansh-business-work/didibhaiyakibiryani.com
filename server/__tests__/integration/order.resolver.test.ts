@@ -9,7 +9,7 @@ vi.mock("../../src/utils/mailer.js", () => ({
 }));
 // Fire-and-forget order emails are covered in notify.resolver.test.ts; stub here
 // so a previous test's background send can't race the next test's DB reset.
-vi.mock("../../src/emails/notify.js", () => ({ notifyOrderEmail: vi.fn() }));
+vi.mock("../../src/emails/notify.js", () => ({ notifyOrderEmail: vi.fn(), notifyOrderTrackingWhatsApp: vi.fn() }));
 
 import { orderResolvers } from "../../src/graphql/resolvers/order";
 import { Order, MenuItem, Coupon, Settings, SETTINGS_KEY, getOrCreateSettings } from "../../src/models/index.js";
@@ -127,6 +127,7 @@ describe("order resolver — queries / lifecycle", () => {
     expect((await orderResolvers.Order.user({ user: user.id }))?.id).toBe(user.id);
     expect(orderResolvers.Order.user({ user: { name: "Pre" } })).toEqual({ name: "Pre" });
     expect(await orderResolvers.Order.deliveryPartner({ deliveryPartner: undefined })).toBeNull();
+    expect(orderResolvers.Order.trackingUrl({ orderNumber: "DDB-ZZZ9" })).toContain("/DDB-ZZZ9");
   });
 });
 
@@ -248,6 +249,38 @@ describe("order resolver — createManualOrder (POS)", () => {
     expect(order.placedAt.getTime()).toBe(placed.getTime());
     expect(order.statusHistory[0]?.status).toBe("DELIVERED");
     expect(order.items[0]?.spiceLevel).toBe(3);
+  });
+
+  it("assigns a delivery partner, rejects a non-rider/unknown user, and clears it on takeaway", async () => {
+    const rider = await makeUser("DELIVERY");
+    const item = await makeItem();
+    const base = {
+      orderType: "DELIVERY" as const,
+      customerName: "Asha",
+      items: [{ menuItemId: item.id, qty: 1 }],
+      address: { line1: "5 Park Rd", city: "Bengaluru", pincode: "560002" },
+      status: "CONFIRMED" as const,
+    };
+
+    const order = await M.createManualOrder(null, { input: { ...base, deliveryPartner: rider.id } }, admin);
+    expect(String(order.deliveryPartner)).toBe(rider.id);
+
+    // A non-DELIVERY user (or an unknown id) cannot be assigned.
+    const cust = await makeUser("CUSTOMER");
+    await expect(
+      M.createManualOrder(null, { input: { ...base, deliveryPartner: cust.id } }, admin)
+    ).rejects.toThrow(/not a delivery partner/i);
+    await expect(
+      M.createManualOrder(null, { input: { ...base, deliveryPartner: new Types.ObjectId().toString() } }, admin)
+    ).rejects.toThrow(/not a delivery partner/i);
+
+    // Switching the order to takeaway drops the rider (the input id is ignored).
+    const cleared = await M.updateManualOrder(
+      null,
+      { id: order.id, input: { orderType: "TAKEAWAY", customerName: "Asha", items: [{ menuItemId: item.id, qty: 1 }], deliveryPartner: rider.id } },
+      admin
+    );
+    expect(cleared.deliveryPartner ?? null).toBeNull();
   });
 
   it("supports custom off-menu line items and clamps discount to subtotal", async () => {
@@ -374,11 +407,11 @@ describe("order resolver — createManualOrder (POS)", () => {
   });
 });
 
-describe("order resolver — survey (public, token-gated)", () => {
-  it("surveyOrder returns order details for a valid token", async () => {
+describe("order resolver — survey (public, by order number)", () => {
+  it("surveyOrder returns order details by order number", async () => {
     const user = await makeUser("CUSTOMER", { name: "Asha" });
     const order = await makeOrder(user.id, { status: "DELIVERED" });
-    const s = await Q.surveyOrder(null, { orderId: order.id, token: order.ratingToken });
+    const s = await Q.surveyOrder(null, { orderNumber: order.orderNumber });
     expect(s.orderNumber).toBe(order.orderNumber);
     expect(s.customerName).toBe("Asha");
     expect(s.canRate).toBe(true);
@@ -395,14 +428,13 @@ describe("order resolver — survey (public, token-gated)", () => {
     );
     expect(
       await M.submitOrderSurvey(null, {
-        orderId: order.id,
-        token: order.ratingToken,
+        orderNumber: order.orderNumber,
         itemRatings: [{ name: "Veg Biryani", rating: 5 }],
         delivery: 4,
         comment: "Great",
       })
     ).toBe(true);
-    const s = await Q.surveyOrder(null, { orderId: order.id, token: order.ratingToken });
+    const s = await Q.surveyOrder(null, { orderNumber: order.orderNumber });
     expect(s.customerName).toBe("Ravi");
     expect(s.alreadyRated).toBe(true);
     expect(s.canRate).toBe(false);
@@ -418,36 +450,72 @@ describe("order resolver — survey (public, token-gated)", () => {
       total: 10,
       address: { line1: "1", city: "B", pincode: "1" },
     });
-    expect((await Q.surveyOrder(null, { orderId: noUser.id, token: noUser.ratingToken })).customerName).toBeNull();
+    expect((await Q.surveyOrder(null, { orderNumber: noUser.orderNumber })).customerName).toBeNull();
     const ghost = await makeOrder(new Types.ObjectId().toString());
-    expect((await Q.surveyOrder(null, { orderId: ghost.id, token: ghost.ratingToken })).customerName).toBeNull();
+    expect((await Q.surveyOrder(null, { orderNumber: ghost.orderNumber })).customerName).toBeNull();
   });
 
-  it("rejects a bad id, wrong token and empty token", async () => {
-    const order = await makeOrder((await makeUser()).id);
-    await expect(Q.surveyOrder(null, { orderId: "not-an-id", token: "x" })).rejects.toThrow(/invalid/i);
-    await expect(Q.surveyOrder(null, { orderId: order.id, token: "wrong" })).rejects.toThrow(/invalid/i);
-    await expect(Q.surveyOrder(null, { orderId: order.id, token: "" })).rejects.toThrow(/invalid/i);
-    await expect(Q.surveyOrder(null, { orderId: new Types.ObjectId().toString(), token: "x" })).rejects.toThrow(/invalid/i);
+  it("rejects an unknown or empty order number", async () => {
+    await expect(Q.surveyOrder(null, { orderNumber: "DDB-NOPE9" })).rejects.toThrow(/invalid/i);
+    await expect(Q.surveyOrder(null, { orderNumber: "   " })).rejects.toThrow(/invalid/i);
+    await expect(Q.surveyOrder(null, { orderNumber: "" })).rejects.toThrow(/invalid/i);
   });
 
   it("submitOrderSurvey saves per-item ratings once and guards bad input", async () => {
     const user = await makeUser();
     const delivered = await makeOrder(user.id, { status: "DELIVERED" });
     const items = [{ name: "Veg Biryani", rating: 4 }];
-    expect(await M.submitOrderSurvey(null, { orderId: delivered.id, token: delivered.ratingToken, itemRatings: items, delivery: 5 })).toBe(true);
+    expect(await M.submitOrderSurvey(null, { orderNumber: delivered.orderNumber, itemRatings: items, delivery: 5 })).toBe(true);
     await expect(
-      M.submitOrderSurvey(null, { orderId: delivered.id, token: delivered.ratingToken, itemRatings: items, delivery: 5 })
+      M.submitOrderSurvey(null, { orderNumber: delivered.orderNumber, itemRatings: items, delivery: 5 })
     ).rejects.toThrow(/already been rated/i);
 
     const placed = await makeOrder(user.id, { status: "PLACED" });
-    await expect(M.submitOrderSurvey(null, { orderId: placed.id, token: placed.ratingToken, itemRatings: items, delivery: 5 })).rejects.toThrow(/delivered/i);
-    await expect(M.submitOrderSurvey(null, { orderId: placed.id, token: "wrong", itemRatings: items, delivery: 5 })).rejects.toThrow(/invalid/i);
+    await expect(M.submitOrderSurvey(null, { orderNumber: placed.orderNumber, itemRatings: items, delivery: 5 })).rejects.toThrow(/delivered/i);
+    await expect(M.submitOrderSurvey(null, { orderNumber: "DDB-NOPE9", itemRatings: items, delivery: 5 })).rejects.toThrow(/invalid/i);
 
     const fresh = await makeOrder(user.id, { status: "DELIVERED" });
-    await expect(M.submitOrderSurvey(null, { orderId: fresh.id, token: fresh.ratingToken, itemRatings: [], delivery: 5 })).rejects.toThrow(/at least one item/i);
+    await expect(M.submitOrderSurvey(null, { orderNumber: fresh.orderNumber, itemRatings: [], delivery: 5 })).rejects.toThrow(/at least one item/i);
     await expect(
-      M.submitOrderSurvey(null, { orderId: fresh.id, token: fresh.ratingToken, itemRatings: [{ name: "X", rating: 9 }], delivery: 5 })
+      M.submitOrderSurvey(null, { orderNumber: fresh.orderNumber, itemRatings: [{ name: "X", rating: 9 }], delivery: 5 })
     ).rejects.toThrow(/between 1 and 5/i);
+  });
+});
+
+describe("order resolver — trackOrder (public, by order number)", () => {
+  it("returns live tracking with a rider fix + ETA while out for delivery", async () => {
+    const rider = await makeUser("DELIVERY", { lastLat: 18.52, lastLng: 73.85, lastLocationAt: new Date() });
+    const cust = await makeUser("CUSTOMER", { name: "Asha" });
+    const order = await makeOrder(cust.id, {
+      status: "OUT_FOR_DELIVERY",
+      deliveryPartner: rider._id,
+      address: { line1: "1", city: "B", pincode: "1", lat: 18.5, lng: 73.85 },
+      statusHistory: [{ status: "PLACED", at: new Date() }, { status: "OUT_FOR_DELIVERY", at: new Date() }],
+    });
+    const t = await Q.trackOrder(null, { orderNumber: order.orderNumber });
+    expect(t.orderNumber).toBe(order.orderNumber);
+    expect(t.customerName).toBe("Asha");
+    expect(t.status).toBe("OUT_FOR_DELIVERY");
+    expect(t.destination).toEqual({ lat: 18.5, lng: 73.85 });
+    expect(t.rider).not.toBeNull();
+    expect(t.etaMinutes).toBeGreaterThanOrEqual(2);
+    expect(t.statusHistory.length).toBeGreaterThan(0);
+  });
+
+  it("hides the rider + map before pickup (no address) and rejects an unknown number", async () => {
+    // A takeaway order has no address at all — destination + address are null.
+    const placed = await Order.create({
+      orderNumber: `DDB-PT${Math.random().toString(36).slice(2, 7)}`,
+      items: [{ name: "X", price: 10, qty: 1 }],
+      subtotal: 10,
+      total: 10,
+      status: "PLACED",
+    });
+    const t = await Q.trackOrder(null, { orderNumber: placed.orderNumber });
+    expect(t.rider).toBeNull();
+    expect(t.destination).toBeNull();
+    expect(t.address).toBeNull();
+    expect(t.etaMinutes).toBe(40);
+    await expect(Q.trackOrder(null, { orderNumber: "DDB-NOPE9" })).rejects.toThrow(/invalid/i);
   });
 });

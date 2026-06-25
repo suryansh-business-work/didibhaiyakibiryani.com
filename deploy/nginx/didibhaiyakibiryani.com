@@ -112,6 +112,48 @@ server {
     }
 }
 
+# ── Survey SPA ───────────────────────────────────────────────────
+server {
+    listen 80;
+    listen [::]:80;
+    server_name survey.didibhaiyakibiryani.com;
+
+    client_max_body_size 25m;
+
+    location / {
+        proxy_pass http://127.0.0.1:3006;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+        proxy_read_timeout 60s;
+    }
+}
+
+# ── Track SPA ────────────────────────────────────────────────────
+server {
+    listen 80;
+    listen [::]:80;
+    server_name track.didibhaiyakibiryani.com;
+
+    client_max_body_size 25m;
+
+    location / {
+        proxy_pass http://127.0.0.1:3007;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+        proxy_read_timeout 60s;
+    }
+}
+
 # ── Signoz (observability UI) ────────────────────────────────────
 server {
     listen 80;

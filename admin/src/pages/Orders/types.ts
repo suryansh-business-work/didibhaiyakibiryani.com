@@ -40,6 +40,7 @@ export interface Order {
   notes?: string;
   surveyUrl?: string;
   ratingToken?: string;
+  trackingUrl?: string;
   customerName?: string;
   customerPhone?: string;
   customerOrderCount?: number;

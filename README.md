@@ -92,7 +92,9 @@ npm run dev:server     # GraphQL at  http://localhost:3001/graphql
 npm run dev:admin      # Admin at    http://localhost:3002
 npm run dev:website    # Website at  http://localhost:3000
 npm run dev:mobile     # Expo dev server (scan the QR; web at http://localhost:3003)
-npm run all            # all four dev servers at once (concurrently)
+npm run dev:survey     # Survey at   http://localhost:3006
+npm run dev:track      # Track at    http://localhost:3007
+npm run all            # all dev servers at once (concurrently)
 ```
 
 > **Mobile app on a physical device:** `localhost` won't reach your machine.

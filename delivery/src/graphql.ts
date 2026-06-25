@@ -73,3 +73,9 @@ export const UPDATE_ORDER_STATUS = gql`
     }
   }
 `;
+
+export const UPDATE_RIDER_LOCATION = gql`
+  mutation UpdateRiderLocation($lat: Float!, $lng: Float!) {
+    updateRiderLocation(lat: $lat, lng: $lng)
+  }
+`;

@@ -11,6 +11,8 @@ const SERVICES = [
   { name: "Admin", local: "http://localhost:3002", deployed: "https://admin.didibhaiyakibiryani.com" },
   { name: "Native (Expo web)", local: "http://localhost:3003", deployed: "https://native.didibhaiyakibiryani.com" },
   { name: "Delivery (rider)", local: "http://localhost:3004", deployed: "https://delivery.didibhaiyakibiryani.com" },
+  { name: "Survey", local: "http://localhost:3006", deployed: "https://survey.didibhaiyakibiryani.com" },
+  { name: "Track", local: "http://localhost:3007", deployed: "https://track.didibhaiyakibiryani.com" },
   { name: "Signoz", local: "— (shared, VPS only)", deployed: "https://signoz.didibhaiyakibiryani.com" },
 ];
 

@@ -297,6 +297,7 @@ export const typeDefs = /* GraphQL */ `
     rating: OrderRating
     surveyUrl: String
     ratingToken: String!
+    trackingUrl: String! # public, no-login live tracking link
     notes: String
     placedAt: DateTime!
   }
@@ -315,6 +316,35 @@ export const typeDefs = /* GraphQL */ `
     alreadyRated: Boolean!
     canRate: Boolean!
     rating: OrderRating
+  }
+
+  type LatLng {
+    lat: Float!
+    lng: Float!
+  }
+
+  # Rider's live position (only present while out for delivery + fresh).
+  type RiderFix {
+    lat: Float!
+    lng: Float!
+    at: DateTime!
+  }
+
+  # Public projection of an order for the no-login live tracking page.
+  type TrackOrder {
+    orderNumber: String!
+    customerName: String
+    status: OrderStatus!
+    statusHistory: [StatusEvent!]!
+    items: [OrderItem!]!
+    total: Float!
+    deliveryFee: Float!
+    paymentMethod: PaymentMethod!
+    address: OrderAddress
+    destination: LatLng
+    rider: RiderFix
+    etaMinutes: Int
+    placedAt: DateTime!
   }
 
   type Review {
@@ -544,6 +574,7 @@ export const typeDefs = /* GraphQL */ `
     orderType: OrderType!
     items: [ManualOrderItemInput!]!
     address: AddressInput
+    deliveryPartner: ID # rider to assign (delivery orders only); syncs to the rider's app
     discount: Float
     deliveryFee: Float
     paymentMethod: PaymentMethod
@@ -878,7 +909,8 @@ export const typeDefs = /* GraphQL */ `
     order(id: ID!): Order
     orders(status: OrderStatus): [Order!]! # admin/staff
     invoicePdf(orderId: ID!): String! # admin/staff — base64-encoded themed PDF
-    surveyOrder(orderId: ID!, token: String!): SurveyOrder # public — no login
+    surveyOrder(orderNumber: String!): SurveyOrder # public — no login, keyed by order number
+    trackOrder(orderNumber: String!): TrackOrder # public — no login, live order tracking
 
     riders: [User!]! # admin/staff
     deliveryQueue: [Order!]! # DELIVERY: my active assigned orders
@@ -987,12 +1019,13 @@ export const typeDefs = /* GraphQL */ `
     cancelOrder(id: ID!): Order!
     updateOrderStatus(id: ID!, status: OrderStatus!, note: String): Order! # admin/staff
     rateOrder(orderId: ID!, food: Int!, delivery: Int!, comment: String): Order!
-    submitOrderSurvey(orderId: ID!, token: String!, itemRatings: [ItemRatingInput!]!, delivery: Int!, comment: String): Boolean! # public — token-gated, per-item
+    submitOrderSurvey(orderNumber: String!, itemRatings: [ItemRatingInput!]!, delivery: Int!, comment: String): Boolean! # public — keyed by order number, per-item
     deleteOrder(id: ID!): Boolean! # admin
     deleteOrders(ids: [ID!]!): Int! # admin — bulk delete, returns count removed
 
     # Delivery management
     assignDeliveryPartner(orderId: ID!, riderId: ID!): Order! # admin/staff
+    updateRiderLocation(lat: Float!, lng: Float!): Boolean! # DELIVERY: push live GPS for tracking
     createStaffUser(name: String!, email: String!, phone: String, password: String!, role: Role!): User! # admin
     updateStaffUser(id: ID!, name: String, phone: String, password: String, isActive: Boolean): User! # admin
     deleteStaffUser(id: ID!): Boolean! # admin

@@ -242,6 +242,7 @@ describe("buildManualInput", () => {
         pincode: "411001",
         phone: "555",
       },
+      deliveryPartner: null,
       discount: 20,
       deliveryFee: 40,
       paymentMethod: "COD",
@@ -269,6 +270,7 @@ describe("buildManualInput", () => {
     expect(input.customerName).toBe("Walk In");
     expect(input.customerPhone).toBe("123");
     expect(input.address).toBeNull();
+    expect(input.deliveryPartner).toBeNull();
     expect(input.deliveryFee).toBe(0);
     expect(input.items).toEqual([{ name: "Custom Dish", price: 150, qty: 1, spiceLevel: 0, complimentary: false }]);
   });
@@ -326,6 +328,21 @@ describe("buildManualInput", () => {
     expect(input.notes).toBeNull();
   });
 
+  it("forwards the chosen delivery partner on a delivery order", () => {
+    const input = buildManualInput(
+      form({
+        orderType: "DELIVERY",
+        customerMode: "WALKIN",
+        customerName: "Asha",
+        deliveryPartner: "rider1",
+        line1: "12 Main",
+        city: "Pune",
+        items: [{ menuItemId: "m1", name: "X", price: 10, qty: 1, spiceLevel: 0 }],
+      })
+    );
+    expect(input.deliveryPartner).toBe("rider1");
+  });
+
   it("coerces non-numeric discount and delivery fee to zero", () => {
     const v = form({ orderType: "DELIVERY" });
     (v as { discount?: unknown }).discount = "nope";
@@ -352,6 +369,7 @@ describe("orderToManualForm", () => {
         placedAt: "2026-06-25T10:00:00.000Z",
         surveyUrl: "https://s",
         notes: "hi",
+        deliveryPartner: { id: "r1", name: "Rider", phone: "777" },
         address: {
           line1: "12 Main",
           line2: "Apt",
@@ -380,6 +398,7 @@ describe("orderToManualForm", () => {
     expect(f.line1).toBe("12 Main");
     expect(f.phone).toBe("555");
     expect(f.couponCode).toBe("SAVE");
+    expect(f.deliveryPartner).toBe("r1");
   });
 
   it("infers delivery from the presence of an address when orderType is absent", () => {
@@ -411,6 +430,7 @@ describe("orderToManualForm", () => {
     expect(f.couponCode).toBe("");
     expect(f.surveyUrl).toBe("");
     expect(f.notes).toBe("");
+    expect(f.deliveryPartner).toBe("");
   });
 
   it("falls back to the user's name/phone when no customer snapshot is present", () => {

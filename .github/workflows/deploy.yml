@@ -50,6 +50,14 @@ jobs:
             context: ./delivery
             image: ddb-delivery
             build-args: EXPO_PUBLIC_API_URL=https://server.didibhaiyakibiryani.com/graphql
+          - app: survey
+            context: ./survey
+            image: ddb-survey
+            build-args: VITE_API_URL=https://server.didibhaiyakibiryani.com/graphql
+          - app: track
+            context: ./track
+            image: ddb-track
+            build-args: VITE_API_URL=https://server.didibhaiyakibiryani.com/graphql
     steps:
       - uses: actions/checkout@v4
 
@@ -137,7 +145,7 @@ jobs:
             MONGODB_URI=${MONGODB_URI}
             JWT_SECRET=${JWT_SECRET}
             JWT_EXPIRES_IN=30d
-            CORS_ORIGINS=https://didibhaiyakibiryani.com,https://admin.didibhaiyakibiryani.com,https://native.didibhaiyakibiryani.com,https://delivery.didibhaiyakibiryani.com
+            CORS_ORIGINS=https://didibhaiyakibiryani.com,https://admin.didibhaiyakibiryani.com,https://native.didibhaiyakibiryani.com,https://delivery.didibhaiyakibiryani.com,https://survey.didibhaiyakibiryani.com,https://track.didibhaiyakibiryani.com
             SMTP_HOST=${SMTP_HOST}
             SMTP_PORT=${SMTP_PORT}
             SMTP_USER=${SMTP_USER}

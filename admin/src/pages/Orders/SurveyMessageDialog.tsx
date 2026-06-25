@@ -30,7 +30,7 @@ export default function SurveyMessageDialog({ order, onClose }: Readonly<Props>)
     () =>
       fillSurveyTemplate(template, {
         name: order.user?.name ?? order.customerName ?? "there",
-        surveyLink: order.ratingToken ? `${window.location.origin}/survey/${order.id}/${order.ratingToken}` : "",
+        surveyLink: `https://survey.didibhaiyakibiryani.com/${order.orderNumber}`,
         orderNumber: order.orderNumber,
         brandName,
         website,

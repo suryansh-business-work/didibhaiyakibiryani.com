@@ -241,6 +241,7 @@ export default function Orders() {
         <ManualOrderModal
           key={editPos?.id ?? "new"}
           editOrder={editPos ?? undefined}
+          riders={riderData?.riders ?? []}
           onClose={() => {
             setPosOpen(false);
             setEditPos(null);

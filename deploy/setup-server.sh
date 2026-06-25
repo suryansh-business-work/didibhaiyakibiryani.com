@@ -13,6 +13,8 @@ CANDIDATE_SUBDOMAINS=(
   "admin.${DOMAIN}"
   "native.${DOMAIN}"
   "delivery.${DOMAIN}"
+  "survey.${DOMAIN}"
+  "track.${DOMAIN}"
   "signoz.${DOMAIN}"
 )
 SUBDOMAINS=()

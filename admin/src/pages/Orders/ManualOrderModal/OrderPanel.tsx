@@ -6,6 +6,7 @@ import { Fulfilment } from "./Fulfilment";
 import { OrderLines } from "./OrderLines";
 import { OrderOptions } from "./OrderOptions";
 import type { ManualOrderForm } from "../../../form";
+import type { Rider } from "../types";
 import type { CouponOption, CustomerOption, LeadOption, SocietyOption, Totals } from "./types";
 
 type OrderType = "DELIVERY" | "TAKEAWAY";
@@ -18,6 +19,7 @@ interface Props {
   customers: CustomerOption[];
   leads: LeadOption[];
   societies: SocietyOption[];
+  riders: Rider[];
   coupons: CouponOption[];
   fields: ReadonlyArray<{ id: string }>;
   totals: Totals;
@@ -46,7 +48,7 @@ function Row({ k, v, strong }: Readonly<{ k: string; v: string; strong?: boolean
 /** The "Current order" panel: customer, line items, options and totals. */
 export function OrderPanel(props: Readonly<Props>) {
   const {
-    control, errors, watch, setValue, customers, leads, societies, coupons, fields, totals,
+    control, errors, watch, setValue, customers, leads, societies, riders, coupons, fields, totals,
     isDelivery, orderType, setOrderType, baseStatus, onQty, onRemove, onToggleComplimentary, onCreate, isSubmitting, rootError,
     submitLabel = "Create order",
   } = props;
@@ -55,7 +57,7 @@ export function OrderPanel(props: Readonly<Props>) {
       <Typography variant="h6" gutterBottom>Current order</Typography>
       <CustomerSelect control={control} errors={errors} watch={watch} setValue={setValue} customers={customers} leads={leads} societies={societies} />
       <Divider sx={{ my: 1.5 }} />
-      <Fulfilment control={control} errors={errors} watch={watch} isDelivery={isDelivery} orderType={orderType} setOrderType={setOrderType} deliveryFee={totals.deliveryFee} />
+      <Fulfilment control={control} errors={errors} watch={watch} isDelivery={isDelivery} orderType={orderType} setOrderType={setOrderType} deliveryFee={totals.deliveryFee} riders={riders} />
       <Divider sx={{ my: 1.5 }} />
       <Box sx={{ flex: 1, overflowY: "auto", pr: 0.5 }}>
         <OrderLines fields={fields} watch={watch} onQty={onQty} onRemove={onRemove} onToggleComplimentary={onToggleComplimentary} />

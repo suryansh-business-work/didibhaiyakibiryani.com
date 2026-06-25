@@ -7,7 +7,7 @@
  */
 import { execSync } from "node:child_process";
 
-const PORTS = [3000, 3001, 3002, 3003, 3004];
+const PORTS = [3000, 3001, 3002, 3003, 3004, 3006, 3007];
 const isWindows = process.platform === "win32";
 
 function run(cmd) {

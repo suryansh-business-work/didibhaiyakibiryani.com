@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -56,14 +56,24 @@ function Recenter({ center }: Readonly<{ center: LatLng | null }>) {
   return null;
 }
 
-function useRiderPosition(): LatLng | null {
+type OnLocation = (lat: number, lng: number) => void;
+
+function useRiderPosition(onLocation?: OnLocation): LatLng | null {
   const [rider, setRider] = useState<LatLng | null>(null);
+  // Hold the latest callback in a ref so the geolocation watch is set up once.
+  const cbRef = useRef(onLocation);
+  cbRef.current = onLocation;
   useEffect(() => {
     if (!navigator.geolocation) {
       return undefined;
     }
     const id = navigator.geolocation.watchPosition(
-      (pos) => setRider({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setRider({ lat, lng });
+        cbRef.current?.(lat, lng);
+      },
       () => undefined,
       { enableHighAccuracy: true },
     );
@@ -72,9 +82,9 @@ function useRiderPosition(): LatLng | null {
   return rider;
 }
 
-export default function TrackMap({ orders }: Readonly<{ orders: ReadonlyArray<QueueOrder> }>) {
+export default function TrackMap({ orders, onLocation }: Readonly<{ orders: ReadonlyArray<QueueOrder>; onLocation?: OnLocation }>) {
   const dests = destinations(orders);
-  const rider = useRiderPosition();
+  const rider = useRiderPosition(onLocation);
   const center = pickCenter(rider, dests);
 
   return (

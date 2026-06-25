@@ -8,7 +8,7 @@ vi.mock("../../src/utils/mailer.js", () => ({
   sendMailAsync: vi.fn(),
   resolveMailConfig: vi.fn(async () => null),
 }));
-vi.mock("../../src/emails/notify.js", () => ({ notifyOrderEmail: vi.fn(), ratingUrlFor: () => "u" }));
+vi.mock("../../src/emails/notify.js", () => ({ notifyOrderEmail: vi.fn(), notifyOrderTrackingWhatsApp: vi.fn(), ratingUrlFor: () => "u" }));
 
 import { orderResolvers } from "../../src/graphql/resolvers/order";
 import { authResolvers } from "../../src/graphql/resolvers/auth";

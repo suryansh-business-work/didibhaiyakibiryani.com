@@ -283,8 +283,10 @@ export const dashboardResolvers = {
             profit: { $sum: { $multiply: [{ $subtract: ["$curPrice", "$curCost"] }, "$items.qty"] } },
           },
         },
-        { $project: { _id: 0, name: "$_id", price: 1, makingCost: 1, qty: 1 } },
+        // Rank by total profit BEFORE projecting `profit` away (sorting on a
+        // dropped field is a no-op, which left the order undefined).
         { $sort: { profit: -1 } },
+        { $project: { _id: 0, name: "$_id", price: 1, makingCost: 1, qty: 1 } },
       ]);
     },
 

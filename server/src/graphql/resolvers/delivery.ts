@@ -4,8 +4,11 @@ import { requireRole, hashPassword, type Context } from "../../utils/auth.js";
 import { logger } from "../../utils/logger.js";
 import type { Role } from "../../models/index.js";
 
-/** Statuses a rider still has work to do on. */
-const ACTIVE_STATUSES = ["CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY"];
+/** Statuses a rider still has work to do on — everything before the order is
+ * finished. Includes PLACED so a just-assigned order (e.g. a POS sale that
+ * hasn't been confirmed yet) shows in the rider's queue immediately; the app
+ * renders a "Waiting for the kitchen…" state until it's ready for pickup. */
+const ACTIVE_STATUSES = ["PLACED", "CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY"];
 
 interface CreateStaffArgs {
   name: string;
@@ -42,6 +45,21 @@ export const deliveryResolvers = {
   },
 
   Mutation: {
+    /** Rider pushes their live GPS (throttled client-side); surfaced on the
+     * public tracking page only while an order is out for delivery. */
+    updateRiderLocation: async (
+      _: unknown,
+      { lat, lng }: { lat: number; lng: number },
+      ctx: Context
+    ) => {
+      const u = requireRole(ctx, "DELIVERY");
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        throw new GraphQLError("Invalid coordinates.", { extensions: { code: "BAD_USER_INPUT" } });
+      }
+      await User.findByIdAndUpdate(u.id, { lastLat: lat, lastLng: lng, lastLocationAt: new Date() }).exec();
+      return true;
+    },
+
     assignDeliveryPartner: async (
       _: unknown,
       { orderId, riderId }: { orderId: string; riderId: string },

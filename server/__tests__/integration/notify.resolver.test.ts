@@ -30,6 +30,6 @@ describe("notify emails", () => {
     await new Promise((r) => setTimeout(r, 200));
     expect(sendMail).toHaveBeenCalledTimes(2);
 
-    expect(ratingUrlFor(order)).toContain(order.ratingToken);
+    expect(ratingUrlFor(order)).toContain(order.orderNumber);
   });
 });

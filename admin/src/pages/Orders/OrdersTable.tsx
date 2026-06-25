@@ -24,6 +24,15 @@ import type { Order } from "./types";
 
 export type SortKey = "orderNumber" | "customer" | "status" | "placedAt" | "total";
 
+/** Normalise a stored phone to a wa.me recipient (India): strip non-digits + a
+ * leading trunk 0, and add the 91 country code for a bare 10-digit number. */
+function waNumber(raw: string): string {
+  let d = raw.replace(/\D/g, "");
+  if (d.startsWith("0")) d = d.slice(1);
+  if (d.length === 10) d = `91${d}`;
+  return d;
+}
+
 interface OrdersTableProps {
   orders: Order[];
   selected: Set<string>;
@@ -116,8 +125,18 @@ export default function OrdersTable({
     setCols((prev) => ({ ...prev, [key]: !prev[key] }));
   }
   function copySurvey(o: Order) {
-    if (!o.ratingToken) return;
-    navigator.clipboard.writeText(`${window.location.origin}/survey/${o.id}/${o.ratingToken}`).catch(() => undefined);
+    navigator.clipboard.writeText(`https://survey.didibhaiyakibiryani.com/${o.orderNumber}`).catch(() => undefined);
+  }
+  function copyTracking(o: Order) {
+    if (!o.trackingUrl) return;
+    navigator.clipboard.writeText(o.trackingUrl).catch(() => undefined);
+  }
+  function shareTrackingWhatsApp(o: Order) {
+    if (!o.trackingUrl) return;
+    const text = `Track your order ${o.orderNumber}: ${o.trackingUrl}`;
+    const withCc = waNumber(o.customerPhone ?? o.user?.phone ?? "");
+    const base = withCc ? `https://wa.me/${withCc}` : "https://wa.me/";
+    window.open(`${base}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
   }
 
   const menuDelivered = menuOrder?.status === "DELIVERED";
@@ -242,6 +261,22 @@ export default function OrdersTable({
           }}
         >
           Change delivery status
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuOrder) copyTracking(menuOrder);
+            closeMenu();
+          }}
+        >
+          Copy tracking link
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuOrder) shareTrackingWhatsApp(menuOrder);
+            closeMenu();
+          }}
+        >
+          Share tracking on WhatsApp
         </MenuItem>
         <MenuItem
           disabled={!menuDelivered}

@@ -227,6 +227,7 @@ export const manualOrderSchema = z
     state: z.string().optional(),
     pincode: z.string().optional(),
     phone: z.string().optional(),
+    deliveryPartner: z.string().optional(),
     couponCode: z.string().optional(),
     discount: z.coerce.number().min(0),
     deliveryFee: z.coerce.number().min(0),

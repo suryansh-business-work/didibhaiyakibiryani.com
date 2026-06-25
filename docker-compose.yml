@@ -68,6 +68,20 @@ services:
     ports:
       - "127.0.0.1:3004:3004"
 
+  survey:
+    image: ${DOCKERHUB_USERNAME}/ddb-survey:latest
+    container_name: ddb-survey
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3006:3006"
+
+  track:
+    image: ${DOCKERHUB_USERNAME}/ddb-track:latest
+    container_name: ddb-track
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3007:3007"
+
 networks:
   default:
   signoz-net:
