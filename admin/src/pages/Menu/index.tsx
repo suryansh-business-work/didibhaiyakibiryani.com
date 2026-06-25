@@ -220,6 +220,7 @@ export default function Menu() {
           control={control}
           errors={errors}
           watch={watch}
+          setValue={setValue}
           cats={cats}
           imageUrl={watch("image") ?? ""}
           onImageUploaded={(url) => setValue("image", url)}

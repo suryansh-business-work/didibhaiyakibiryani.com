@@ -1,4 +1,4 @@
-import { Controller, type Control, type FieldErrors, type UseFormWatch } from "react-hook-form";
+import { Controller, type Control, type FieldErrors, type UseFormWatch, type UseFormSetValue } from "react-hook-form";
 import {
   Accordion,
   AccordionDetails,
@@ -22,6 +22,7 @@ interface MenuItemModalProps {
   control: Control<MenuForm>;
   errors: FieldErrors<MenuForm>;
   watch: UseFormWatch<MenuForm>;
+  setValue: UseFormSetValue<MenuForm>;
   cats: Cat[];
   imageUrl: string;
   onImageUploaded: (url: string) => void;
@@ -30,19 +31,46 @@ interface MenuItemModalProps {
   onSubmit: () => void;
 }
 
-function FinanceAccordion({ control, watch, error }: Readonly<{ control: Control<MenuForm>; watch: UseFormWatch<MenuForm>; error?: string }>) {
+function FinanceAccordion({
+  control,
+  watch,
+  setValue,
+  error,
+}: Readonly<{ control: Control<MenuForm>; watch: UseFormWatch<MenuForm>; setValue: UseFormSetValue<MenuForm>; error?: string }>) {
   const price = Number(watch("price")) || 0;
   const cost = Number(watch("makingCost")) || 0;
   const profit = price - cost;
   const margin = price > 0 ? Math.round((profit / price) * 100) : 0;
+
+  // Making cost and Profit/unit are two views of the same number: cost + profit = price.
+  // Editing Profit/unit derives the making cost (clamped to 0…price) and merges it back.
+  function onProfitChange(raw: string) {
+    const entered = Number(raw);
+    if (!Number.isFinite(entered)) return;
+    const nextCost = Math.min(Math.max(price - entered, 0), price);
+    setValue("makingCost", nextCost, { shouldValidate: true, shouldDirty: true });
+  }
+
   return (
     <Accordion disableGutters sx={{ mt: 1, bgcolor: "transparent" }}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography fontWeight={700}>Finance</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        <Stack spacing={1}>
-          <RHFField control={control} name="makingCost" label="Making cost (₹)" type="number" hint="What one unit costs you to make" error={error} />
+        <Stack spacing={1.5}>
+          <Box sx={{ display: "flex", gap: 1.5 }}>
+            <RHFField control={control} name="makingCost" label="Making cost (₹)" type="number" hint="What one unit costs you to make" error={error} />
+            <TextField
+              label="Profit / unit (₹)"
+              type="number"
+              size="small"
+              margin="dense"
+              fullWidth
+              value={profit}
+              onChange={(e) => onProfitChange(e.target.value)}
+              helperText="Sets making cost from price"
+            />
+          </Box>
           <Stack direction="row" justifyContent="space-between">
             <Typography variant="body2" color="text.secondary">Profit / unit</Typography>
             <Typography variant="body2" fontWeight={700} color={profit >= 0 ? "success.main" : "error"}>
@@ -60,6 +88,7 @@ export default function MenuItemModal({
   control,
   errors,
   watch,
+  setValue,
   cats,
   imageUrl,
   onImageUploaded,
@@ -99,7 +128,7 @@ export default function MenuItemModal({
           )}
         />
       </Box>
-      <FinanceAccordion control={control} watch={watch} error={errors.makingCost?.message} />
+      <FinanceAccordion control={control} watch={watch} setValue={setValue} error={errors.makingCost?.message} />
       <RHFCheckbox control={control} name="spiceSelectable" label="Let customers choose a spice level for this item" />
       <Box sx={{ display: "flex", gap: 1.5 }}>
         <Controller
