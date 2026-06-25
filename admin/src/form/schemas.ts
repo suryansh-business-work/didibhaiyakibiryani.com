@@ -4,6 +4,8 @@ import { z } from "zod";
  * they're unit-testable and shared by each page. */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Valid 10-digit Indian mobile number. */
+const PHONE_RE = /^[6-9]\d{9}$/;
 const sortOrder = z.coerce.number().int("Whole number").min(0, "Must be 0 or more");
 
 export const adminLoginSchema = z.object({
@@ -122,13 +124,18 @@ export const leadSchema = z.object({
 
 export const partyOrderSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
-  phone: z.string().trim().min(1, "Phone is required"),
+  phone: z.string().trim().regex(PHONE_RE, "Enter a valid 10-digit mobile number"),
   email: z.string().trim().regex(EMAIL_RE, "Enter a valid email"),
-  eventDate: z.string().optional(),
+  eventDate: z.string().trim().min(1, "Event date is required"),
+  eventTime: z.string().trim().min(1, "Event time is required"),
   guests: z
     .union([z.literal(""), z.coerce.number().int().positive("Enter a valid count").max(100000, "Too large")])
-    .optional(),
-  location: z.string().optional(),
+    // Annotate `boolean` so TS doesn't infer a type-guard that narrows out "".
+    .refine((v): boolean => v !== "", "Guests is required"),
+  line1: z.string().trim().min(1, "Address line is required"),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  pincode: optionalPincode,
   message: z.string().optional(),
 });
 

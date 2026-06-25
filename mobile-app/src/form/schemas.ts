@@ -6,6 +6,10 @@ import { z } from "zod";
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Digits only — a 10-digit phone number. */
 export const PHONE_RE = /^[0-9]{10}$/;
+/** A valid 10-digit Indian mobile number (starts 6-9). */
+export const MOBILE_RE = /^[6-9]\d{9}$/;
+/** A 6-digit Indian PIN code. */
+export const PINCODE_RE = /^\d{6}$/;
 export const OTHER_SUBJECT = "Other (custom subject)";
 
 export const loginSchema = z.object({
@@ -39,15 +43,35 @@ export const checkoutAddressSchema = z.object({
 
 export const partySchema = z.object({
   name: z.string().trim().min(1, "Enter your name"),
-  phone: z.string().trim().regex(PHONE_RE, "Enter a valid 10-digit phone number"),
+  phone: z.string().trim().regex(MOBILE_RE, "Enter a valid 10-digit mobile number"),
   email: z.string().trim().regex(EMAIL_RE, "Enter a valid email"),
-  eventDate: z.string().trim().optional(),
+  eventDate: z.string().trim().min(1, "Select the event date"),
+  eventTime: z.string().trim().min(1, "Select the event time"),
   guests: z
     .string()
     .trim()
+    .superRefine((v, ctx) => {
+      if (!v) {
+        ctx.addIssue({ code: "custom", message: "Enter the number of guests" });
+        return;
+      }
+      if (!/^\d+$/.test(v)) {
+        ctx.addIssue({ code: "custom", message: "Guests must be a number" });
+        return;
+      }
+      const n = Number(v);
+      if (n < 1 || n > 100000) {
+        ctx.addIssue({ code: "custom", message: "Enter between 1 and 100000 guests" });
+      }
+    }),
+  line1: z.string().trim().min(1, "Enter the address line"),
+  city: z.string().trim().optional(),
+  state: z.string().trim().optional(),
+  pincode: z
+    .string()
+    .trim()
     .optional()
-    .refine((v) => !v || /^\d+$/.test(v), "Guests must be a number"),
-  location: z.string().trim().optional(),
+    .refine((v) => !v || PINCODE_RE.test(v), "Enter a valid 6-digit PIN code"),
   message: z.string().trim().optional(),
   captchaAnswer: z.string().trim().min(1, "Solve the captcha"),
 });

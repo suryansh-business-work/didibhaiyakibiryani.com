@@ -21,13 +21,44 @@ interface PartyOrderInput {
   phone: string;
   email: string;
   eventDate?: string;
+  eventTime?: string;
   guests?: number;
   location?: string;
+  line1?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
   message?: string;
 }
 
 function bad(message: string): GraphQLError {
   return new GraphQLError(message, { extensions: { code: "BAD_USER_INPUT" } });
+}
+
+/** Trim + validate the required identity fields shared by create and update. */
+function validateParty(input: PartyOrderInput): { name: string; phone: string; email: string } {
+  const name = input.name.trim();
+  const phone = input.phone.trim();
+  const email = input.email.toLowerCase().trim();
+  if (!name || !phone || !email) throw bad("Name, phone and email are required.");
+  if (!EMAIL_RE.test(email)) throw bad("Please enter a valid email address.");
+  return { name, phone, email };
+}
+
+/** Map the optional input fields to document fields. `blank` is `null` on update
+ * (clears an emptied field) and `undefined` on create (falls back to defaults). */
+function partyDocFields(input: PartyOrderInput, blank: null | undefined) {
+  return {
+    eventDate: input.eventDate?.trim() || blank,
+    eventTime: input.eventTime?.trim() || blank,
+    guests: input.guests ?? blank,
+    location: input.location?.trim() || blank,
+    line1: input.line1?.trim() || blank,
+    city: input.city?.trim() || blank,
+    state: input.state?.trim() || blank,
+    pincode: input.pincode?.trim() || blank,
+    message: input.message?.trim() || blank,
+  };
 }
 
 /** Email the admin/support inbox and the customer (build is synchronous; send is fire-and-forget). */
@@ -59,7 +90,7 @@ export const partyResolvers = {
       requireRole(ctx, "ADMIN", "STAFF");
       return paginate(PartyOrder, {
         filter: status ? { status } : {},
-        searchFields: ["name", "phone", "email", "location"],
+        searchFields: ["name", "phone", "email", "location", "line1", "city"],
         sortAllow: ["name", "createdAt", "status"],
         ...page,
       });
@@ -74,29 +105,21 @@ export const partyResolvers = {
       const ok = await verifyCaptcha(captchaId, captchaAnswer);
       if (!ok) throw bad("Captcha answer is wrong or expired — try again.");
 
-      const name = input.name.trim();
-      const phone = input.phone.trim();
-      const email = input.email.toLowerCase().trim();
-      if (!name || !phone || !email) throw bad("Name, phone and email are required.");
-      if (!EMAIL_RE.test(email)) throw bad("Please enter a valid email address.");
-
-      const party = await PartyOrder.create({
-        name,
-        phone,
-        email,
-        eventDate: input.eventDate?.trim() || undefined,
-        guests: input.guests ?? undefined,
-        location: input.location?.trim() || undefined,
-        message: input.message?.trim() || undefined,
-      });
+      const { name, phone, email } = validateParty(input);
+      const party = await PartyOrder.create({ name, phone, email, ...partyDocFields(input, undefined) });
 
       const details: PartyOrderDetails = {
         name,
         phone,
         email,
         eventDate: party.eventDate,
+        eventTime: party.eventTime,
         guests: party.guests,
         location: party.location,
+        line1: party.line1,
+        city: party.city,
+        state: party.state,
+        pincode: party.pincode,
         message: party.message,
       };
       await notifyPartyEmails(details);
@@ -106,21 +129,29 @@ export const partyResolvers = {
 
     createPartyOrder: async (_: unknown, { input }: { input: PartyOrderInput }, ctx: Context) => {
       requireRole(ctx, "ADMIN", "STAFF");
-      const name = input.name.trim();
-      const phone = input.phone.trim();
-      const email = input.email.toLowerCase().trim();
-      if (!name || !phone || !email) throw bad("Name, phone and email are required.");
-      if (!EMAIL_RE.test(email)) throw bad("Please enter a valid email address.");
+      const { name, phone, email } = validateParty(input);
       // Staff-entered party orders skip captcha and the customer/admin email blast.
-      return PartyOrder.create({
-        name,
-        phone,
-        email,
-        eventDate: input.eventDate?.trim() || undefined,
-        guests: input.guests ?? undefined,
-        location: input.location?.trim() || undefined,
-        message: input.message?.trim() || undefined,
-      });
+      return PartyOrder.create({ name, phone, email, ...partyDocFields(input, undefined) });
+    },
+
+    updatePartyOrder: async (_: unknown, { id, input }: { id: string; input: PartyOrderInput }, ctx: Context) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+      const { name, phone, email } = validateParty(input);
+      // `null` for empty optionals so an admin can clear a field on edit.
+      const party = await PartyOrder.findByIdAndUpdate(
+        id,
+        { name, phone, email, ...partyDocFields(input, null) },
+        { new: true }
+      ).exec();
+      if (!party) throw bad("Party order not found.");
+      return party;
+    },
+
+    deletePartyOrder: async (_: unknown, { id }: { id: string }, ctx: Context) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+      const removed = await PartyOrder.findByIdAndDelete(id).exec();
+      if (!removed) throw bad("Party order not found.");
+      return true;
     },
 
     updatePartyOrderStatus: async (

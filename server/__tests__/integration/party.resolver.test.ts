@@ -26,8 +26,13 @@ const fullInput = {
   phone: "9876543210",
   email: "Asha@Example.com",
   eventDate: "2026-08-01",
+  eventTime: "19:30",
   guests: 40,
   location: "Indiranagar",
+  line1: "12 MG Road",
+  city: "Bengaluru",
+  state: "Karnataka",
+  pincode: "560001",
   message: "Veg only please",
 };
 
@@ -56,6 +61,9 @@ describe("party order resolver", () => {
     expect(await M.submitPartyOrder(null, { input: fullInput, ...goodCaptcha })).toBe(true);
     const saved = await PartyOrder.findOne({ email: "asha@example.com" }).lean();
     expect(saved?.guests).toBe(40);
+    expect(saved?.eventTime).toBe("19:30");
+    expect(saved?.line1).toBe("12 MG Road");
+    expect(saved?.state).toBe("Karnataka");
     expect(saved?.status).toBe("NEW");
   });
 
@@ -87,6 +95,41 @@ describe("party order resolver", () => {
     ).rejects.toThrow();
     await expect(
       M.updatePartyOrderStatus(null, { id: "651111111111111111111111", status: "CLOSED" }, admin)
+    ).rejects.toThrow(/not found/i);
+  });
+
+  it("creates a party order for staff (no captcha/email) and rejects invalid input", async () => {
+    const created = await M.createPartyOrder(null, { input: fullInput }, admin);
+    expect(created.email).toBe("asha@example.com");
+    expect(created.guests).toBe(40);
+    await expect(M.createPartyOrder(null, { input: { ...fullInput, name: " " } }, admin)).rejects.toThrow(/required/i);
+    await expect(M.createPartyOrder(null, { input: { ...fullInput, email: "nope" } }, admin)).rejects.toThrow(/valid email/i);
+  });
+
+  it("updates an enquiry's details, clears emptied optionals, and blocks unknown ids", async () => {
+    const p = await PartyOrder.create({ ...fullInput, email: "x@x.com" });
+    const updated = await M.updatePartyOrder(
+      null,
+      { id: p.id, input: { name: "Asha B", phone: "9", email: "asha.b@x.com", location: "", guests: undefined } },
+      admin
+    );
+    expect(updated.name).toBe("Asha B");
+    expect(updated.location ?? null).toBeNull();
+    expect(updated.guests ?? null).toBeNull();
+    await expect(
+      M.updatePartyOrder(null, { id: p.id, input: { ...fullInput, email: "bad" } }, admin)
+    ).rejects.toThrow(/valid email/i);
+    await expect(
+      M.updatePartyOrder(null, { id: "651111111111111111111111", input: fullInput }, admin)
+    ).rejects.toThrow(/not found/i);
+  });
+
+  it("deletes a single enquiry and rejects unknown ids", async () => {
+    const p = await PartyOrder.create({ name: "Z", phone: "1", email: "z@x.com" });
+    expect(await M.deletePartyOrder(null, { id: p.id }, admin)).toBe(true);
+    expect(await PartyOrder.countDocuments()).toBe(0);
+    await expect(
+      M.deletePartyOrder(null, { id: "651111111111111111111111" }, admin)
     ).rejects.toThrow(/not found/i);
   });
 });

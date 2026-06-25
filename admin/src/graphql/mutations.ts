@@ -329,6 +329,16 @@ export const CREATE_PARTY_ORDER = gql`
   }
 `;
 
+export const UPDATE_PARTY_ORDER = gql`
+  mutation UpdatePartyOrder($id: ID!, $input: PartyOrderInput!) {
+    updatePartyOrder(id: $id, input: $input) {
+      id
+    }
+  }
+`;
+
+export const DELETE_PARTY_ORDER = gql`mutation DeletePartyOrder($id: ID!) { deletePartyOrder(id: $id) }`;
+
 export const CREATE_ITEM = gql`
   mutation CreateMenuItem($input: MenuItemInput!) {
     createMenuItem(input: $input) {

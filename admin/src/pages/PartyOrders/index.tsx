@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { PARTY_ORDERS_PAGE } from "../../graphql/queries";
-import { UPDATE_PARTY_ORDER_STATUS, DELETE_PARTY_ORDERS } from "../../graphql/mutations";
+import { UPDATE_PARTY_ORDER_STATUS, DELETE_PARTY_ORDER, DELETE_PARTY_ORDERS } from "../../graphql/mutations";
 import { Button, Chip, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
 import { fmtDate } from "../../components/ui";
@@ -12,8 +12,14 @@ import PartyOrderModal from "./PartyOrderModal";
 
 interface Party {
   id: string; name: string; phone: string; email: string;
-  eventDate?: string; guests?: number; location?: string; message?: string;
+  eventDate?: string; eventTime?: string; guests?: number;
+  location?: string; line1?: string; city?: string; state?: string; pincode?: string;
+  message?: string;
   status: "NEW" | "CONTACTED" | "CLOSED"; createdAt: string;
+}
+
+function partyAddress(o: Party): string {
+  return [o.line1, o.city, o.state, o.pincode].filter(Boolean).join(", ") || o.location || "";
 }
 
 const STATUSES = ["NEW", "CONTACTED", "CLOSED"] as const;
@@ -26,10 +32,12 @@ export default function PartyOrders() {
     variables: { ...variables, status: filter === "ALL" ? null : filter },
   });
   const [updateStatus] = useMutation(UPDATE_PARTY_ORDER_STATUS);
+  const [deleteOne] = useMutation(DELETE_PARTY_ORDER);
   const [deleteMany] = useMutation(DELETE_PARTY_ORDERS);
   const notify = useAlert();
   const confirm = useConfirm();
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<Party | null>(null);
 
   const orders = data?.partyOrdersPage.items ?? [];
   const total = data?.partyOrdersPage.total ?? 0;
@@ -45,6 +53,17 @@ export default function PartyOrders() {
       await refetch();
     } catch (e: unknown) {
       await notify({ title: "Could not update", message: e instanceof Error ? e.message : "Could not update the status." });
+    }
+  }
+
+  async function removeOne(o: Party) {
+    const ok = await confirm({ title: "Delete party order", message: `Delete the enquiry from “${o.name}”?`, confirmLabel: "Delete", danger: true });
+    if (!ok) return;
+    try {
+      await deleteOne({ variables: { id: o.id } });
+      await refetch();
+    } catch (e: unknown) {
+      await notify({ title: "Could not delete", message: e instanceof Error ? e.message : "Could not delete." });
     }
   }
 
@@ -68,12 +87,15 @@ export default function PartyOrders() {
         <Typography variant="caption" color="text.secondary">{o.email}</Typography>
       </>
     ) },
-    { key: "event", label: "Event", render: (o) => (
-      <>
-        <Typography variant="body2" color="text.secondary">{o.eventDate || "—"}</Typography>
-        {o.location ? <Typography variant="caption" color="text.secondary">{o.location}</Typography> : null}
-      </>
-    ) },
+    { key: "event", label: "Event", render: (o) => {
+      const address = partyAddress(o);
+      return (
+        <>
+          <Typography variant="body2" color="text.secondary">{[o.eventDate, o.eventTime].filter(Boolean).join(" ") || "—"}</Typography>
+          {address ? <Typography variant="caption" color="text.secondary">{address}</Typography> : null}
+        </>
+      );
+    } },
     { key: "guests", label: "Guests", render: (o) => <Typography variant="body2" color="text.secondary">{o.guests ?? "—"}</Typography> },
     { key: "message", label: "Details", render: (o) => <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 280, whiteSpace: "pre-wrap" }}>{o.message || "—"}</Typography> },
     { key: "status", label: "Status", render: (o) => (
@@ -110,11 +132,26 @@ export default function PartyOrders() {
         searchPlaceholder="Search name, phone, email…"
         onBulkDelete={bulkDelete}
         toolbarStart={chips}
+        renderActions={(o) => (
+          <>
+            <Button size="small" onClick={() => setEditing(o)}>Edit</Button>
+            <Button size="small" color="error" onClick={() => removeOne(o)}>Delete</Button>
+          </>
+        )}
         toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={() => setAdding(true)}>Add party order</Button>}
         {...tableProps}
       />
 
-      {adding && <PartyOrderModal onClose={() => setAdding(false)} onCreated={() => refetch()} />}
+      {(adding || editing) && (
+        <PartyOrderModal
+          editing={editing ?? undefined}
+          onClose={() => {
+            setAdding(false);
+            setEditing(null);
+          }}
+          onSaved={() => refetch()}
+        />
+      )}
     </Layout>
   );
 }

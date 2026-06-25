@@ -10,7 +10,8 @@ import { CAPTCHA, SUBMIT_PARTY_ORDER } from "../src/graphql";
 import { useAuth } from "../src/auth";
 import { brand } from "../src/theme";
 import { Section, Notice } from "../src/checkout/fields";
-import { RHFTextField, DateTimeField, partySchema, type PartyForm } from "../src/form";
+import { RHFTextField, partySchema, type PartyForm } from "../src/form";
+import { PartyFormBody } from "../src/party/PartyFormBody";
 import { BackButton, MIcon } from "../src/components";
 
 export default function PartyOrder() {
@@ -32,8 +33,12 @@ export default function PartyOrder() {
       phone: user?.phone ?? "",
       email: user?.email ?? "",
       eventDate: "",
+      eventTime: "",
       guests: "",
-      location: "",
+      line1: "",
+      city: "",
+      state: "",
+      pincode: "",
       message: "",
       captchaAnswer: "",
     },
@@ -59,9 +64,13 @@ export default function PartyOrder() {
             name: data.name.trim(),
             phone: data.phone.trim(),
             email: data.email.trim(),
-            eventDate: data.eventDate?.trim() || undefined,
-            guests: data.guests?.trim() ? Number(data.guests.trim()) : undefined,
-            location: data.location?.trim() || undefined,
+            eventDate: data.eventDate.trim(),
+            eventTime: data.eventTime.trim(),
+            guests: Number(data.guests.trim()),
+            line1: data.line1.trim(),
+            city: data.city?.trim() || undefined,
+            state: data.state?.trim() || undefined,
+            pincode: data.pincode?.trim() || undefined,
             message: data.message?.trim() || undefined,
           },
           captchaId: captcha.id,
@@ -98,23 +107,14 @@ export default function PartyOrder() {
               Birthdays, office lunches, pujas and big dawats — tell us what you need and we'll plan the handi.
             </Text>
 
-            <Section title="Your details">
-              <RHFTextField control={control} name="name" label="Name" error={errors.name?.message} />
-              <RHFTextField control={control} name="phone" label="Phone" keyboard="phone-pad" error={errors.phone?.message} />
-              <RHFTextField control={control} name="email" label="Email" keyboard="email-address" error={errors.email?.message} />
-            </Section>
-
-            <Section title="Party details">
-              <DateTimeField
-                label="Event date & time"
-                value={watch("eventDate") ?? ""}
-                onChange={(v) => setValue("eventDate", v, { shouldValidate: true })}
-                error={errors.eventDate?.message}
-              />
-              <RHFTextField control={control} name="guests" label="Approx. guests" keyboard="number-pad" error={errors.guests?.message} />
-              <RHFTextField control={control} name="location" label="Location / society" error={errors.location?.message} />
-              <RHFTextField control={control} name="message" label="Anything else? (menu, budget, timing)" multiline error={errors.message?.message} />
-            </Section>
+            <PartyFormBody
+              control={control}
+              errors={errors}
+              eventDate={watch("eventDate") ?? ""}
+              eventTime={watch("eventTime") ?? ""}
+              onEventDate={(v) => setValue("eventDate", v, { shouldValidate: true })}
+              onEventTime={(v) => setValue("eventTime", v, { shouldValidate: true })}
+            />
 
             <Section title={`Captcha: ${captcha?.question ?? "…"}`}>
               <RHFTextField control={control} name="captchaAnswer" label="Your answer" keyboard="number-pad" error={errors.captchaAnswer?.message} />

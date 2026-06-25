@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ScrollView } from "react-native";
 import { YStack, Text, Spinner } from "tamagui";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -12,13 +13,14 @@ interface HomeListProps {
   items: Item[];
   count: number;
   onAdd: (item: Item) => void;
+  header?: ReactNode;
 }
 
 function hueFor(index: number): number {
   return (index * 9 + 12) % 40;
 }
 
-export function HomeList({ loading, error, items, count, onAdd }: Readonly<HomeListProps>) {
+export function HomeList({ loading, error, items, count, onAdd, header }: Readonly<HomeListProps>) {
   const tabBarHeight = useBottomTabBarHeight();
   if (loading) {
     return (
@@ -45,6 +47,7 @@ export function HomeList({ loading, error, items, count, onAdd }: Readonly<HomeL
     <ScrollView
       contentContainerStyle={{ padding: 14, paddingBottom: tabBarHeight + (count > 0 ? 84 : 20), gap: 12 }}
     >
+      {header && <YStack marginHorizontal={-14}>{header}</YStack>}
       {items.map((it, idx) => (
         <RiseIn key={it.id} index={idx}>
           <MenuItemCard item={it} hue={hueFor(idx)} onAdd={onAdd} />

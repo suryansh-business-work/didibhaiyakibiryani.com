@@ -43,14 +43,18 @@ export default function Home() {
     <YStack flex={1} backgroundColor={brand.bg}>
       <HomeHeader count={count} paddingTop={insets.top + 8} onOpenCart={openCart} />
       <StoreClosedBanner />
-      <HomeSlider banners={banners} />
-      <CategoryChips cats={cats} activeCat={activeCat} onSelect={setActiveCat} />
       <HomeList
         loading={loading && !data}
         error={error?.message}
         items={filtered}
         count={count}
         onAdd={addToCart}
+        header={
+          <>
+            <HomeSlider banners={banners} />
+            <CategoryChips cats={cats} activeCat={activeCat} onSelect={setActiveCat} />
+          </>
+        }
       />
       {count > 0 && <CartBar count={count} subtotal={subtotal} onPress={openCart} />}
     </YStack>

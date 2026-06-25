@@ -12,8 +12,14 @@ export interface IPartyOrder extends Document {
   phone: string;
   email: string;
   eventDate?: string;
+  eventTime?: string;
   guests?: number;
+  /** Legacy free-text location; superseded by the structured address below. */
   location?: string;
+  line1?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
   message?: string;
   status: PartyOrderStatus;
   createdAt: Date;
@@ -26,8 +32,13 @@ const partyOrderSchema = new Schema<IPartyOrder>(
     phone: { type: String, required: true, trim: true, maxlength: 20 },
     email: { type: String, required: true, trim: true, lowercase: true, maxlength: 160 },
     eventDate: { type: String, trim: true, maxlength: 60 },
+    eventTime: { type: String, trim: true, maxlength: 30 },
     guests: { type: Number, min: 1, max: 100000 },
     location: { type: String, trim: true, maxlength: 200 },
+    line1: { type: String, trim: true, maxlength: 200 },
+    city: { type: String, trim: true, maxlength: 80 },
+    state: { type: String, trim: true, maxlength: 80 },
+    pincode: { type: String, trim: true, maxlength: 12 },
     message: { type: String, trim: true, maxlength: 2000 },
     status: {
       type: String,

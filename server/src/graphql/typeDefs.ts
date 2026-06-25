@@ -189,8 +189,13 @@ export const typeDefs = /* GraphQL */ `
     phone: String!
     email: String!
     eventDate: String
+    eventTime: String
     guests: Int
     location: String
+    line1: String
+    city: String
+    state: String
+    pincode: String
     message: String
     status: PartyOrderStatus!
     createdAt: DateTime!
@@ -452,8 +457,13 @@ export const typeDefs = /* GraphQL */ `
     phone: String!
     email: String!
     eventDate: String
+    eventTime: String
     guests: Int
     location: String
+    line1: String
+    city: String
+    state: String
+    pincode: String
     message: String
   }
 
@@ -927,7 +937,9 @@ export const typeDefs = /* GraphQL */ `
     # Party order enquiries
     submitPartyOrder(input: PartyOrderInput!, captchaId: String!, captchaAnswer: String!): Boolean! # public, captcha-gated
     createPartyOrder(input: PartyOrderInput!): PartyOrder! # admin/staff — manual entry, no captcha/email
+    updatePartyOrder(id: ID!, input: PartyOrderInput!): PartyOrder! # admin/staff — edit an enquiry
     updatePartyOrderStatus(id: ID!, status: PartyOrderStatus!): PartyOrder! # admin/staff
+    deletePartyOrder(id: ID!): Boolean! # admin/staff — single delete
 
     createMenuItem(input: MenuItemInput!): MenuItem!
     updateMenuItem(id: ID!, input: MenuItemInput!): MenuItem!

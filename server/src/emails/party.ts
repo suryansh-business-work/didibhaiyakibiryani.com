@@ -6,8 +6,13 @@ export interface PartyOrderDetails {
   phone: string;
   email: string;
   eventDate?: string;
+  eventTime?: string;
   guests?: number;
   location?: string;
+  line1?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
   message?: string;
 }
 
@@ -18,8 +23,10 @@ function row(label: string, value: string): string {
 function detailRows(p: PartyOrderDetails): string {
   const rows = [row("Name", p.name), row("Phone", p.phone), row("Email", p.email)];
   if (p.eventDate) rows.push(row("Event date", p.eventDate));
+  if (p.eventTime) rows.push(row("Event time", p.eventTime));
   if (p.guests) rows.push(row("Guests", String(p.guests)));
-  if (p.location) rows.push(row("Location", p.location));
+  const address = [p.line1, p.city, p.state, p.pincode].filter(Boolean).join(", ");
+  if (address) rows.push(row("Address", address));
   if (p.message) rows.push(row("Message", p.message));
   return rows.join("");
 }

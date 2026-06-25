@@ -315,8 +315,13 @@ export const PARTY_ORDERS_PAGE = gql`
         phone
         email
         eventDate
+        eventTime
         guests
         location
+        line1
+        city
+        state
+        pincode
         message
         status
         createdAt

@@ -4,6 +4,9 @@ export default defineConfig({
   test: {
     include: ["__tests__/unit/**/*.test.ts", "__tests__/integration/**/*.test.ts"],
     environment: "node",
+    // The v8 coverage provider + worker-threads pool crashes tinypool on Node 22
+    // (Windows). Child-process forks are stable for plain, integration and coverage runs.
+    pool: "forks",
     // In-memory Mongo (mongodb-memory-server) downloads a mongod binary on first
     // run and resolver suites spin one up per file — give hooks room.
     testTimeout: 30000,

@@ -337,10 +337,16 @@ const partyPerks = [
             </div>
             <input id="po-email" type="email" placeholder="Email*" autocomplete="email" />
             <div class="party-form__row">
-              <input id="po-date" type="text" placeholder="Event date (e.g. 15 Aug)" />
-              <input id="po-guests" type="number" min="1" placeholder="Guests" />
+              <input id="po-date" type="date" aria-label="Event date" placeholder="Event date*" required />
+              <input id="po-time" type="time" aria-label="Event time" placeholder="Event time*" required />
             </div>
-            <input id="po-location" type="text" placeholder="Location / society" />
+            <input id="po-guests" type="number" min="1" placeholder="Guests*" required />
+            <input id="po-line1" type="text" placeholder="Address line*" autocomplete="address-line1" required />
+            <div class="party-form__row">
+              <input id="po-city" type="text" placeholder="City" autocomplete="address-level2" />
+              <input id="po-state" type="text" placeholder="State" autocomplete="address-level1" />
+            </div>
+            <input id="po-pincode" type="text" inputmode="numeric" maxlength="6" placeholder="Pin code" autocomplete="postal-code" />
             <textarea id="po-message" rows="2" placeholder="Menu, budget, timing — tell us about your party"></textarea>
             <div class="party-form__captcha">
               <label id="po-captcha-q" for="po-captcha-a">Captcha: …</label>
@@ -423,23 +429,61 @@ const partyPerks = [
         const name = val("po-name");
         const phone = val("po-phone");
         const email = val("po-email");
+        const eventDate = val("po-date");
+        const eventTime = val("po-time");
+        const guestsRaw = val("po-guests");
+        const line1 = val("po-line1");
+        const pincode = val("po-pincode");
         const answer = val("po-captcha-a");
-        if (!name || !phone || !email) {
-          showMsg("Name, phone and email are required.", false);
+        const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!name) {
+          showMsg("Name is required.", false);
+          return;
+        }
+        if (!/^[6-9]\d{9}$/.test(phone)) {
+          showMsg("Enter a valid 10-digit mobile number", false);
+          return;
+        }
+        if (!email || !emailRe.test(email)) {
+          showMsg("Enter a valid email address.", false);
+          return;
+        }
+        if (!eventDate) {
+          showMsg("Event date is required.", false);
+          return;
+        }
+        if (!eventTime) {
+          showMsg("Event time is required.", false);
+          return;
+        }
+        const guests = Number.parseInt(guestsRaw, 10);
+        if (!guestsRaw || Number.isNaN(guests) || guests < 1) {
+          showMsg("Enter the number of guests.", false);
+          return;
+        }
+        if (!line1) {
+          showMsg("Address line is required.", false);
+          return;
+        }
+        if (pincode && !/^\d{6}$/.test(pincode)) {
+          showMsg("Enter a valid 6-digit pin code.", false);
           return;
         }
         if (!captchaId || !answer) {
           showMsg("Please solve the captcha.", false);
           return;
         }
-        const guestsRaw = val("po-guests");
         const input = {
           name: name,
           phone: phone,
           email: email,
-          eventDate: val("po-date") || null,
-          guests: guestsRaw ? Number.parseInt(guestsRaw, 10) : null,
-          location: val("po-location") || null,
+          eventDate: eventDate,
+          eventTime: eventTime,
+          guests: guests,
+          line1: line1,
+          city: val("po-city") || null,
+          state: val("po-state") || null,
+          pincode: pincode || null,
           message: val("po-message") || null,
         };
         submitBtn.disabled = true;

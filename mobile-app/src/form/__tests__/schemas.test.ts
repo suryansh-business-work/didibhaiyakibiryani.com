@@ -74,22 +74,50 @@ describe("partySchema", () => {
     name: "Asha",
     phone: "9876543210",
     email: "a@b.com",
-    eventDate: "",
-    guests: "",
-    location: "",
+    eventDate: "2026-08-15",
+    eventTime: "19:00",
+    guests: "50",
+    line1: "12 MG Road",
+    city: "",
+    state: "",
+    pincode: "",
     message: "",
     captchaAnswer: "7",
   };
   it("accepts a valid enquiry (optional fields blank)", () => {
     expect(ok(partySchema, base)).toBe(true);
   });
+  it("accepts an enquiry with optional city/state/pincode filled", () => {
+    expect(ok(partySchema, { ...base, city: "Delhi", state: "DL", pincode: "110001" })).toBe(true);
+  });
   it("flags bad name, phone, email, guests and captcha", () => {
     const e = errs(partySchema, { ...base, name: "", phone: "x", email: "no", guests: "ten", captchaAnswer: "" });
     expect(e.name).toBe("Enter your name");
-    expect(e.phone).toBe("Enter a valid 10-digit phone number");
+    expect(e.phone).toBe("Enter a valid 10-digit mobile number");
     expect(e.email).toBe("Enter a valid email");
     expect(e.guests).toBe("Guests must be a number");
     expect(e.captchaAnswer).toBe("Solve the captcha");
+  });
+  it("requires eventDate, eventTime, guests and line1", () => {
+    const e = errs(partySchema, { ...base, eventDate: "", eventTime: "", guests: "", line1: "" });
+    expect(e.eventDate).toBe("Select the event date");
+    expect(e.eventTime).toBe("Select the event time");
+    expect(e.guests).toBe("Enter the number of guests");
+    expect(e.line1).toBe("Enter the address line");
+  });
+  it("rejects a non-Indian-mobile phone (must start 6-9)", () => {
+    expect(errs(partySchema, { ...base, phone: "1234567890" }).phone).toBe("Enter a valid 10-digit mobile number");
+    expect(errs(partySchema, { ...base, phone: "98765" }).phone).toBe("Enter a valid 10-digit mobile number");
+  });
+  it("enforces a 1..100000 integer guest count", () => {
+    expect(errs(partySchema, { ...base, guests: "0" }).guests).toBe("Enter between 1 and 100000 guests");
+    expect(errs(partySchema, { ...base, guests: "100001" }).guests).toBe("Enter between 1 and 100000 guests");
+    expect(ok(partySchema, { ...base, guests: "1" })).toBe(true);
+  });
+  it("rejects a malformed pincode but accepts 6 digits", () => {
+    expect(errs(partySchema, { ...base, pincode: "12" }).pincode).toBe("Enter a valid 6-digit PIN code");
+    expect(errs(partySchema, { ...base, pincode: "abcdef" }).pincode).toBe("Enter a valid 6-digit PIN code");
+    expect(ok(partySchema, { ...base, pincode: "560001" })).toBe(true);
   });
 });
 

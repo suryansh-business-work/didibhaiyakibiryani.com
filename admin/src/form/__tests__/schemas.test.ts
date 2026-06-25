@@ -57,6 +57,16 @@ describe("societySchema", () => {
     expect(ok(societySchema, { name: "Prestige", area: "", pincode: "", sortOrder: 0, isActive: true })).toBe(true);
     expect(errs(societySchema, { name: "", sortOrder: 0, isActive: true }).name).toBe("Name is required");
   });
+
+  it("accepts a present, well-formed 6-digit pincode (refine regex passes)", () => {
+    expect(ok(societySchema, { name: "Prestige", pincode: "560001", sortOrder: 0, isActive: true })).toBe(true);
+  });
+
+  it("rejects a present but malformed pincode (refine regex fails)", () => {
+    expect(errs(societySchema, { name: "Prestige", pincode: "12", sortOrder: 0, isActive: true }).pincode).toBe(
+      "Enter a 6-digit pincode"
+    );
+  });
 });
 
 describe("sliderSchema", () => {
@@ -115,7 +125,7 @@ describe("couponSchema", () => {
 
 describe("menuItemSchema", () => {
   const base = {
-    name: "Veg Biryani", description: "", image: "", price: 199, categoryId: "c1",
+    name: "Veg Biryani", description: "", image: "", price: 199, makingCost: 50, categoryId: "c1",
     spiceSelectable: true, spiceLevel: 1, serves: "2", badge: "NONE", tags: "", isAvailable: true,
   };
   it("accepts a valid item", () => {
