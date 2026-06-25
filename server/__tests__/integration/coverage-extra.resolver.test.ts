@@ -257,9 +257,13 @@ describe("dashboard / delivery / payment / passwordReset / integrations", () => 
     });
     const rows = await dashboardResolvers.Query.profitItems(null, undefined, admin);
     const find = (n: string) => rows.find((r: { name: string }) => r.name === n);
-    expect(find("Biryani")).toMatchObject({ price: 200, makingCost: 50, qty: 2, profit: 300 });
-    expect(find("Roti")).toMatchObject({ makingCost: 0, profit: 90 });
+    // Per-unit inputs only; the client derives profit as (price - makingCost) * qty.
+    expect(find("Biryani")).toMatchObject({ price: 200, makingCost: 50, qty: 2 });
+    expect(find("Roti")).toMatchObject({ price: 30, makingCost: 0, qty: 3 });
     expect(find("Lassi")).toBeUndefined();
+    // Ranked by total profit (Profit/Unit × Qty): Biryani (300) before Roti (90).
+    const names = rows.map((r: { name: string }) => r.name);
+    expect(names.indexOf("Biryani")).toBeLessThan(names.indexOf("Roti"));
   });
 
   it("complimentaryItemsPage searches, sorts and paginates the free items", async () => {

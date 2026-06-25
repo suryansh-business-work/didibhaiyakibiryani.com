@@ -267,6 +267,7 @@ export const dashboardResolvers = {
             price: { $first: "$items.price" },
             makingCost: { $first: { $ifNull: ["$items.makingCost", 0] } },
             qty: { $sum: "$items.qty" },
+            // Total profit (Profit/Unit × Qty) — kept only to rank the most profitable dishes first.
             profit: {
               $sum: {
                 $multiply: [{ $subtract: ["$items.price", { $ifNull: ["$items.makingCost", 0] }] }, "$items.qty"],
@@ -274,7 +275,7 @@ export const dashboardResolvers = {
             },
           },
         },
-        { $project: { _id: 0, name: "$_id", price: 1, makingCost: 1, qty: 1, profit: 1 } },
+        { $project: { _id: 0, name: "$_id", price: 1, makingCost: 1, qty: 1 } },
         { $sort: { profit: -1 } },
       ]);
     },

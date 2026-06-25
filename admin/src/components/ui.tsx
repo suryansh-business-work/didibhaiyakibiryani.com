@@ -56,11 +56,13 @@ export function Modal({
   onClose,
   children,
   footer,
+  maxWidth = "sm",
 }: Readonly<{
   title: string;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  maxWidth?: "xs" | "sm" | "md" | "lg";
 }>) {
   // Dismiss only via the × button or an explicit footer action — ignore
   // backdrop clicks and Escape so a half-filled form isn't lost by accident.
@@ -71,7 +73,7 @@ export function Modal({
         if (reason !== "backdropClick") onClose();
       }}
       disableEscapeKeyDown
-      maxWidth="sm"
+      maxWidth={maxWidth}
       fullWidth
     >
       <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pr: 1 }}>

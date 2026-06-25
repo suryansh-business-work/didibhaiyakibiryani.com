@@ -67,7 +67,6 @@ export const PROFIT_ITEMS = gql`
       price
       makingCost
       qty
-      profit
     }
   }
 `;

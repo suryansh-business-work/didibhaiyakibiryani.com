@@ -347,13 +347,13 @@ export const typeDefs = /* GraphQL */ `
     total: Int!
   }
 
-  # Per-dish profit breakdown (menu finance) for the dashboard Profit drill-down.
+  # Per-dish menu-finance inputs for the dashboard Profit drill-down.
+  # Total profit is derived as (price - makingCost) * qty — i.e. Profit/Unit × Qty.
   type ProfitItem {
     name: String!
     price: Float!
     makingCost: Float!
     qty: Int!
-    profit: Float!
   }
 
   type DishRating {
