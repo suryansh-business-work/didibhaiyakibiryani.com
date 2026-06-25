@@ -515,5 +515,15 @@ export const orderResolvers = {
     /* v8 ignore next 2 -- present/absent both exercised; trivial field resolver */
     deliveryPartner: (parent: { deliveryPartner?: unknown }) =>
       parent.deliveryPartner ? User.findById(parent.deliveryPartner as string).exec() : null,
+    customerOrderCount: async (parent: { user?: unknown; customerPhone?: string }) => {
+      if (parent.user) {
+        return Order.countDocuments({ user: parent.user, status: { $ne: "CANCELLED" } }).exec();
+      }
+      const phone = parent.customerPhone?.trim();
+      if (phone) {
+        return Order.countDocuments({ customerPhone: phone, status: { $ne: "CANCELLED" } }).exec();
+      }
+      return 1;
+    },
   },
 };

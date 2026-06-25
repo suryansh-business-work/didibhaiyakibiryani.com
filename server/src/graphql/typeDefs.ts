@@ -106,6 +106,7 @@ export const typeDefs = /* GraphQL */ `
     slug: String!
     description: String
     price: Float!
+    makingCost: Float
     image: String
     category: Category
     isVeg: Boolean!
@@ -172,6 +173,7 @@ export const typeDefs = /* GraphQL */ `
     amount: Float!
     note: String
     invoiceUrl: String
+    date: DateTime
     createdAt: DateTime!
   }
 
@@ -270,6 +272,7 @@ export const typeDefs = /* GraphQL */ `
     user: User
     customerName: String
     customerPhone: String
+    customerOrderCount: Int
     items: [OrderItem!]!
     subtotal: Float!
     discount: Float!
@@ -342,10 +345,15 @@ export const typeDefs = /* GraphQL */ `
     todayRevenue: Float!
     pendingOrders: Int!
     totalCustomers: Int!
+    repeatCustomers: Int!
     avgOrderValue: Float!
     avgFoodRating: Float!
     avgDeliveryRating: Float!
     ratingCount: Int!
+    periodOrders: Int!
+    periodRevenue: Float!
+    periodExpenses: Float!
+    periodProfit: Float!
     dishRatings: [DishRating!]!
     topItems: [TopItem!]!
     revenueByDay: [RevenuePoint!]!
@@ -385,6 +393,7 @@ export const typeDefs = /* GraphQL */ `
     name: String!
     description: String
     price: Float!
+    makingCost: Float
     image: String
     categoryId: ID!
     spiceSelectable: Boolean
@@ -435,6 +444,7 @@ export const typeDefs = /* GraphQL */ `
     amount: Float!
     note: String
     invoiceUrl: String
+    date: DateTime
   }
 
   input PartyOrderInput {
@@ -847,7 +857,7 @@ export const typeDefs = /* GraphQL */ `
 
     customers(search: String): [User!]! # admin
     leads(search: String): [Lead!]! # admin — non-signup contacts
-    dashboardStats: DashboardStats! # admin
+    dashboardStats(from: DateTime, to: DateTime): DashboardStats! # admin
 
     integrationSettings: IntegrationSettings! # admin: SMTP / ImageKit config (secrets masked)
 

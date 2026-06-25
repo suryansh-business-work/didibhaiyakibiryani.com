@@ -72,6 +72,7 @@ export const expenseSchema = z.object({
   amount: z.coerce.number().positive("Enter an amount above 0"),
   note: z.string().optional(),
   invoiceUrl: z.string().optional(),
+  date: z.string().optional(),
 });
 
 export const sliderSchema = z.object({
@@ -180,6 +181,7 @@ export const menuItemSchema = z.object({
   description: z.string().optional(),
   image: z.string().optional(),
   price: z.coerce.number().positive("Enter a price above 0"),
+  makingCost: z.coerce.number().min(0, "Must be 0 or more"),
   categoryId: z.string().min(1, "Pick a category"),
   spiceSelectable: z.boolean(),
   spiceLevel: z.coerce.number().int().min(0).max(3),
@@ -206,7 +208,7 @@ export const manualOrderItemSchema = z
 export const manualOrderSchema = z
   .object({
     orderType: z.enum(["DELIVERY", "TAKEAWAY"]),
-    customerMode: z.enum(["WALKIN", "EXISTING"]),
+    customerMode: z.enum(["WALKIN", "EXISTING", "CONTACT"]),
     userId: z.string().optional(),
     customerName: z.string().optional(),
     customerPhone: z.string().optional(),
@@ -231,7 +233,8 @@ export const manualOrderSchema = z
     if (d.customerMode === "EXISTING" && !d.userId) {
       ctx.addIssue({ code: "custom", path: ["userId"], message: "Pick a customer" });
     }
-    if (d.customerMode === "WALKIN" && !d.customerName?.trim()) {
+    // Walk-in and Contact both carry a name/phone snapshot.
+    if (d.customerMode !== "EXISTING" && !d.customerName?.trim()) {
       ctx.addIssue({ code: "custom", path: ["customerName"], message: "Enter a customer name" });
     }
     if (d.orderType !== "DELIVERY") return;

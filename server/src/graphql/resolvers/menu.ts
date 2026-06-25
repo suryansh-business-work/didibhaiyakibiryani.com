@@ -16,6 +16,7 @@ interface MenuItemInput {
   name: string;
   description?: string;
   price: number;
+  makingCost?: number;
   image?: string;
   categoryId: string;
   spiceSelectable?: boolean;

@@ -1,5 +1,5 @@
 import { GraphQLError } from "graphql";
-import { Order, User, MenuItem, Review } from "../../models/index.js";
+import { Order, User, MenuItem, Review, Expense } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
 import { paginate, type PageArgs } from "../../utils/pagination.js";
 
@@ -13,6 +13,22 @@ function startOfToday(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+/**
+ * Builds a `$gte`/`$lte` range filter for the given date field. Returns an
+ * empty object (no filter ⇒ all-time) when neither bound is provided so the
+ * period stats fall back to lifetime figures.
+ */
+function dateRangeFilter(from: Date | undefined, to: Date | undefined, field: string): Record<string, unknown> {
+  const range: Record<string, Date> = {};
+  if (from) {
+    range.$gte = from;
+  }
+  if (to) {
+    range.$lte = to;
+  }
+  return Object.keys(range).length > 0 ? { [field]: range } : {};
 }
 
 export const dashboardResolvers = {
@@ -47,9 +63,17 @@ export const dashboardResolvers = {
       });
     },
 
-    dashboardStats: async (_: unknown, __: unknown, ctx: Context) => {
+    dashboardStats: async (
+      _: unknown,
+      { from, to }: { from?: Date; to?: Date } = {},
+      ctx: Context
+    ) => {
       requireRole(ctx, "ADMIN");
       const today = startOfToday();
+      const ordersRange = dateRangeFilter(from, to, "placedAt");
+      // Expenses report on their effective date: the back-dated `date` when set,
+      // else the legacy `createdAt`. Match the range on that computed field.
+      const expensesRange = dateRangeFilter(from, to, "effDate");
 
       const [
         totalOrders,
@@ -58,11 +82,15 @@ export const dashboardResolvers = {
         todayRevenueAgg,
         pendingOrders,
         totalCustomers,
+        repeatAgg,
         topItemsAgg,
         revenueByDayAgg,
         recentOrders,
         ratingAgg,
         dishRatingsAgg,
+        periodOrders,
+        periodRevenueAgg,
+        periodExpensesAgg,
       ] = await Promise.all([
         Order.countDocuments({ status: { $ne: "CANCELLED" } }),
         Order.aggregate([
@@ -76,6 +104,15 @@ export const dashboardResolvers = {
         ]),
         Order.countDocuments({ status: { $in: ["PLACED", "CONFIRMED", "PREPARING"] } }),
         User.countDocuments({ role: "CUSTOMER" }),
+        // Repeat customers (all-time): group every non-cancelled order by its
+        // unified identity (signed-up user id, else walk-in phone) and count the
+        // identities that appear more than once.
+        Order.aggregate([
+          { $match: { status: { $ne: "CANCELLED" } } },
+          { $group: { _id: { $ifNull: ["$user", "$customerPhone"] }, c: { $sum: 1 } } },
+          { $match: { _id: { $ne: null }, c: { $gt: 1 } } },
+          { $count: "n" },
+        ]),
         Order.aggregate([
           { $match: { status: { $ne: "CANCELLED" } } },
           { $unwind: "$items" },
@@ -133,7 +170,21 @@ export const dashboardResolvers = {
           },
           { $sort: { rating: -1, count: -1 } },
         ]),
+        Order.countDocuments({ status: { $ne: "CANCELLED" }, ...ordersRange }),
+        Order.aggregate([
+          { $match: { status: { $in: REVENUE_STATUSES }, ...ordersRange } },
+          { $group: { _id: null, total: { $sum: "$total" } } },
+        ]),
+        Expense.aggregate([
+          { $addFields: { effDate: { $ifNull: ["$date", "$createdAt"] } } },
+          { $match: { ...expensesRange } },
+          { $group: { _id: null, total: { $sum: "$amount" } } },
+        ]),
       ]);
+
+      const periodRevenue = periodRevenueAgg[0]?.total ?? 0;
+      const periodExpenses = periodExpensesAgg[0]?.total ?? 0;
+      const periodProfit = periodRevenue - periodExpenses;
 
       const totalRevenue = revenueAgg[0]?.total ?? 0;
       const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
@@ -149,10 +200,15 @@ export const dashboardResolvers = {
         todayRevenue: todayRevenueAgg[0]?.total ?? 0,
         pendingOrders,
         totalCustomers,
+        repeatCustomers: repeatAgg[0]?.n ?? 0,
         avgOrderValue,
         avgFoodRating,
         avgDeliveryRating,
         ratingCount,
+        periodOrders,
+        periodRevenue,
+        periodExpenses,
+        periodProfit,
         dishRatings: dishRatingsAgg.map((d) => ({
           name: d._id,
           rating: Math.round(d.rating * 10) / 10,

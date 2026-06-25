@@ -12,6 +12,7 @@ export interface Item {
   name: string;
   description?: string;
   price: number;
+  makingCost?: number;
   image?: string;
   spiceSelectable: boolean;
   spiceLevel: number;
@@ -27,6 +28,7 @@ export const BLANK_FORM: MenuForm = {
   name: "",
   description: "",
   price: 0,
+  makingCost: 0,
   image: "",
   categoryId: "",
   spiceSelectable: true,

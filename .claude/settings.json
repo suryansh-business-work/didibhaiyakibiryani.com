@@ -344,7 +344,10 @@
       "PowerShell(npm --prefix mobile-app test)",
       "PowerShell(npm --prefix server run typecheck)",
       "PowerShell(npm --prefix \"c:\\\\Users\\\\Suryansh\\\\Desktop\\\\Projects\\\\didibhaiyakibiryani.com\\\\server\" run typecheck)",
-      "PowerShell(npm --prefix \"c:\\\\Users\\\\Suryansh\\\\Desktop\\\\Projects\\\\didibhaiyakibiryani.com\\\\server\" test -- __tests__/integration/order.resolver.test.ts __tests__/unit/invoice.test.ts __tests__/unit/settings.test.ts __tests__/integration/schema.test.ts)"
+      "PowerShell(npm --prefix \"c:\\\\Users\\\\Suryansh\\\\Desktop\\\\Projects\\\\didibhaiyakibiryani.com\\\\server\" test -- __tests__/integration/order.resolver.test.ts __tests__/unit/invoice.test.ts __tests__/unit/settings.test.ts __tests__/integration/schema.test.ts)",
+      "PowerShell(npm --prefix server run test:coverage 2>&1)",
+      "PowerShell(npm --prefix admin run typecheck 2>&1)",
+      "PowerShell(npm --prefix admin run build 2>&1)"
     ],
     "deny": [],
     "ask": [],

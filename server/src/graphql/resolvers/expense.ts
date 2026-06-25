@@ -21,6 +21,7 @@ interface ExpenseInput {
   amount: number;
   note?: string;
   invoiceUrl?: string;
+  date?: string;
 }
 
 function expenseFields(input: ExpenseInput) {
@@ -30,6 +31,9 @@ function expenseFields(input: ExpenseInput) {
     amount: input.amount,
     note: input.note,
     invoiceUrl: input.invoiceUrl?.trim() || undefined,
+    // undefined → mongoose `default: now` on create; ignored by
+    // findByIdAndUpdate on update, so the date only changes when supplied.
+    date: input.date ? new Date(input.date) : undefined,
   };
 }
 
@@ -46,7 +50,8 @@ export const expenseResolvers = {
       requireRole(ctx, "ADMIN");
       return paginate(Expense, {
         searchFields: ["title"],
-        sortAllow: ["amount", "createdAt", "title"],
+        sortAllow: ["amount", "createdAt", "title", "date"],
+        defaultSort: "date",
         populate: "source",
         ...page,
       });

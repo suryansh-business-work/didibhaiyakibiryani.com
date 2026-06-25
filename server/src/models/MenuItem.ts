@@ -7,6 +7,8 @@ export interface IMenuItem extends Document {
   slug: string;
   description?: string;
   price: number;
+  /** What it costs to make one unit — used to show profit per item in admin. */
+  makingCost?: number;
   image?: string;
   category: Types.ObjectId;
   isVeg: boolean;
@@ -29,6 +31,7 @@ const menuItemSchema = new Schema<IMenuItem>(
     slug: { type: String, required: true, unique: true, lowercase: true },
     description: { type: String },
     price: { type: Number, required: true, min: 0 },
+    makingCost: { type: Number, min: 0 },
     image: { type: String },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true, index: true },
     isVeg: { type: Boolean, default: true },

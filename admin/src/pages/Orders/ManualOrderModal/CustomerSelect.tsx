@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Controller,
   type Control,
@@ -10,7 +9,7 @@ import { Autocomplete, Stack, TextField, ToggleButton, ToggleButtonGroup } from 
 import type { ManualOrderForm } from "../../../form";
 import type { CustomerOption, LeadOption, SocietyOption } from "./types";
 
-type Source = "WALKIN" | "EXISTING" | "CONTACT";
+type Source = ManualOrderForm["customerMode"];
 
 interface Props {
   control: Control<ManualOrderForm>;
@@ -23,17 +22,14 @@ interface Props {
 }
 
 /** Counter walk-in (name/phone), a signed-up account, or a saved non-signup
- * contact (which fills the name/phone snapshot). */
+ * contact (which fills the name/phone snapshot). The source is persisted in the
+ * form (`customerMode`) so the selected tab stays put across re-renders/edits. */
 export function CustomerSelect({ control, errors, watch, setValue, customers, leads, societies }: Readonly<Props>) {
-  const isExisting = watch("customerMode") === "EXISTING";
-  const [source, setSource] = useState<Source>(isExisting ? "EXISTING" : "WALKIN");
+  const source: Source = watch("customerMode");
 
   function changeSource(next: Source) {
-    setSource(next);
-    if (next === "EXISTING") {
-      setValue("customerMode", "EXISTING");
-    } else {
-      setValue("customerMode", "WALKIN");
+    setValue("customerMode", next, { shouldValidate: true });
+    if (next !== "EXISTING") {
       setValue("userId", "");
     }
   }

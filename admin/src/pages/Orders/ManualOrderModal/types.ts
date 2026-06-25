@@ -213,11 +213,12 @@ export function buildManualInput(v: ManualOrderForm) {
         phone: v.phone?.trim() || null,
       }
     : null;
+  const isExistingCustomer = v.customerMode === "EXISTING";
   return {
     orderType: v.orderType,
-    userId: v.customerMode === "EXISTING" ? v.userId : null,
-    customerName: v.customerMode === "WALKIN" ? v.customerName?.trim() : null,
-    customerPhone: v.customerMode === "WALKIN" ? v.customerPhone?.trim() || null : null,
+    userId: isExistingCustomer ? v.userId : null,
+    customerName: isExistingCustomer ? null : v.customerName?.trim(),
+    customerPhone: isExistingCustomer ? null : v.customerPhone?.trim() || null,
     items,
     address,
     discount: Number(v.discount) || 0,

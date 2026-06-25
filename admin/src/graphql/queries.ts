@@ -13,18 +13,23 @@ export const ME = gql`
 `;
 
 export const DASHBOARD = gql`
-  query Dashboard {
-    dashboardStats {
+  query Dashboard($from: DateTime, $to: DateTime) {
+    dashboardStats(from: $from, to: $to) {
       totalOrders
       totalRevenue
       todayOrders
       todayRevenue
       pendingOrders
       totalCustomers
+      repeatCustomers
       avgOrderValue
       avgFoodRating
       avgDeliveryRating
       ratingCount
+      periodOrders
+      periodRevenue
+      periodExpenses
+      periodProfit
       dishRatings {
         name
         rating
@@ -73,6 +78,7 @@ const ORDER_FIELDS = `
   ratingToken
   customerName
   customerPhone
+  customerOrderCount
   user {
     id
     name
@@ -219,6 +225,7 @@ export const EXPENSES = gql`
       amount
       note
       invoiceUrl
+      date
       createdAt
       source {
         id
@@ -239,6 +246,7 @@ export const EXPENSES_PAGE = gql`
         amount
         note
         invoiceUrl
+        date
         createdAt
         source {
           id
@@ -341,6 +349,7 @@ export const MENU_ITEMS = gql`
       name
       description
       price
+      makingCost
       image
       spiceSelectable
       spiceLevel

@@ -1,6 +1,18 @@
-import { Controller, type Control, type FieldErrors } from "react-hook-form";
-import { Box, Checkbox, FormControlLabel, MenuItem as MuiMenuItem, TextField, Typography } from "@mui/material";
-import { Modal, FormActions } from "../../components/ui";
+import { Controller, type Control, type FieldErrors, type UseFormWatch } from "react-hook-form";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Checkbox,
+  FormControlLabel,
+  MenuItem as MuiMenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Modal, FormActions, inr } from "../../components/ui";
 import ImageUpload from "../../components/ImageUpload";
 import { RHFField, RHFCheckbox, type MenuForm } from "../../form";
 import { BADGE_OPTIONS, SERVES_OPTIONS, SPICE_OPTIONS, type Cat } from "./types";
@@ -9,6 +21,7 @@ interface MenuItemModalProps {
   editing: boolean;
   control: Control<MenuForm>;
   errors: FieldErrors<MenuForm>;
+  watch: UseFormWatch<MenuForm>;
   cats: Cat[];
   imageUrl: string;
   onImageUploaded: (url: string) => void;
@@ -17,10 +30,36 @@ interface MenuItemModalProps {
   onSubmit: () => void;
 }
 
+function FinanceAccordion({ control, watch, error }: Readonly<{ control: Control<MenuForm>; watch: UseFormWatch<MenuForm>; error?: string }>) {
+  const price = Number(watch("price")) || 0;
+  const cost = Number(watch("makingCost")) || 0;
+  const profit = price - cost;
+  const margin = price > 0 ? Math.round((profit / price) * 100) : 0;
+  return (
+    <Accordion disableGutters sx={{ mt: 1, bgcolor: "transparent" }}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography fontWeight={700}>Finance</Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Stack spacing={1}>
+          <RHFField control={control} name="makingCost" label="Making cost (₹)" type="number" hint="What one unit costs you to make" error={error} />
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="body2" color="text.secondary">Profit / unit</Typography>
+            <Typography variant="body2" fontWeight={700} color={profit >= 0 ? "success.main" : "error"}>
+              {inr(profit)} ({margin}% margin)
+            </Typography>
+          </Stack>
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
+  );
+}
+
 export default function MenuItemModal({
   editing,
   control,
   errors,
+  watch,
   cats,
   imageUrl,
   onImageUploaded,
@@ -60,6 +99,7 @@ export default function MenuItemModal({
           )}
         />
       </Box>
+      <FinanceAccordion control={control} watch={watch} error={errors.makingCost?.message} />
       <RHFCheckbox control={control} name="spiceSelectable" label="Let customers choose a spice level for this item" />
       <Box sx={{ display: "flex", gap: 1.5 }}>
         <Controller

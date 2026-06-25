@@ -1,9 +1,13 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@apollo/client";
 import { Box, Rating, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { startOfDay, endOfDay } from "date-fns";
 import { DASHBOARD } from "../graphql/queries";
 import Layout from "../components/Layout";
 import { Spinner, StatusBadge, inr, fmtDate } from "../components/ui";
 import { IOrders, IRupee, IClock, IUsers } from "../components/icons";
+import DashboardFilter, { rangeForPreset, type Preset, type DateRange } from "./DashboardFilter";
+import { Stat, PeriodSummary } from "./DashboardStat";
 
 interface TopItem { name: string; qty: number; revenue: number; }
 interface DishRating { name: string; rating: number; count: number; }
@@ -14,17 +18,44 @@ interface RecentOrder {
 }
 interface Stats {
   totalOrders: number; totalRevenue: number; todayOrders: number; todayRevenue: number;
-  pendingOrders: number; totalCustomers: number; avgOrderValue: number;
+  pendingOrders: number; totalCustomers: number; repeatCustomers: number; avgOrderValue: number;
   avgFoodRating: number; avgDeliveryRating: number; ratingCount: number;
+  periodOrders: number; periodRevenue: number; periodExpenses: number; periodProfit: number;
   dishRatings: DishRating[];
   topItems: TopItem[]; revenueByDay: RevPoint[]; recentOrders: RecentOrder[];
 }
 
+function customRange(from: Date | null, to: Date | null): DateRange {
+  return {
+    from: from ? startOfDay(from).toISOString() : undefined,
+    to: to ? endOfDay(to).toISOString() : undefined,
+  };
+}
+
 export default function Dashboard() {
-  const { data, loading, error } = useQuery<{ dashboardStats: Stats }>(DASHBOARD);
+  const [preset, setPreset] = useState<Preset>("month");
+  const [customFrom, setCustomFrom] = useState<Date | null>(null);
+  const [customTo, setCustomTo] = useState<Date | null>(null);
+
+  const range = useMemo<DateRange>(
+    () => (preset === "custom" ? customRange(customFrom, customTo) : rangeForPreset(preset)),
+    [preset, customFrom, customTo]
+  );
+
+  const { data, loading, error } = useQuery<{ dashboardStats: Stats }>(DASHBOARD, {
+    variables: range,
+  });
 
   return (
     <Layout title="Dashboard">
+      <DashboardFilter
+        preset={preset}
+        customFrom={customFrom}
+        customTo={customTo}
+        onPreset={setPreset}
+        onCustomFrom={setCustomFrom}
+        onCustomTo={setCustomTo}
+      />
       <DashboardContent
         loading={loading && !data}
         error={error?.message}
@@ -62,11 +93,14 @@ function Body({ s }: Readonly<{ s: Stats }>) {
   const maxRev = Math.max(1, ...s.revenueByDay.map((d) => d.revenue));
   return (
     <>
-      <div className="stat-grid">
+      <PeriodSummary s={s} />
+
+      <div className="stat-grid section-gap">
         <Stat label="Today's revenue" value={inr(s.todayRevenue)} sub={`${s.todayOrders} orders today`} icon={<IRupee />} />
         <Stat label="Total revenue" value={inr(s.totalRevenue)} sub={`Avg ${inr(s.avgOrderValue)} / order`} icon={<IOrders />} />
         <Stat label="Pending orders" value={String(s.pendingOrders)} sub="Need attention" icon={<IClock />} />
         <Stat label="Customers" value={String(s.totalCustomers)} sub={`${s.totalOrders} lifetime orders`} icon={<IUsers />} />
+        <Stat label="Repeat customers" value={String(s.repeatCustomers)} sub="ordered more than once" icon={<IUsers />} />
         <Stat label="Food rating" value={s.ratingCount ? `${s.avgFoodRating} ★` : "—"} sub={`${s.ratingCount} rating(s)`} icon={<span>★</span>} />
         <Stat label="Delivery rating" value={s.ratingCount ? `${s.avgDeliveryRating} ★` : "—"} sub={`${s.ratingCount} rating(s)`} icon={<span>★</span>} />
       </div>
@@ -159,13 +193,3 @@ function Body({ s }: Readonly<{ s: Stats }>) {
   );
 }
 
-function Stat({ label, value, sub, icon }: Readonly<{ label: string; value: string; sub: string; icon: React.ReactNode }>) {
-  return (
-    <div className="stat">
-      <div className="stat__icon">{icon}</div>
-      <div className="stat__label">{label}</div>
-      <div className="stat__value">{value}</div>
-      <div className="stat__sub">{sub}</div>
-    </div>
-  );
-}

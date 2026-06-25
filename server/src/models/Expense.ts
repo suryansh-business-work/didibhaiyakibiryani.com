@@ -10,6 +10,7 @@ export interface IExpense extends Document {
   amount: number;
   note?: string;
   invoiceUrl?: string;
+  date?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,6 +22,9 @@ const expenseSchema = new Schema<IExpense>(
     amount: { type: Number, required: true, min: 0 },
     note: { type: String, trim: true },
     invoiceUrl: { type: String, trim: true },
+    // The date the money was spent on (may be back-dated). `createdAt` stays the
+    // record-creation timestamp; this drives period reporting on the dashboard.
+    date: { type: Date, default: Date.now, index: true },
   },
   { timestamps: true }
 );

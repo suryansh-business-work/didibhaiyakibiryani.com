@@ -57,7 +57,7 @@ describe("dashboard resolver", () => {
     expect((await dashboardResolvers.Query.customers(null, {}, adminCtx)).length).toBe(1);
     expect((await dashboardResolvers.Query.customers(null, { search: "Asha" }, adminCtx)).length).toBe(1);
 
-    const stats = await dashboardResolvers.Query.dashboardStats(null, null, adminCtx);
+    const stats = await dashboardResolvers.Query.dashboardStats(null, {}, adminCtx);
     expect(stats.totalOrders).toBe(2);
     expect(stats.totalCustomers).toBe(1);
     expect(stats.avgFoodRating).toBe(5);

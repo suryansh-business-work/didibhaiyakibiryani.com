@@ -70,6 +70,15 @@ function RatingCell({ value }: Readonly<{ value: number | null | undefined }>) {
   return <Rating value={value} precision={0.5} readOnly size="small" />;
 }
 
+/** Repeat-customer badge under the customer name; undefined ⇒ treated as a first order. */
+function CustomerOrderChip({ count }: Readonly<{ count: number | undefined }>) {
+  const n = count ?? 1;
+  if (n > 1) {
+    return <Chip size="small" variant="outlined" color="success" label={`Repeat ×${n}`} sx={{ mt: 0.25, height: 18 }} />;
+  }
+  return <Chip size="small" label="New" sx={{ mt: 0.25, height: 18 }} />;
+}
+
 export default function OrdersTable({
   orders,
   selected,
@@ -168,6 +177,7 @@ export default function OrdersTable({
                   <TableCell>
                     {o.user?.name ?? o.customerName ?? "—"}
                     <Typography variant="caption" display="block" color="text.secondary">{o.user?.phone ?? o.customerPhone}</Typography>
+                    <CustomerOrderChip count={o.customerOrderCount} />
                   </TableCell>
                 ) : null}
                 {cols.status ? <TableCell><StatusBadge status={o.status} /></TableCell> : null}

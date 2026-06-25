@@ -21,7 +21,7 @@ import { paymentResolvers } from "../../src/graphql/resolvers/payment";
 import { passwordResetResolvers } from "../../src/graphql/resolvers/passwordReset";
 import { integrationResolvers } from "../../src/graphql/resolvers/integrations";
 import {
-  MenuItem, Coupon, SupportTicket, Settings, SETTINGS_KEY, getOrCreateSettings, Otp,
+  MenuItem, Coupon, SupportTicket, Settings, SETTINGS_KEY, getOrCreateSettings, Otp, Expense,
 } from "../../src/models/index.js";
 import { Payment } from "../../src/models/index.js";
 import { hashOtp, otpExpiry } from "../../src/utils/otp.js";
@@ -101,6 +101,25 @@ describe("order resolver — guard & branch coverage", () => {
     expect(await orderResolvers.Order.deliveryPartner({ deliveryPartner: u.id })).toBeTruthy();
     expect(await orderResolvers.Order.deliveryPartner({})).toBeNull();
   });
+
+  it("Order.customerOrderCount counts by user, by walk-in phone, and defaults to 1", async () => {
+    // Signed-up user with two non-cancelled orders + one cancelled (ignored).
+    const u = await makeUser();
+    await makeOrder(u.id);
+    await makeOrder(u.id);
+    await makeOrder(u.id, { status: "CANCELLED" });
+    expect(await orderResolvers.Order.customerOrderCount({ user: u.id })).toBe(2);
+
+    // Walk-in / contact identified only by phone, repeated across two orders.
+    const phone = "9876500011";
+    await makeOrder(u.id, { user: undefined, customerPhone: phone });
+    await makeOrder(u.id, { user: undefined, customerPhone: phone });
+    // The resolver trims the parent's phone before matching the stored value.
+    expect(await orderResolvers.Order.customerOrderCount({ customerPhone: ` ${phone} ` })).toBe(2);
+
+    // Neither a user nor a phone → treated as a one-off (1).
+    expect(await orderResolvers.Order.customerOrderCount({})).toBe(1);
+  });
 });
 
 describe("support / coupon / menu branch coverage", () => {
@@ -149,10 +168,74 @@ describe("dashboard / delivery / payment / passwordReset / integrations", () => 
       status: "DELIVERED",
       items: [{ menuItem: item._id, name: item.name, price: 199, qty: 2 }],
     });
-    const stats = await dashboardResolvers.Query.dashboardStats(null, null, admin);
+    const stats = await dashboardResolvers.Query.dashboardStats(null, {}, admin);
     expect(stats.totalOrders).toBeGreaterThan(0);
     expect(stats.topItems.length).toBeGreaterThan(0);
     expect(await dashboardResolvers.User.totalSpent({ _id: cust._id })).toBeGreaterThan(0);
+  });
+
+  it("dashboardStats repeatCustomers counts identities with >1 non-cancelled order", async () => {
+    // Repeat signed-up customer: 2 non-cancelled + 1 cancelled (cancelled ignored).
+    const repeatUser = await makeUser();
+    await makeOrder(repeatUser.id);
+    await makeOrder(repeatUser.id);
+    await makeOrder(repeatUser.id, { status: "CANCELLED" });
+    // One-off customer: a single order ⇒ not a repeat.
+    const onceUser = await makeUser();
+    await makeOrder(onceUser.id);
+
+    const stats = await dashboardResolvers.Query.dashboardStats(null, {}, admin);
+    expect(stats.repeatCustomers).toBe(1);
+  });
+
+  it("dashboardStats period stats sum revenue + expenses over a from/to range", async () => {
+    const cust = await makeUser();
+    const item = await makeItem();
+    const at = new Date("2026-03-15T10:00:00.000Z");
+    await makeOrder(cust.id, {
+      status: "DELIVERED",
+      placedAt: at,
+      total: 500,
+      items: [{ menuItem: item._id, name: item.name, price: 199, qty: 2 }],
+    });
+    // Cancelled order in range counts toward periodOrders but not revenue.
+    await makeOrder(cust.id, { status: "CANCELLED", placedAt: at, total: 999 });
+    // Back-dated expense: the explicit `date` (not createdAt) drives the period.
+    await Expense.create({
+      source: new Types.ObjectId(),
+      title: "Gas cylinder",
+      amount: 120,
+      date: at,
+    });
+    // Legacy expense with no `date` field at all (raw insert bypasses the schema
+    // default): the $ifNull falls back to createdAt to keep it in the period.
+    await Expense.collection.insertOne({
+      source: new Types.ObjectId(),
+      title: "Vegetables",
+      amount: 30,
+      createdAt: at,
+      updatedAt: at,
+    });
+
+    const from = new Date("2026-03-01T00:00:00.000Z");
+    const to = new Date("2026-03-31T23:59:59.999Z");
+    const stats = await dashboardResolvers.Query.dashboardStats(null, { from, to }, admin);
+    expect(stats.periodOrders).toBe(1);
+    expect(stats.periodRevenue).toBe(500);
+    expect(stats.periodExpenses).toBe(150);
+    expect(stats.periodProfit).toBe(350);
+  });
+
+  it("dashboardStats period stats fall back to all-time with no date args", async () => {
+    const cust = await makeUser();
+    await makeOrder(cust.id, { status: "DELIVERED", total: 300 });
+    await Expense.create({ source: new Types.ObjectId(), title: "Packaging", amount: 80 });
+
+    const stats = await dashboardResolvers.Query.dashboardStats(null, undefined, admin);
+    expect(stats.periodOrders).toBe(1);
+    expect(stats.periodRevenue).toBe(300);
+    expect(stats.periodExpenses).toBe(80);
+    expect(stats.periodProfit).toBe(220);
   });
 
   it("myDeliveries honours default + capped limits", async () => {
@@ -226,8 +309,11 @@ describe("more guard coverage", () => {
   });
 
   it("dashboardStats + totalSpent handle empty data (object and string ids)", async () => {
-    const stats = await dashboardResolvers.Query.dashboardStats(null, null, admin);
+    const stats = await dashboardResolvers.Query.dashboardStats(null, {}, admin);
     expect(stats.totalRevenue).toBe(0);
+    expect(stats.periodExpenses).toBe(0);
+    expect(stats.periodProfit).toBe(0);
+    expect(stats.repeatCustomers).toBe(0);
     const u = await makeUser();
     expect(await dashboardResolvers.User.totalSpent({ _id: u._id })).toBe(0);
     expect(await dashboardResolvers.User.totalSpent({ id: u.id })).toBe(0);

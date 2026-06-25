@@ -107,6 +107,7 @@ export default function Menu() {
       name: it.name,
       description: it.description ?? "",
       price: it.price,
+      makingCost: it.makingCost ?? 0,
       image: it.image ?? "",
       categoryId: it.category?.id ?? "",
       spiceSelectable: it.spiceSelectable ?? true,
@@ -124,6 +125,7 @@ export default function Menu() {
       name: form.name.trim(),
       description: form.description,
       price: form.price,
+      makingCost: form.makingCost,
       image: form.image,
       categoryId: form.categoryId,
       spiceSelectable: form.spiceSelectable,
@@ -203,6 +205,7 @@ export default function Menu() {
           editing={Boolean(editing)}
           control={control}
           errors={errors}
+          watch={watch}
           cats={cats}
           imageUrl={watch("image") ?? ""}
           onImageUploaded={(url) => setValue("image", url)}

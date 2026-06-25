@@ -83,13 +83,16 @@ describe("expense resolver", () => {
       admin
     );
 
+    const backDate = "2026-03-10T00:00:00.000Z";
     const expense = await expenseResolvers.Mutation.createExpense(
       null,
-      { input: { sourceId: source.id, title: "Vegetables", amount: 250, note: "weekly" } },
+      { input: { sourceId: source.id, title: "Vegetables", amount: 250, note: "weekly", date: backDate } },
       admin
     );
     expect(expense.amount).toBe(250);
     expect((expense.source as { name: string }).name).toBe("Ramesh");
+    // The supplied back-date is stored on `date` (not the auto createdAt).
+    expect(expense.date?.toISOString()).toBe(backDate);
 
     const list = await expenseResolvers.Query.expenses();
     expect(list.length).toBe(1);

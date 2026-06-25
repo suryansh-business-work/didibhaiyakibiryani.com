@@ -41,6 +41,7 @@ export interface Order {
   ratingToken?: string;
   customerName?: string;
   customerPhone?: string;
+  customerOrderCount?: number;
   user?: { id: string; name: string; phone?: string; email: string } | null;
   address?: OrderAddress | null;
   items: OrderItem[];

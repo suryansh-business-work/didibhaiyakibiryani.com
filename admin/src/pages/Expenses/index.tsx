@@ -12,6 +12,7 @@ import { DataTable, useServerTable, type Column } from "../../components/DataTab
 import { useAlert, useConfirm } from "../../components/dialog";
 import ImageUpload from "../../components/ImageUpload";
 import { RHFField, RHFSelect, expenseSchema, type ExpenseForm } from "../../form";
+import ExpenseDateField from "./ExpenseDateField";
 
 interface SourceRef {
   id: string;
@@ -24,18 +25,19 @@ interface Expense {
   amount: number;
   note?: string;
   invoiceUrl?: string;
+  date?: string;
   createdAt: string;
   source?: SourceRef | null;
 }
 
-const BLANK: ExpenseForm = { sourceId: "", title: "", amount: 0, note: "", invoiceUrl: "" };
+const BLANK: ExpenseForm = { sourceId: "", title: "", amount: 0, note: "", invoiceUrl: "", date: new Date().toISOString() };
 
 function sourceLabel(s: SourceRef): string {
   return `${s.name} — ${s.type === "PERSON" ? "Person" : "Account"}`;
 }
 
 export default function Expenses() {
-  const { variables, tableProps } = useServerTable({ initialSortKey: "createdAt", initialSortDir: "desc" });
+  const { variables, tableProps } = useServerTable({ initialSortKey: "date", initialSortDir: "desc" });
   const { data, loading, refetch } = useQuery<{ expensesPage: { items: Expense[]; total: number } }>(EXPENSES_PAGE, { variables });
   const { data: srcData } = useQuery<{ expenseSources: SourceRef[] }>(EXPENSE_SOURCES);
   const [create] = useMutation(CREATE_EXPENSE);
@@ -70,7 +72,7 @@ export default function Expenses() {
       </>
     ) },
     { key: "source", label: "Source", render: (e) => (e.source ? <Chip size="small" variant="outlined" label={sourceLabel(e.source)} /> : <Typography variant="body2" color="text.secondary">—</Typography>) },
-    { key: "createdAt", label: "Date", sortable: true, render: (e) => <Typography variant="body2" color="text.secondary">{fmtDate(e.createdAt)}</Typography> },
+    { key: "date", label: "Date", sortable: true, render: (e) => <Typography variant="body2" color="text.secondary">{fmtDate(e.date ?? e.createdAt)}</Typography> },
     { key: "amount", label: "Amount", align: "right", sortable: true, render: (e) => <Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(e.amount)}</Typography> },
   ], []);
 
@@ -81,7 +83,7 @@ export default function Expenses() {
   }
   function openEdit(e: Expense) {
     setEditing(e);
-    reset({ sourceId: e.source?.id ?? "", title: e.title, amount: e.amount, note: e.note ?? "", invoiceUrl: e.invoiceUrl ?? "" });
+    reset({ sourceId: e.source?.id ?? "", title: e.title, amount: e.amount, note: e.note ?? "", invoiceUrl: e.invoiceUrl ?? "", date: e.date ?? e.createdAt ?? "" });
     setOpen(true);
   }
 
@@ -92,6 +94,7 @@ export default function Expenses() {
       amount: form.amount,
       note: form.note?.trim() || undefined,
       invoiceUrl: form.invoiceUrl?.trim() || undefined,
+      date: form.date || undefined,
     };
     try {
       if (editing) await update({ variables: { id: editing.id, input } });
@@ -156,6 +159,7 @@ export default function Expenses() {
           <RHFSelect control={control} name="sourceId" label="Expense source" options={sourceOptions} error={errors.sourceId?.message} emptyLabel="Select a source" />
           <RHFField control={control} name="title" label="Title" placeholder="e.g. Vegetables, Rent" error={errors.title?.message} />
           <RHFField control={control} name="amount" label="Amount (₹)" type="number" error={errors.amount?.message} />
+          <ExpenseDateField control={control} />
           <RHFField control={control} name="note" label="Note (optional)" multiline error={errors.note?.message} />
           <ImageUpload
             folder="/expenses"
