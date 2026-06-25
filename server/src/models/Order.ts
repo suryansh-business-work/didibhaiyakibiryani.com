@@ -29,6 +29,7 @@ export interface IOrderAddress {
   line1: string;
   line2?: string;
   city: string;
+  state?: string;
   pincode: string;
   phone?: string;
   lat?: number;
@@ -105,6 +106,7 @@ const orderAddressSchema = new Schema<IOrderAddress>(
     line1: { type: String, required: true },
     line2: String,
     city: { type: String, required: true },
+    state: String,
     pincode: { type: String },
     phone: String,
     lat: Number,

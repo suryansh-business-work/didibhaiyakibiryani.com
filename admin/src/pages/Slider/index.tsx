@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { SLIDERS } from "../../graphql/queries";
-import { CREATE_SLIDER, UPDATE_SLIDER, DELETE_SLIDER } from "../../graphql/mutations";
-import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { CREATE_SLIDER, UPDATE_SLIDER, DELETE_SLIDER, DELETE_SLIDERS } from "../../graphql/mutations";
+import { Box, Button, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
-import { AsyncList, FormActions, Modal, OnOffChip } from "../../components/ui";
+import { FormActions, Modal, OnOffChip } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import ImageUpload from "../../components/ImageUpload";
 import { useAlert, useConfirm } from "../../components/dialog";
+import { DataTable, useClientTable, type Column } from "../../components/DataTable";
 import { RHFField, RHFCheckbox, sliderSchema, type SliderForm } from "../../form";
 
 interface Slide {
@@ -23,6 +24,7 @@ export default function Slider() {
   const [create] = useMutation(CREATE_SLIDER);
   const [update] = useMutation(UPDATE_SLIDER);
   const [del] = useMutation(DELETE_SLIDER);
+  const [delMany] = useMutation(DELETE_SLIDERS);
 
   const confirm = useConfirm();
   const notify = useAlert();
@@ -40,6 +42,30 @@ export default function Slider() {
   } = useForm<SliderForm>({ resolver: zodResolver(sliderSchema), defaultValues: { ...BLANK } });
 
   const slides = data?.banners ?? [];
+
+  const columns = useMemo<Column<Slide>[]>(() => [
+    {
+      key: "imageUrl", label: "Image",
+      render: (s) => <Box component="img" src={s.imageUrl} alt="" sx={{ width: 72, height: 48, borderRadius: 1.5, objectFit: "cover" }} />,
+    },
+    {
+      key: "title", label: "Title", sortable: true,
+      searchValue: (s) => `${s.title ?? ""} ${s.linkUrl ?? ""}`, sortValue: (s) => s.title ?? "",
+      render: (s) => <Typography fontWeight={700}>{s.title || "—"}</Typography>,
+    },
+    {
+      key: "linkUrl", label: "Link",
+      searchValue: (s) => s.linkUrl ?? "",
+      render: (s) => <Typography variant="body2" color="text.secondary">{s.linkUrl || "—"}</Typography>,
+    },
+    {
+      key: "sortOrder", label: "Order", sortable: true, sortValue: (s) => s.sortOrder,
+      render: (s) => <Typography variant="body2" color="text.secondary">{s.sortOrder}</Typography>,
+    },
+    { key: "isActive", label: "Status", render: (s) => <OnOffChip on={s.isActive} offLabel="Hidden" /> },
+  ], []);
+
+  const { tableProps } = useClientTable(slides, columns, { initialSortKey: "sortOrder", initialSortDir: "asc" });
 
   function openNew() {
     setEditing(null);
@@ -79,12 +105,7 @@ export default function Slider() {
   }
 
   async function remove(s: Slide) {
-    const ok = await confirm({
-      title: "Delete slide",
-      message: `Delete this slide${s.title ? ` “${s.title}”` : ""}?`,
-      confirmLabel: "Delete",
-      danger: true,
-    });
+    const ok = await confirm({ title: "Delete slide", message: `Delete this slide${s.title ? ` “${s.title}”` : ""}?`, confirmLabel: "Delete", danger: true });
     if (!ok) return;
     try {
       await del({ variables: { id: s.id } });
@@ -94,41 +115,36 @@ export default function Slider() {
     }
   }
 
+  async function bulkDelete(ids: string[]) {
+    const ok = await confirm({ title: "Delete slides", message: `Delete ${ids.length} selected slide(s)?`, confirmLabel: "Delete all", danger: true });
+    if (!ok) return;
+    try {
+      await delMany({ variables: { ids } });
+      await refetch();
+    } catch (e: unknown) {
+      await notify({ title: "Could not delete", message: e instanceof Error ? e.message : "Could not delete." });
+    }
+  }
+
   return (
     <Layout title="Slider">
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New slide</Button>
-      </Box>
-
-      <div className="card">
-        <AsyncList loading={loading && !data} empty={slides.length === 0} emptyLabel="No slides yet.">
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Image</TableCell><TableCell>Title</TableCell><TableCell>Link</TableCell>
-                  <TableCell>Order</TableCell><TableCell>Status</TableCell><TableCell />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {slides.map((s) => (
-                  <TableRow key={s.id} hover>
-                    <TableCell><Box component="img" src={s.imageUrl} alt="" sx={{ width: 72, height: 48, borderRadius: 1.5, objectFit: "cover" }} /></TableCell>
-                    <TableCell><Typography fontWeight={700}>{s.title || "—"}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{s.linkUrl || "—"}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{s.sortOrder}</Typography></TableCell>
-                    <TableCell><OnOffChip on={s.isActive} offLabel="Hidden" /></TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                      <Button size="small" onClick={() => openEdit(s)}>Edit</Button>
-                      <Button size="small" color="error" onClick={() => remove(s)}>Delete</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        </AsyncList>
-      </div>
+      <DataTable
+        columns={columns}
+        rowKey={(s) => s.id}
+        loading={loading && !data}
+        emptyLabel="No slides yet."
+        noun="slide"
+        searchPlaceholder="Search slides…"
+        onBulkDelete={bulkDelete}
+        renderActions={(s) => (
+          <>
+            <Button size="small" onClick={() => openEdit(s)}>Edit</Button>
+            <Button size="small" color="error" onClick={() => remove(s)}>Delete</Button>
+          </>
+        )}
+        toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New slide</Button>}
+        {...tableProps}
+      />
 
       {open && (
         <Modal

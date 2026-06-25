@@ -1,14 +1,15 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { RIDERS } from "../../graphql/queries";
-import { CREATE_STAFF_USER, UPDATE_STAFF_USER, DELETE_STAFF_USER } from "../../graphql/mutations";
-import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { CREATE_STAFF_USER, UPDATE_STAFF_USER, DELETE_STAFF_USER, DELETE_STAFF_USERS } from "../../graphql/mutations";
+import { Box, Button, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
-import { AsyncList, OnOffChip } from "../../components/ui";
+import { OnOffChip } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
+import { DataTable, useClientTable, type Column } from "../../components/DataTable";
 import RiderModal from "./RiderModal";
 import { riderSchema, riderEditSchema, type RiderForm } from "../../form";
 import type { RiderRow } from "./types";
@@ -20,6 +21,7 @@ export default function Riders() {
   const [createStaff] = useMutation(CREATE_STAFF_USER);
   const [updateStaff] = useMutation(UPDATE_STAFF_USER);
   const [deleteStaff] = useMutation(DELETE_STAFF_USER);
+  const [deleteStaffMany] = useMutation(DELETE_STAFF_USERS);
 
   const confirm = useConfirm();
   const notify = useAlert();
@@ -42,6 +44,27 @@ export default function Riders() {
   });
 
   const riders = data?.riders ?? [];
+
+  const columns = useMemo<Column<RiderRow>[]>(() => [
+    {
+      key: "name", label: "Name", sortable: true,
+      searchValue: (r) => r.name, sortValue: (r) => r.name,
+      render: (r) => <Typography fontWeight={700}>{r.name}</Typography>,
+    },
+    {
+      key: "email", label: "Email", sortable: true,
+      searchValue: (r) => r.email, sortValue: (r) => r.email,
+      render: (r) => <Typography variant="body2" color="text.secondary">{r.email}</Typography>,
+    },
+    {
+      key: "phone", label: "Phone",
+      searchValue: (r) => r.phone ?? "",
+      render: (r) => <Typography variant="body2" color="text.secondary">{r.phone ?? "—"}</Typography>,
+    },
+    { key: "isActive", label: "Status", render: (r) => <OnOffChip on={r.isActive} offLabel="Disabled" /> },
+  ], []);
+
+  const { tableProps } = useClientTable(riders, columns, { initialSortKey: "name", initialSortDir: "asc" });
 
   function openNew() {
     editingRef.current = false;
@@ -105,45 +128,49 @@ export default function Riders() {
     }
   }
 
+  async function bulkDelete(ids: string[]) {
+    const ok = await confirm({
+      title: "Delete delivery partners",
+      message: `Delete ${ids.length} selected rider(s)? They will no longer be able to sign in.`,
+      confirmLabel: "Delete all",
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteStaffMany({ variables: { ids } });
+      await refetch();
+    } catch (e: unknown) {
+      await notify({ title: "Could not delete", message: e instanceof Error ? e.message : "Could not delete." });
+    }
+  }
+
   return (
     <Layout title="Delivery partners">
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
+      <Box sx={{ mb: 2 }}>
         <Typography variant="body2" color="text.secondary">
           Riders sign in on the delivery portal to pick up and deliver assigned orders.
         </Typography>
-        <Box sx={{ flex: 1 }} />
-        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New rider</Button>
       </Box>
 
-      <div className="card">
-        <AsyncList loading={loading && !data} empty={riders.length === 0} emptyLabel="No delivery partners yet — create the first one.">
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell><TableCell>Email</TableCell><TableCell>Phone</TableCell><TableCell>Status</TableCell><TableCell />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {riders.map((r) => (
-                  <TableRow key={r.id} hover>
-                    <TableCell><Typography fontWeight={700}>{r.name}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{r.email}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{r.phone ?? "—"}</Typography></TableCell>
-                    <TableCell><OnOffChip on={r.isActive} offLabel="Disabled" /></TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                      <Button size="small" onClick={() => openEdit(r)}>Edit</Button>
-                      <Button size="small" color="error" disabled={deletingId === r.id} onClick={() => remove(r)}>
-                        {deletingId === r.id ? "Deleting…" : "Delete"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        </AsyncList>
-      </div>
+      <DataTable
+        columns={columns}
+        rowKey={(r) => r.id}
+        loading={loading && !data}
+        emptyLabel="No delivery partners yet — create the first one."
+        noun="rider"
+        searchPlaceholder="Search riders…"
+        onBulkDelete={bulkDelete}
+        renderActions={(r) => (
+          <>
+            <Button size="small" onClick={() => openEdit(r)}>Edit</Button>
+            <Button size="small" color="error" disabled={deletingId === r.id} onClick={() => remove(r)}>
+              {deletingId === r.id ? "Deleting…" : "Delete"}
+            </Button>
+          </>
+        )}
+        toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New rider</Button>}
+        {...tableProps}
+      />
 
       {open && (
         <RiderModal

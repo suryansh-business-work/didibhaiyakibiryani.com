@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { CAMPAIGNS } from "../../graphql/queries";
 import { SEND_CAMPAIGN } from "../../graphql/mutations";
-import { Box, Button, Chip, type ChipProps, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Button, Chip, type ChipProps, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
-import { AsyncList, fmtDate } from "../../components/ui";
+import { fmtDate } from "../../components/ui";
 import { useConfirm } from "../../components/dialog";
 import { IPlus } from "../../components/icons";
+import { DataTable, useClientTable, type Column } from "../../components/DataTable";
 import CampaignModal from "./CampaignModal";
 import { BLANK_FORM, type CampaignForm, type CampaignRow } from "./types";
 
@@ -29,6 +30,42 @@ export default function Campaigns() {
   const [err, setErr] = useState("");
 
   const campaigns = data?.campaigns ?? [];
+
+  const columns = useMemo<Column<CampaignRow>[]>(() => [
+    {
+      key: "name", label: "Campaign", sortable: true,
+      searchValue: (c) => `${c.name} ${c.subject}`, sortValue: (c) => c.name,
+      render: (c) => (
+        <>
+          <Typography fontWeight={700}>{c.name}</Typography>
+          <Typography variant="caption" color="text.secondary">{c.subject}</Typography>
+        </>
+      ),
+    },
+    {
+      key: "channel", label: "Channel", sortable: true,
+      searchValue: (c) => c.channel, sortValue: (c) => c.channel,
+      render: (c) => <Typography variant="body2" color="text.secondary">{c.channel}</Typography>,
+    },
+    {
+      key: "status", label: "Status", sortable: true, sortValue: (c) => c.status,
+      render: (c) => <Chip size="small" variant="outlined" color={STATUS_COLOR[c.status] ?? "default"} label={c.status} />,
+    },
+    {
+      key: "audienceCount", label: "Audience", sortable: true, sortValue: (c) => c.audienceCount,
+      render: (c) => <Typography variant="body2" color="text.secondary">{c.audienceCount}</Typography>,
+    },
+    {
+      key: "sentCount", label: "Sent / Failed", sortable: true, sortValue: (c) => c.sentCount,
+      render: (c) => <Typography variant="body2" color="text.secondary">{c.sentCount} / {c.failedCount}</Typography>,
+    },
+    {
+      key: "when", label: "When", sortable: true, sortValue: (c) => c.sentAt ?? c.createdAt,
+      render: (c) => <Typography variant="body2" color="text.secondary">{fmtDate(c.sentAt ?? c.createdAt)}</Typography>,
+    },
+  ], []);
+
+  const { tableProps } = useClientTable(campaigns, columns, { initialSortKey: "when", initialSortDir: "desc" });
 
   async function doSend() {
     setErr("");
@@ -66,39 +103,16 @@ export default function Campaigns() {
 
   return (
     <Layout title="Email & WhatsApp Campaigns">
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={() => { setErr(""); setOpen(true); }}>New campaign</Button>
-      </Box>
-
-      <div className="card">
-        <AsyncList loading={loading && !data} empty={campaigns.length === 0} emptyLabel="No campaigns yet.">
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Campaign</TableCell><TableCell>Channel</TableCell><TableCell>Status</TableCell>
-                  <TableCell>Audience</TableCell><TableCell>Sent / Failed</TableCell><TableCell>When</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {campaigns.map((c) => (
-                  <TableRow key={c.id} hover>
-                    <TableCell>
-                      <Typography fontWeight={700}>{c.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">{c.subject}</Typography>
-                    </TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{c.channel}</Typography></TableCell>
-                    <TableCell><Chip size="small" variant="outlined" color={STATUS_COLOR[c.status] ?? "default"} label={c.status} /></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{c.audienceCount}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{c.sentCount} / {c.failedCount}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(c.sentAt ?? c.createdAt)}</Typography></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        </AsyncList>
-      </div>
+      <DataTable
+        columns={columns}
+        rowKey={(c) => c.id}
+        loading={loading && !data}
+        emptyLabel="No campaigns yet."
+        noun="campaign"
+        searchPlaceholder="Search campaigns…"
+        toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={() => { setErr(""); setOpen(true); }}>New campaign</Button>}
+        {...tableProps}
+      />
 
       {open && (
         <CampaignModal

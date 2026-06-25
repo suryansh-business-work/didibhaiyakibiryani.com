@@ -10,8 +10,9 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { inr } from "../../../components/ui";
 import type { ManualOrderForm } from "../../../form";
-import { ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES } from "./types";
+import { ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES, type CouponOption } from "./types";
 import { NEXT } from "../types";
 
 interface SelectFieldProps {
@@ -43,12 +44,27 @@ function SelectField({ control, name, label, options, enabledValues }: Readonly<
 interface Props {
   control: Control<ManualOrderForm>;
   baseStatus: string;
+  coupons: CouponOption[];
+  appliedDiscount: number;
 }
 
-/** Collapsible extras: discount, payment, status, back-date and survey link.
+function CouponNote({ coupon, appliedDiscount }: Readonly<{ coupon?: CouponOption; appliedDiscount: number }>) {
+  if (appliedDiscount > 0) {
+    return <Typography variant="caption" color="success.main">– {inr(appliedDiscount)} discount applied</Typography>;
+  }
+  if (coupon?.type === "FREE_DELIVERY") {
+    return <Typography variant="caption" color="success.main">Free delivery applied</Typography>;
+  }
+  if (coupon) {
+    return <Typography variant="caption" color="text.secondary">No discount yet (min order not met, or a free-item coupon).</Typography>;
+  }
+  return null;
+}
+
+/** Collapsible extras: coupon, payment, status, back-date and survey link.
  * The status select only enables the current step + its allowed next steps so
  * an order can't jump straight to a later status. */
-export function OrderOptions({ control, baseStatus }: Readonly<Props>) {
+export function OrderOptions({ control, baseStatus, coupons, appliedDiscount }: Readonly<Props>) {
   const enabledStatuses = new Set<string>([baseStatus, ...(NEXT[baseStatus] ?? [])]);
   return (
     <Accordion disableGutters sx={{ mt: 1, bgcolor: "transparent" }}>
@@ -59,8 +75,18 @@ export function OrderOptions({ control, baseStatus }: Readonly<Props>) {
         <Stack spacing={1.5}>
           <Controller
             control={control}
-            name="discount"
-            render={({ field }) => <TextField {...field} value={field.value ?? ""} label="Discount (₹)" type="number" size="small" />}
+            name="couponCode"
+            render={({ field }) => (
+              <Stack spacing={0.5}>
+                <TextField {...field} value={field.value ?? ""} select label="Coupon" size="small">
+                  <MenuItem value="">No coupon</MenuItem>
+                  {coupons.map((c) => (
+                    <MenuItem key={c.id} value={c.code}>{c.code} — {c.title}</MenuItem>
+                  ))}
+                </TextField>
+                <CouponNote coupon={coupons.find((c) => c.code === field.value)} appliedDiscount={appliedDiscount} />
+              </Stack>
+            )}
           />
 
           <Stack direction="row" spacing={1}>

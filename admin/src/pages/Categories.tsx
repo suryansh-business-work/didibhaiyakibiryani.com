@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { CATEGORIES } from "../graphql/queries";
-import { CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY } from "../graphql/mutations";
-import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY, DELETE_CATEGORIES } from "../graphql/mutations";
+import { Button, Typography } from "@mui/material";
 import Layout from "../components/Layout";
-import { AsyncList, FormActions, Modal, OnOffChip } from "../components/ui";
+import { FormActions, Modal, OnOffChip } from "../components/ui";
 import { IPlus } from "../components/icons";
+import { DataTable, useClientTable, type Column } from "../components/DataTable";
 import { useAlert, useConfirm } from "../components/dialog";
 import { RHFField, RHFCheckbox, categorySchema, type CategoryForm } from "../form";
 
@@ -22,6 +23,7 @@ export default function Categories() {
   const [create] = useMutation(CREATE_CATEGORY);
   const [update] = useMutation(UPDATE_CATEGORY);
   const [del] = useMutation(DELETE_CATEGORY);
+  const [delMany] = useMutation(DELETE_CATEGORIES);
 
   const confirm = useConfirm();
   const notify = useAlert();
@@ -29,14 +31,21 @@ export default function Categories() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Cat | null>(null);
   const {
-    control,
-    handleSubmit,
-    reset,
-    setError,
+    control, handleSubmit, reset, setError,
     formState: { errors, isSubmitting },
   } = useForm<CategoryForm>({ resolver: zodResolver(categorySchema), defaultValues: { ...BLANK } });
 
   const cats = data?.categories ?? [];
+
+  const columns = useMemo<Column<Cat>[]>(() => [
+    { key: "name", label: "Name", sortable: true, searchValue: (c) => c.name, sortValue: (c) => c.name, render: (c) => <Typography fontWeight={700}>{c.name}</Typography> },
+    { key: "description", label: "Description", searchValue: (c) => c.description ?? "", render: (c) => <Typography variant="body2" color="text.secondary">{c.description || "—"}</Typography> },
+    { key: "itemCount", label: "Items", sortable: true, sortValue: (c) => c.itemCount, render: (c) => <Typography variant="body2" color="text.secondary">{c.itemCount}</Typography> },
+    { key: "sortOrder", label: "Order", sortable: true, sortValue: (c) => c.sortOrder, render: (c) => <Typography variant="body2" color="text.secondary">{c.sortOrder}</Typography> },
+    { key: "isActive", label: "Status", render: (c) => <OnOffChip on={c.isActive} offLabel="Hidden" /> },
+  ], []);
+
+  const { tableProps } = useClientTable(cats, columns, { initialSortKey: "sortOrder", initialSortDir: "asc" });
 
   function openNew() {
     setEditing(null);
@@ -62,12 +71,7 @@ export default function Categories() {
   }
 
   async function remove(c: Cat) {
-    const ok = await confirm({
-      title: "Delete category",
-      message: `Delete category “${c.name}”?`,
-      confirmLabel: "Delete",
-      danger: true,
-    });
+    const ok = await confirm({ title: "Delete category", message: `Delete category “${c.name}”?`, confirmLabel: "Delete", danger: true });
     if (!ok) return;
     try {
       await del({ variables: { id: c.id } });
@@ -77,41 +81,36 @@ export default function Categories() {
     }
   }
 
+  async function bulkDelete(ids: string[]) {
+    const ok = await confirm({ title: "Delete categories", message: `Delete ${ids.length} selected categor(ies)?`, confirmLabel: "Delete all", danger: true });
+    if (!ok) return;
+    try {
+      await delMany({ variables: { ids } });
+      await refetch();
+    } catch (e: unknown) {
+      await notify({ title: "Could not delete", message: e instanceof Error ? e.message : "Could not delete." });
+    }
+  }
+
   return (
     <Layout title="Categories">
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New category</Button>
-      </Box>
-
-      <div className="card">
-        <AsyncList loading={loading && !data} empty={cats.length === 0} emptyLabel="No categories yet.">
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell><TableCell>Description</TableCell><TableCell>Items</TableCell>
-                  <TableCell>Order</TableCell><TableCell>Status</TableCell><TableCell />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {cats.map((c) => (
-                  <TableRow key={c.id} hover>
-                    <TableCell><Typography fontWeight={700}>{c.name}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{c.description || "—"}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{c.itemCount}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{c.sortOrder}</Typography></TableCell>
-                    <TableCell><OnOffChip on={c.isActive} offLabel="Hidden" /></TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                      <Button size="small" onClick={() => openEdit(c)}>Edit</Button>
-                      <Button size="small" color="error" onClick={() => remove(c)}>Delete</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        </AsyncList>
-      </div>
+      <DataTable
+        columns={columns}
+        rowKey={(c) => c.id}
+        loading={loading && !data}
+        emptyLabel="No categories yet."
+        noun="category"
+        searchPlaceholder="Search categories…"
+        onBulkDelete={bulkDelete}
+        renderActions={(c) => (
+          <>
+            <Button size="small" onClick={() => openEdit(c)}>Edit</Button>
+            <Button size="small" color="error" onClick={() => remove(c)}>Delete</Button>
+          </>
+        )}
+        toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New category</Button>}
+        {...tableProps}
+      />
 
       {open && (
         <Modal

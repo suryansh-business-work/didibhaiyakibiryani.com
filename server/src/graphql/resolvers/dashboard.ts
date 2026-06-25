@@ -1,6 +1,7 @@
 import { GraphQLError } from "graphql";
 import { Order, User, MenuItem, Review } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
+import { paginate, type PageArgs } from "../../utils/pagination.js";
 
 function customerNotFound(): GraphQLError {
   return new GraphQLError("Customer not found.", { extensions: { code: "BAD_USER_INPUT" } });
@@ -34,6 +35,16 @@ export const dashboardResolvers = {
         ];
       }
       return User.find(filter).sort({ createdAt: -1 }).limit(200).exec();
+    },
+
+    customersPage: async (_: unknown, page: PageArgs, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      return paginate(User, {
+        filter: { role: "CUSTOMER" },
+        searchFields: ["name", "email", "phone"],
+        sortAllow: ["name", "createdAt"],
+        ...page,
+      });
     },
 
     dashboardStats: async (_: unknown, __: unknown, ctx: Context) => {
@@ -184,6 +195,15 @@ export const dashboardResolvers = {
       if (!user || user.role !== "CUSTOMER") throw customerNotFound();
       await User.findByIdAndDelete(id).exec();
       return true;
+    },
+
+    deleteCustomers: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      if (!ids.length) return 0;
+      // Scoped to CUSTOMER so staff/admin accounts can't be removed via this path.
+      const res = await User.deleteMany({ _id: { $in: ids }, role: "CUSTOMER" }).exec();
+      /* v8 ignore next -- deletedCount is always present on the driver result */
+      return res.deletedCount ?? 0;
     },
   },
 

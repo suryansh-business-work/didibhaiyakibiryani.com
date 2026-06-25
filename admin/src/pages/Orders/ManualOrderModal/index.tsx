@@ -1,10 +1,10 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
 import { AppBar, Box, Dialog, IconButton, Toolbar, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { CATEGORIES, CUSTOMERS, LEADS, MENU_ITEMS } from "../../../graphql/queries";
+import { CATEGORIES, COUPONS, CUSTOMERS, LEADS, MENU_ITEMS, SETTINGS, SOCIETIES } from "../../../graphql/queries";
 import { CREATE_MANUAL_ORDER, UPDATE_MANUAL_ORDER } from "../../../graphql/mutations";
 import { manualOrderSchema, type ManualOrderForm } from "../../../form";
 import { ItemCatalog } from "./ItemCatalog";
@@ -13,13 +13,21 @@ import {
   BLANK_MANUAL_ORDER,
   buildManualInput,
   computeTotals,
+  couponItemDiscount,
+  deliveryFeeFor,
   orderToManualForm,
   type CategoryOption,
+  type CouponOption,
   type CustomerOption,
   type LeadOption,
   type MenuOption,
+  type SocietyOption,
 } from "./types";
 import type { Order } from "../types";
+
+interface DeliverySettingsData {
+  settings: { minDeliveryCost: number; freeDeliveryAbove: number };
+}
 
 interface Props {
   onClose: () => void;
@@ -35,6 +43,9 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
   const { data: catData } = useQuery<{ categories: CategoryOption[] }>(CATEGORIES);
   const { data: custData } = useQuery<{ customers: CustomerOption[] }>(CUSTOMERS);
   const { data: leadData } = useQuery<{ leads: LeadOption[] }>(LEADS);
+  const { data: socData } = useQuery<{ societies: SocietyOption[] }>(SOCIETIES);
+  const { data: couponData } = useQuery<{ coupons: CouponOption[] }>(COUPONS);
+  const { data: setData } = useQuery<DeliverySettingsData>(SETTINGS);
   const [create] = useMutation(CREATE_MANUAL_ORDER);
   const [updateOrder] = useMutation(UPDATE_MANUAL_ORDER);
 
@@ -48,13 +59,32 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
     formState: { errors, isSubmitting },
   } = useForm<ManualOrderForm>({
     resolver: zodResolver(manualOrderSchema),
-    defaultValues: editOrder ? orderToManualForm(editOrder) : { ...BLANK_MANUAL_ORDER },
+    // New POS sales default the order date to right now (back-dating stays editable).
+    defaultValues: editOrder ? orderToManualForm(editOrder) : { ...BLANK_MANUAL_ORDER, placedAt: new Date().toISOString() },
   });
   const { fields, append, remove, update } = useFieldArray({ control, name: "items" });
 
   const form = watch();
   const totals = useMemo(() => computeTotals(form), [form]);
   const isDelivery = form.orderType === "DELIVERY";
+
+  const activeCoupons = useMemo(() => (couponData?.coupons ?? []).filter((c) => c.isActive), [couponData]);
+  const minDeliveryCost = setData?.settings.minDeliveryCost ?? 0;
+  const freeDeliveryAbove = setData?.settings.freeDeliveryAbove ?? 0;
+  const couponCode = form.couponCode ?? "";
+  const orderType = form.orderType;
+
+  // Keep discount (from the chosen coupon) and the delivery fee (from Finance
+  // settings) in sync with the cart — both are derived, not typed by staff.
+  useEffect(() => {
+    const coupon = activeCoupons.find((c) => c.code === couponCode);
+    const discount = couponItemDiscount(coupon, totals.subtotal);
+    if ((Number(getValues("discount")) || 0) !== discount) setValue("discount", discount);
+    if (orderType === "DELIVERY") {
+      const fee = deliveryFeeFor({ minDeliveryCost, freeDeliveryAbove }, totals.subtotal, coupon?.type === "FREE_DELIVERY");
+      if ((Number(getValues("deliveryFee")) || 0) !== fee) setValue("deliveryFee", fee);
+    }
+  }, [couponCode, orderType, totals.subtotal, activeCoupons, minDeliveryCost, freeDeliveryAbove, setValue, getValues]);
 
   function addMenuItem(m: MenuOption) {
     const items = getValues("items");
@@ -106,6 +136,8 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
           setValue={setValue}
           customers={custData?.customers ?? []}
           leads={leadData?.leads ?? []}
+          societies={socData?.societies ?? []}
+          coupons={activeCoupons}
           fields={fields}
           totals={totals}
           isDelivery={isDelivery}

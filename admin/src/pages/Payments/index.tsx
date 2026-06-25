@@ -1,19 +1,16 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
-import { PAYMENTS } from "../../graphql/queries";
+import { PAYMENTS_PAGE } from "../../graphql/queries";
 import { REFUND_PAYMENT } from "../../graphql/mutations";
-import { Box, Button, Chip, type ChipProps, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Button, Chip, type ChipProps, Stack, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
-import { AsyncList, inr, fmtDate } from "../../components/ui";
+import { inr, fmtDate } from "../../components/ui";
 import { IPlus } from "../../components/icons";
+import { DataTable, useServerTable, type Column } from "../../components/DataTable";
 import { useAlert, useConfirm } from "../../components/dialog";
 import PaymentDetail from "./PaymentDetail";
 import ManualPaymentModal from "./ManualPaymentModal";
-import {
-  STATUS_FILTERS,
-  refundableAmount,
-  type PaymentRow,
-} from "./types";
+import { STATUS_FILTERS, refundableAmount, type PaymentRow } from "./types";
 
 const STATUS_COLOR: Record<string, ChipProps["color"]> = {
   CAPTURED: "success",
@@ -25,8 +22,9 @@ const STATUS_COLOR: Record<string, ChipProps["color"]> = {
 
 export default function Payments() {
   const [filter, setFilter] = useState<string>("ALL");
-  const { data, loading, refetch } = useQuery<{ payments: PaymentRow[] }>(PAYMENTS, {
-    variables: { status: filter === "ALL" ? null : filter },
+  const { variables, tableProps, setPage } = useServerTable({ initialSortKey: "createdAt", initialSortDir: "desc" });
+  const { data, loading, refetch } = useQuery<{ paymentsPage: { items: PaymentRow[]; total: number } }>(PAYMENTS_PAGE, {
+    variables: { ...variables, status: filter === "ALL" ? null : filter },
   });
   const [refund, { loading: refunding }] = useMutation(REFUND_PAYMENT);
   const confirm = useConfirm();
@@ -34,16 +32,17 @@ export default function Payments() {
   const [active, setActive] = useState<PaymentRow | null>(null);
   const [recording, setRecording] = useState(false);
 
-  const payments = data?.payments ?? [];
+  const payments = data?.paymentsPage.items ?? [];
+  const total = data?.paymentsPage.total ?? 0;
+
+  function selectFilter(f: string) {
+    setFilter(f);
+    setPage(1);
+  }
 
   async function doRefund(p: PaymentRow) {
     const amount = refundableAmount(p);
-    const ok = await confirm({
-      title: "Refund payment",
-      message: `Refund ${inr(amount)} for order ${p.order?.orderNumber ?? p.providerOrderId}? This cannot be undone.`,
-      confirmLabel: "Refund",
-      danger: true,
-    });
+    const ok = await confirm({ title: "Refund payment", message: `Refund ${inr(amount)} for order ${p.order?.orderNumber ?? p.providerOrderId}? This cannot be undone.`, confirmLabel: "Refund", danger: true });
     if (!ok) return;
     try {
       await refund({ variables: { paymentId: p.id, reason: "Admin refund" } });
@@ -51,78 +50,60 @@ export default function Payments() {
       setActive(null);
       await notify({ title: "Refunded", message: `${inr(amount)} refund initiated.` });
     } catch (e: unknown) {
-      await notify({
-        title: "Refund failed",
-        message: e instanceof Error ? e.message : "Please try again.",
-      });
+      await notify({ title: "Refund failed", message: e instanceof Error ? e.message : "Please try again." });
     }
   }
 
+  const columns = useMemo<Column<PaymentRow>[]>(() => [
+    { key: "order", label: "Order", render: (p) => (
+      <>
+        <Typography fontWeight={700}>{p.order?.orderNumber ?? "—"}</Typography>
+        <Typography variant="caption" color="text.secondary">{p.providerOrderId}</Typography>
+      </>
+    ) },
+    { key: "status", label: "Status", sortable: true, render: (p) => <Chip size="small" variant="outlined" color={STATUS_COLOR[p.status] ?? "default"} label={p.status.replaceAll("_", " ")} /> },
+    { key: "method", label: "Method", render: (p) => <Typography variant="body2" color="text.secondary">{p.method ?? "—"}</Typography> },
+    { key: "refunded", label: "Refunded", render: (p) => <Typography variant="body2" color="text.secondary">{p.refunds.length > 0 ? inr(p.amount - refundableAmount(p)) : "—"}</Typography> },
+    { key: "createdAt", label: "Created", sortable: true, render: (p) => <Typography variant="body2" color="text.secondary">{fmtDate(p.createdAt)}</Typography> },
+    { key: "amount", label: "Amount", align: "right", sortable: true, render: (p) => <Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(p.amount)}</Typography> },
+  ], []);
+
+  const chips = (
+    <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+      {STATUS_FILTERS.map((f) => (
+        <Chip
+          key={f}
+          label={f === "ALL" ? "All" : f.replaceAll("_", " ").toLowerCase()}
+          color={filter === f ? "primary" : "default"}
+          variant={filter === f ? "filled" : "outlined"}
+          onClick={() => selectFilter(f)}
+        />
+      ))}
+    </Stack>
+  );
+
   return (
     <Layout title="Payments">
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
-        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-          {STATUS_FILTERS.map((f) => (
-            <Chip
-              key={f}
-              label={f === "ALL" ? "All" : f.replaceAll("_", " ").toLowerCase()}
-              color={filter === f ? "primary" : "default"}
-              variant={filter === f ? "filled" : "outlined"}
-              onClick={() => setFilter(f)}
-            />
-          ))}
-        </Stack>
-        <Box sx={{ flexGrow: 1 }} />
-        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={() => setRecording(true)}>Record payment</Button>
-      </Box>
-
-      <div className="card">
-        <AsyncList loading={loading && !data} empty={payments.length === 0} emptyLabel="No payments yet.">
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Order</TableCell><TableCell>Status</TableCell><TableCell>Method</TableCell>
-                  <TableCell>Refunded</TableCell><TableCell>Created</TableCell><TableCell align="right">Amount</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {payments.map((p) => (
-                  <TableRow key={p.id} hover sx={{ cursor: "pointer" }} onClick={() => setActive(p)}>
-                    <TableCell>
-                      <Typography fontWeight={700}>{p.order?.orderNumber ?? "—"}</Typography>
-                      <Typography variant="caption" color="text.secondary">{p.providerOrderId}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip size="small" variant="outlined" color={STATUS_COLOR[p.status] ?? "default"} label={p.status.replaceAll("_", " ")} />
-                    </TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{p.method ?? "—"}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{p.refunds.length > 0 ? inr(p.amount - refundableAmount(p)) : "—"}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(p.createdAt)}</Typography></TableCell>
-                    <TableCell align="right"><Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(p.amount)}</Typography></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        </AsyncList>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={payments}
+        total={total}
+        rowKey={(p) => p.id}
+        loading={loading && !data}
+        emptyLabel="No payments yet."
+        noun="payment"
+        searchPlaceholder="Search order #, payment id…"
+        toolbarStart={chips}
+        renderActions={(p) => <Button size="small" onClick={() => setActive(p)}>Open</Button>}
+        toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={() => setRecording(true)}>Record payment</Button>}
+        {...tableProps}
+      />
 
       {active && (
-        <PaymentDetail
-          payment={active}
-          refunding={refunding}
-          onRefund={doRefund}
-          onClose={() => setActive(null)}
-        />
+        <PaymentDetail payment={active} refunding={refunding} onRefund={doRefund} onClose={() => setActive(null)} />
       )}
       {recording && (
-        <ManualPaymentModal
-          onClose={() => setRecording(false)}
-          onCreated={() => {
-            refetch().catch(() => undefined);
-          }}
-        />
+        <ManualPaymentModal onClose={() => setRecording(false)} onCreated={() => { refetch().catch(() => undefined); }} />
       )}
     </Layout>
   );

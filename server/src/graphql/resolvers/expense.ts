@@ -1,6 +1,7 @@
 import { GraphQLError } from "graphql";
 import { Expense, ExpenseSource, type ExpenseSourceType } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
+import { paginate, type PageArgs } from "../../utils/pagination.js";
 
 interface ExpenseSourceInput {
   type: ExpenseSourceType;
@@ -19,10 +20,17 @@ interface ExpenseInput {
   title: string;
   amount: number;
   note?: string;
+  invoiceUrl?: string;
 }
 
 function expenseFields(input: ExpenseInput) {
-  return { source: input.sourceId, title: input.title, amount: input.amount, note: input.note };
+  return {
+    source: input.sourceId,
+    title: input.title,
+    amount: input.amount,
+    note: input.note,
+    invoiceUrl: input.invoiceUrl?.trim() || undefined,
+  };
 }
 
 export const expenseResolvers = {
@@ -33,6 +41,16 @@ export const expenseResolvers = {
     },
 
     expenses: async () => Expense.find().sort({ createdAt: -1 }).populate("source").exec(),
+
+    expensesPage: async (_: unknown, page: PageArgs, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      return paginate(Expense, {
+        searchFields: ["title"],
+        sortAllow: ["amount", "createdAt", "title"],
+        populate: "source",
+        ...page,
+      });
+    },
   },
 
   Mutation: {
@@ -58,6 +76,14 @@ export const expenseResolvers = {
       return true;
     },
 
+    deleteExpenseSources: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      if (!ids.length) return 0;
+      const res = await ExpenseSource.deleteMany({ _id: { $in: ids } }).exec();
+      /* v8 ignore next -- deletedCount is always present on the driver result */
+      return res.deletedCount ?? 0;
+    },
+
     createExpense: async (_: unknown, { input }: { input: ExpenseInput }, ctx: Context) => {
       requireRole(ctx, "ADMIN");
       const expense = await Expense.create(expenseFields(input));
@@ -75,6 +101,14 @@ export const expenseResolvers = {
       requireRole(ctx, "ADMIN");
       await Expense.findByIdAndDelete(id);
       return true;
+    },
+
+    deleteExpenses: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      if (!ids.length) return 0;
+      const res = await Expense.deleteMany({ _id: { $in: ids } }).exec();
+      /* v8 ignore next -- deletedCount is always present on the driver result */
+      return res.deletedCount ?? 0;
     },
   },
 };

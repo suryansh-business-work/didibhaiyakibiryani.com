@@ -1,6 +1,7 @@
 import { GraphQLError } from "graphql";
 import { Order, MenuItem, Coupon, User, getOrCreateSettings } from "../../models/index.js";
 import { requireAuth, requireRole, type Context, type TokenPayload } from "../../utils/auth.js";
+import { paginate, type PageArgs } from "../../utils/pagination.js";
 import { evaluateCoupon, computeDeliveryFee, haversineKm } from "../../utils/pricing.js";
 import { assertOrderingAvailable } from "../../utils/ordering.js";
 import { genOrderNumber } from "../../utils/helpers.js";
@@ -27,6 +28,7 @@ interface AddressInput {
   line1: string;
   line2?: string;
   city: string;
+  state?: string;
   pincode: string;
   phone?: string;
   lat?: number;
@@ -222,6 +224,21 @@ export const orderResolvers = {
       requireRole(ctx, "ADMIN", "STAFF", "DELIVERY");
       const filter = status ? { status } : {};
       return Order.find(filter).sort({ placedAt: -1 }).limit(200).exec();
+    },
+
+    ordersPage: async (
+      _: unknown,
+      { status, ...page }: PageArgs & { status?: OrderStatus },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN", "STAFF", "DELIVERY");
+      return paginate(Order, {
+        filter: status ? { status } : {},
+        searchFields: ["orderNumber", "customerName", "customerPhone"],
+        sortAllow: ["placedAt", "total", "createdAt", "status"],
+        defaultSort: "placedAt",
+        ...page,
+      });
     },
 
     invoicePdf: async (_: unknown, { orderId }: { orderId: string }, ctx: Context) => {

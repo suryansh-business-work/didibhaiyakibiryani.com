@@ -52,6 +52,12 @@ export const typeDefs = /* GraphQL */ `
     REFUNDED
   }
 
+  # Sort direction shared by every paginated admin list query.
+  enum SortDir {
+    ASC
+    DESC
+  }
+
   # ─────────────── Types ───────────────
   type Address {
     id: ID!
@@ -133,6 +139,8 @@ export const typeDefs = /* GraphQL */ `
     city: String
     state: String
     pincode: String
+    lat: Float
+    lng: Float
     sortOrder: Int!
     isActive: Boolean!
     createdAt: DateTime!
@@ -163,6 +171,7 @@ export const typeDefs = /* GraphQL */ `
     title: String!
     amount: Float!
     note: String
+    invoiceUrl: String
     createdAt: DateTime!
   }
 
@@ -224,6 +233,7 @@ export const typeDefs = /* GraphQL */ `
     line1: String!
     line2: String
     city: String!
+    state: String
     pincode: String!
     phone: String
     lat: Float
@@ -355,6 +365,7 @@ export const typeDefs = /* GraphQL */ `
     line1: String!
     line2: String
     city: String!
+    state: String
     pincode: String!
     lat: Float
     lng: Float
@@ -400,6 +411,8 @@ export const typeDefs = /* GraphQL */ `
     city: String
     state: String
     pincode: String
+    lat: Float
+    lng: Float
     sortOrder: Int
     isActive: Boolean
   }
@@ -421,6 +434,7 @@ export const typeDefs = /* GraphQL */ `
     title: String!
     amount: Float!
     note: String
+    invoiceUrl: String
   }
 
   input PartyOrderInput {
@@ -752,6 +766,45 @@ export const typeDefs = /* GraphQL */ `
     ctaUrl: String
   }
 
+  # ─────────────── Paginated list wrappers ───────────────
+  # Each wraps a page window (items) plus the unpaginated total for page counts.
+  type OrdersPage {
+    items: [Order!]!
+    total: Int!
+  }
+  type PaymentsPage {
+    items: [Payment!]!
+    total: Int!
+  }
+  type CustomersPage {
+    items: [User!]!
+    total: Int!
+  }
+  type LeadsPage {
+    items: [Lead!]!
+    total: Int!
+  }
+  type PartyOrdersPage {
+    items: [PartyOrder!]!
+    total: Int!
+  }
+  type SupportTicketsPage {
+    items: [SupportTicket!]!
+    total: Int!
+  }
+  type ExpensesPage {
+    items: [Expense!]!
+    total: Int!
+  }
+  type MenuItemsPage {
+    items: [MenuItem!]!
+    total: Int!
+  }
+  type CouponsPage {
+    items: [Coupon!]!
+    total: Int!
+  }
+
   type Query {
     me: User
 
@@ -797,6 +850,17 @@ export const typeDefs = /* GraphQL */ `
     dashboardStats: DashboardStats! # admin
 
     integrationSettings: IntegrationSettings! # admin: SMTP / ImageKit config (secrets masked)
+
+    # ── Paginated + searchable + sortable admin list queries ──
+    ordersPage(status: OrderStatus, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): OrdersPage! # admin/staff
+    paymentsPage(status: PaymentRecordStatus, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): PaymentsPage! # admin
+    customersPage(search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): CustomersPage! # admin
+    leadsPage(search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): LeadsPage! # admin
+    partyOrdersPage(status: PartyOrderStatus, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): PartyOrdersPage! # admin/staff
+    supportTicketsPage(status: TicketStatus, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): SupportTicketsPage! # admin/staff
+    expensesPage(search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): ExpensesPage! # admin
+    menuItemsPage(categoryId: ID, search: String, availableOnly: Boolean, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): MenuItemsPage! # admin
+    couponsPage(activeOnly: Boolean, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): CouponsPage! # admin
   }
 
   # A non-signup contact (lead), managed from admin → Contacts.
@@ -810,6 +874,11 @@ export const typeDefs = /* GraphQL */ `
     society: String
     block: String
     flat: String
+    city: String
+    state: String
+    pincode: String
+    lat: Float
+    lng: Float
     createdAt: DateTime!
   }
 
@@ -847,6 +916,7 @@ export const typeDefs = /* GraphQL */ `
 
     # Party order enquiries
     submitPartyOrder(input: PartyOrderInput!, captchaId: String!, captchaAnswer: String!): Boolean! # public, captcha-gated
+    createPartyOrder(input: PartyOrderInput!): PartyOrder! # admin/staff — manual entry, no captcha/email
     updatePartyOrderStatus(id: ID!, status: PartyOrderStatus!): PartyOrder! # admin/staff
 
     createMenuItem(input: MenuItemInput!): MenuItem!
@@ -910,6 +980,11 @@ export const typeDefs = /* GraphQL */ `
       society: String
       block: String
       flat: String
+      city: String
+      state: String
+      pincode: String
+      lat: Float
+      lng: Float
     ): Lead!
     updateLead(
       id: ID!
@@ -921,6 +996,11 @@ export const typeDefs = /* GraphQL */ `
       society: String
       block: String
       flat: String
+      city: String
+      state: String
+      pincode: String
+      lat: Float
+      lng: Float
     ): Lead!
     deleteLead(id: ID!): Boolean!
 
@@ -943,5 +1023,19 @@ export const typeDefs = /* GraphQL */ `
 
     # Campaigns (admin)
     sendCampaign(input: CampaignInput!): Campaign!
+
+    # ── Bulk deletes — each returns the count of documents removed ──
+    deleteLeads(ids: [ID!]!): Int! # admin
+    deleteCustomers(ids: [ID!]!): Int! # admin
+    deletePartyOrders(ids: [ID!]!): Int! # admin/staff
+    deleteSupportTickets(ids: [ID!]!): Int! # admin
+    deleteExpenses(ids: [ID!]!): Int! # admin
+    deleteMenuItems(ids: [ID!]!): Int! # admin
+    deleteCoupons(ids: [ID!]!): Int! # admin
+    deleteCategories(ids: [ID!]!): Int! # admin
+    deleteSocieties(ids: [ID!]!): Int! # admin
+    deleteExpenseSources(ids: [ID!]!): Int! # admin
+    deleteBanners(ids: [ID!]!): Int! # admin
+    deleteStaffUsers(ids: [ID!]!): Int! # admin
   }
 `;

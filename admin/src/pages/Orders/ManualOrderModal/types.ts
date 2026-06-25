@@ -20,11 +20,47 @@ export interface CustomerOption {
   phone?: string;
 }
 
+export interface SocietyOption {
+  id: string;
+  name: string;
+  line1?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+}
+
+export type CouponKind = "PERCENT" | "FLAT" | "FREE_DELIVERY" | "FREE_ITEM";
+
+export interface CouponOption {
+  id: string;
+  code: string;
+  title: string;
+  type: CouponKind;
+  value: number;
+  maxDiscount?: number | null;
+  minOrder: number;
+  isActive: boolean;
+}
+
+export interface DeliverySettings {
+  minDeliveryCost: number;
+  freeDeliveryAbove: number;
+}
+
 export interface LeadOption {
   id: string;
   name: string;
   phone: string;
   email?: string;
+  address?: string;
+  society?: string;
+  block?: string;
+  flat?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  lat?: number;
+  lng?: number;
 }
 
 /** Empty-form defaults. Items are added by tapping the catalogue; POS counter
@@ -39,8 +75,10 @@ export const BLANK_MANUAL_ORDER: ManualOrderForm = {
   line1: "",
   line2: "",
   city: "",
+  state: "",
   pincode: "",
   phone: "",
+  couponCode: "",
   discount: 0,
   deliveryFee: 0,
   paymentMethod: "COD",
@@ -98,6 +136,26 @@ export function computeTotals(v: ManualOrderForm): Totals {
   return { subtotal, discount, deliveryFee, total };
 }
 
+/** Item discount a coupon yields against the current subtotal (POS quick-apply).
+ * FREE_DELIVERY is handled via the delivery fee; FREE_ITEM is not auto-applied. */
+export function couponItemDiscount(coupon: CouponOption | undefined, subtotal: number): number {
+  if (!coupon || subtotal <= 0 || subtotal < (coupon.minOrder ?? 0)) return 0;
+  if (coupon.type === "PERCENT") {
+    const raw = Math.round((subtotal * coupon.value) / 100);
+    return coupon.maxDiscount ? Math.min(raw, coupon.maxDiscount) : raw;
+  }
+  if (coupon.type === "FLAT") return Math.min(Math.round(coupon.value), subtotal);
+  return 0;
+}
+
+/** Delivery fee derived from Finance settings (free over a threshold, else the
+ * base min cost). A FREE_DELIVERY coupon zeroes it. */
+export function deliveryFeeFor(settings: DeliverySettings, subtotal: number, freeByCoupon: boolean): number {
+  if (freeByCoupon) return 0;
+  if (settings.freeDeliveryAbove > 0 && subtotal >= settings.freeDeliveryAbove) return 0;
+  return Math.max(0, Math.round(settings.minDeliveryCost) || 0);
+}
+
 /** Merge duplicate lines of the same dish so an order shows one row per dish. */
 function mergeItemsByName(items: Order["items"]) {
   const map = new Map<string, { name: string; price: number; qty: number; spiceLevel: number }>();
@@ -122,8 +180,10 @@ export function orderToManualForm(o: Order): ManualOrderForm {
     line1: o.address?.line1 ?? "",
     line2: o.address?.line2 ?? "",
     city: o.address?.city ?? "",
+    state: o.address?.state ?? "",
     pincode: o.address?.pincode ?? "",
     phone: o.address?.phone ?? "",
+    couponCode: o.couponCode ?? "",
     discount: o.discount,
     deliveryFee: o.deliveryFee,
     paymentMethod: o.paymentMethod as ManualOrderForm["paymentMethod"],
@@ -148,6 +208,7 @@ export function buildManualInput(v: ManualOrderForm) {
         line1: v.line1?.trim(),
         line2: v.line2?.trim() || null,
         city: v.city?.trim(),
+        state: v.state?.trim() || null,
         pincode: v.pincode?.trim() || "",
         phone: v.phone?.trim() || null,
       }

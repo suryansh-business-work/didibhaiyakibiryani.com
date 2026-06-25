@@ -8,7 +8,7 @@ import {
 } from "react-hook-form";
 import { Autocomplete, Stack, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import type { ManualOrderForm } from "../../../form";
-import type { CustomerOption, LeadOption } from "./types";
+import type { CustomerOption, LeadOption, SocietyOption } from "./types";
 
 type Source = "WALKIN" | "EXISTING" | "CONTACT";
 
@@ -19,11 +19,12 @@ interface Props {
   setValue: UseFormSetValue<ManualOrderForm>;
   customers: CustomerOption[];
   leads: LeadOption[];
+  societies: SocietyOption[];
 }
 
 /** Counter walk-in (name/phone), a signed-up account, or a saved non-signup
  * contact (which fills the name/phone snapshot). */
-export function CustomerSelect({ control, errors, watch, setValue, customers, leads }: Readonly<Props>) {
+export function CustomerSelect({ control, errors, watch, setValue, customers, leads, societies }: Readonly<Props>) {
   const isExisting = watch("customerMode") === "EXISTING";
   const [source, setSource] = useState<Source>(isExisting ? "EXISTING" : "WALKIN");
 
@@ -40,6 +41,23 @@ export function CustomerSelect({ control, errors, watch, setValue, customers, le
   function pickContact(l: LeadOption | null) {
     setValue("customerName", l?.name ?? "", { shouldValidate: true });
     setValue("customerPhone", l?.phone ?? "");
+    if (!l) return;
+    // Society contacts store only the society name; resolve its city/state/pin.
+    const society = l.society ? societies.find((s) => s.name === l.society) : undefined;
+    const line1 = l.society
+      ? [l.flat ? `Flat ${l.flat}` : "", l.block, l.society].filter(Boolean).join(", ")
+      : l.address ?? "";
+    const city = l.city ?? society?.city ?? "";
+    const state = l.state ?? society?.state ?? "";
+    const pincode = l.pincode ?? society?.pincode ?? "";
+    const hasAddress = Boolean(line1 || city || state || pincode);
+    if (!hasAddress) return;
+    // A saved address means this is almost certainly a delivery — switch and fill.
+    setValue("orderType", "DELIVERY");
+    setValue("line1", line1, { shouldValidate: true });
+    setValue("city", city, { shouldValidate: true });
+    setValue("state", state);
+    setValue("pincode", pincode);
   }
 
   return (

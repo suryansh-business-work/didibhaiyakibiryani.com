@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
-import { ORDERS, RIDERS } from "../../graphql/queries";
+import { ORDERS_PAGE, RIDERS } from "../../graphql/queries";
 import { ASSIGN_RIDER, UPDATE_ORDER_STATUS, DELETE_ORDER, DELETE_ORDERS } from "../../graphql/mutations";
 import { Button } from "@mui/material";
 import Layout from "../../components/Layout";
 import { AsyncList } from "../../components/ui";
 import { IPlus } from "../../components/icons";
+import { useServerTable } from "../../components/DataTable";
 import { useAlert, useConfirm } from "../../components/dialog";
 import OrderDetail from "./OrderDetail";
 import OrderMap from "./OrderMap";
@@ -16,14 +17,10 @@ import SurveyMessageDialog from "./SurveyMessageDialog";
 import OrderTimelineDialog from "./OrderTimelineDialog";
 import { FILTERS, type Order, type Rider } from "./types";
 
-const PAGE_SIZE = 15;
-
 export default function Orders() {
   const [filter, setFilter] = useState("ALL");
-  const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("placedAt");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [page, setPage] = useState(1);
+  // Server-side search / sort / pagination (page resets internally on input change).
+  const { variables, tableProps, setPage } = useServerTable({ initialSortKey: "placedAt", initialSortDir: "desc" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [active, setActive] = useState<Order | null>(null);
   const [mapOrder, setMapOrder] = useState<Order | null>(null);
@@ -41,8 +38,8 @@ export default function Orders() {
     else setEditPos(o);
   }
 
-  const { data, loading, refetch } = useQuery<{ orders: Order[] }>(ORDERS, {
-    variables: { status: filter === "ALL" ? null : filter },
+  const { data, loading, refetch } = useQuery<{ ordersPage: { items: Order[]; total: number } }>(ORDERS_PAGE, {
+    variables: { ...variables, status: filter === "ALL" ? null : filter },
   });
   const { data: riderData } = useQuery<{ riders: Rider[] }>(RIDERS);
   const [updateStatus, { loading: savingStatus }] = useMutation(UPDATE_ORDER_STATUS);
@@ -52,47 +49,17 @@ export default function Orders() {
   const confirm = useConfirm();
   const notify = useAlert();
   const saving = savingStatus || assigning;
-  const orders = data?.orders ?? [];
 
-  const sorted = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const list = q
-      ? orders.filter(
-          (o) =>
-            o.orderNumber.toLowerCase().includes(q) ||
-            (o.user?.name ?? "").toLowerCase().includes(q) ||
-            (o.user?.phone ?? "").toLowerCase().includes(q)
-        )
-      : orders;
-    const dir = sortDir === "asc" ? 1 : -1;
-    return [...list].sort((a, b) => cmp(a, b, sortKey) * dir);
-  }, [orders, search, sortKey, sortDir]);
-
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-  const current = Math.min(page, totalPages);
-  const pageItems = sorted.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+  const pageItems = data?.ordersPage.items ?? [];
+  const total = data?.ordersPage.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / tableProps.pageSize));
+  const current = Math.min(tableProps.page, totalPages);
   const pageAllChecked = pageItems.length > 0 && pageItems.every((o) => selected.has(o.id));
 
-  function resetTo(p: number) {
-    setPage(p);
-  }
-  function onSearch(v: string) {
-    setSearch(v);
-    resetTo(1);
-  }
   function onFilter(f: string) {
     setFilter(f);
     setSelected(new Set());
-    resetTo(1);
-  }
-  function onSort(key: SortKey) {
-    if (key === sortKey) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir(key === "placedAt" || key === "total" ? "desc" : "asc");
-    }
-    resetTo(1);
+    setPage(1);
   }
   function toggleRow(id: string) {
     setSelected((prev) => {
@@ -199,8 +166,8 @@ export default function Orders() {
         <input
           className="search-input"
           placeholder="Search order #, name, phone…"
-          value={search}
-          onChange={(e) => onSearch(e.target.value)}
+          value={tableProps.search}
+          onChange={(e) => tableProps.onSearchChange(e.target.value)}
           style={{ minWidth: 220 }}
         />
         <Button variant="contained" startIcon={<IPlus size={16} />} onClick={() => setPosOpen(true)}>New order (POS)</Button>
@@ -217,16 +184,16 @@ export default function Orders() {
       )}
 
       <div className="card">
-        <AsyncList loading={loading && !data} empty={sorted.length === 0} emptyLabel="No orders here yet.">
+        <AsyncList loading={loading && !data} empty={total === 0} emptyLabel="No orders here yet.">
           <OrdersTable
             orders={pageItems}
             selected={selected}
             pageAllChecked={pageAllChecked}
             onToggleAll={toggleAll}
             onToggleRow={toggleRow}
-            sortKey={sortKey}
-            sortDir={sortDir}
-            onSort={onSort}
+            sortKey={tableProps.sortKey as SortKey}
+            sortDir={tableProps.sortDir}
+            onSort={(k) => tableProps.onSort(k)}
             onOpen={setActive}
             onEditPos={openEdit}
             onChangeStatus={setStatusOrder}
@@ -238,11 +205,11 @@ export default function Orders() {
           />
           <div className="pager">
             <span className="muted">
-              {sorted.length} order(s) · page {current} of {totalPages}
+              {total} order(s) · page {current} of {totalPages}
             </span>
             <div className="spacer" />
-            <button className="btn btn-ghost btn-sm" disabled={current <= 1} onClick={() => resetTo(current - 1)}>‹ Prev</button>
-            <button className="btn btn-ghost btn-sm" disabled={current >= totalPages} onClick={() => resetTo(current + 1)}>Next ›</button>
+            <button className="btn btn-ghost btn-sm" disabled={current <= 1} onClick={() => setPage(current - 1)}>‹ Prev</button>
+            <button className="btn btn-ghost btn-sm" disabled={current >= totalPages} onClick={() => setPage(current + 1)}>Next ›</button>
           </div>
         </AsyncList>
       </div>
@@ -285,14 +252,6 @@ export default function Orders() {
       )}
     </Layout>
   );
-}
-
-function cmp(a: Order, b: Order, key: SortKey): number {
-  if (key === "total") return a.total - b.total;
-  if (key === "placedAt") return new Date(a.placedAt).getTime() - new Date(b.placedAt).getTime();
-  const av = key === "customer" ? a.user?.name ?? "" : key === "status" ? a.status : a.orderNumber;
-  const bv = key === "customer" ? b.user?.name ?? "" : key === "status" ? b.status : b.orderNumber;
-  return av.localeCompare(bv);
 }
 
 function msg(e: unknown, fallback: string): string {

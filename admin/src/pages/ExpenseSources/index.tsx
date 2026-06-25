@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
@@ -7,12 +7,14 @@ import {
   CREATE_EXPENSE_SOURCE,
   UPDATE_EXPENSE_SOURCE,
   DELETE_EXPENSE_SOURCE,
+  DELETE_EXPENSE_SOURCES,
 } from "../../graphql/mutations";
-import { Box, Button, Chip, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Button, Chip, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
-import { AsyncList, FormActions, Modal, OnOffChip } from "../../components/ui";
+import { FormActions, Modal, OnOffChip } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
+import { DataTable, useClientTable, type Column } from "../../components/DataTable";
 import { RHFField, RHFSelect, RHFCheckbox, expenseSourceSchema, type ExpenseSourceForm } from "../../form";
 
 interface ExpenseSource {
@@ -47,6 +49,7 @@ export default function ExpenseSources() {
   const [create] = useMutation(CREATE_EXPENSE_SOURCE);
   const [update] = useMutation(UPDATE_EXPENSE_SOURCE);
   const [del] = useMutation(DELETE_EXPENSE_SOURCE);
+  const [delMany] = useMutation(DELETE_EXPENSE_SOURCES);
 
   const confirm = useConfirm();
   const notify = useAlert();
@@ -64,6 +67,26 @@ export default function ExpenseSources() {
 
   const sources = data?.expenseSources ?? [];
   const type = watch("type");
+
+  const columns = useMemo<Column<ExpenseSource>[]>(() => [
+    {
+      key: "name", label: "Name", sortable: true,
+      searchValue: (s) => `${s.name} ${detailOf(s)}`, sortValue: (s) => s.name,
+      render: (s) => <Typography fontWeight={700}>{s.name}</Typography>,
+    },
+    {
+      key: "type", label: "Type", sortable: true, sortValue: (s) => s.type,
+      render: (s) => <Chip size="small" variant="outlined" label={s.type === "PERSON" ? "Person" : "Account"} />,
+    },
+    {
+      key: "details", label: "Details",
+      searchValue: (s) => detailOf(s),
+      render: (s) => <Typography variant="body2" color="text.secondary">{detailOf(s)}</Typography>,
+    },
+    { key: "isActive", label: "Status", render: (s) => <OnOffChip on={s.isActive} offLabel="Hidden" /> },
+  ], []);
+
+  const { tableProps } = useClientTable(sources, columns, { initialSortKey: "name", initialSortDir: "asc" });
 
   function openNew() {
     setEditing(null);
@@ -103,12 +126,7 @@ export default function ExpenseSources() {
   }
 
   async function remove(s: ExpenseSource) {
-    const ok = await confirm({
-      title: "Delete expense source",
-      message: `Delete “${s.name}”?`,
-      confirmLabel: "Delete",
-      danger: true,
-    });
+    const ok = await confirm({ title: "Delete expense source", message: `Delete “${s.name}”?`, confirmLabel: "Delete", danger: true });
     if (!ok) return;
     try {
       await del({ variables: { id: s.id } });
@@ -118,42 +136,36 @@ export default function ExpenseSources() {
     }
   }
 
+  async function bulkDelete(ids: string[]) {
+    const ok = await confirm({ title: "Delete expense sources", message: `Delete ${ids.length} selected source(s)?`, confirmLabel: "Delete all", danger: true });
+    if (!ok) return;
+    try {
+      await delMany({ variables: { ids } });
+      await refetch();
+    } catch (e: unknown) {
+      await notify({ title: "Could not delete", message: e instanceof Error ? e.message : "Could not delete." });
+    }
+  }
+
   return (
     <Layout title="Expense Sources">
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New source</Button>
-      </Box>
-
-      <div className="card">
-        <AsyncList loading={loading && !data} empty={sources.length === 0} emptyLabel="No expense sources yet.">
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell><TableCell>Type</TableCell><TableCell>Details</TableCell>
-                  <TableCell>Status</TableCell><TableCell />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sources.map((s) => (
-                  <TableRow key={s.id} hover>
-                    <TableCell><Typography fontWeight={700}>{s.name}</Typography></TableCell>
-                    <TableCell>
-                      <Chip size="small" variant="outlined" label={s.type === "PERSON" ? "Person" : "Account"} />
-                    </TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{detailOf(s)}</Typography></TableCell>
-                    <TableCell><OnOffChip on={s.isActive} offLabel="Hidden" /></TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                      <Button size="small" onClick={() => openEdit(s)}>Edit</Button>
-                      <Button size="small" color="error" onClick={() => remove(s)}>Delete</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        </AsyncList>
-      </div>
+      <DataTable
+        columns={columns}
+        rowKey={(s) => s.id}
+        loading={loading && !data}
+        emptyLabel="No expense sources yet."
+        noun="source"
+        searchPlaceholder="Search sources…"
+        onBulkDelete={bulkDelete}
+        renderActions={(s) => (
+          <>
+            <Button size="small" onClick={() => openEdit(s)}>Edit</Button>
+            <Button size="small" color="error" onClick={() => remove(s)}>Delete</Button>
+          </>
+        )}
+        toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New source</Button>}
+        {...tableProps}
+      />
 
       {open && (
         <Modal

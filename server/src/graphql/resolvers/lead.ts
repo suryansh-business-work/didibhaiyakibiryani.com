@@ -1,6 +1,7 @@
 import { GraphQLError } from "graphql";
 import { Lead } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
+import { paginate, type PageArgs } from "../../utils/pagination.js";
 
 function leadNotFound(): GraphQLError {
   return new GraphQLError("Contact not found.", { extensions: { code: "BAD_USER_INPUT" } });
@@ -23,6 +24,11 @@ interface LeadInput {
   society?: string;
   block?: string;
   flat?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export const leadResolvers = {
@@ -39,6 +45,15 @@ export const leadResolvers = {
       }
       return Lead.find(filter).sort({ createdAt: -1 }).limit(200).exec();
     },
+
+    leadsPage: async (_: unknown, page: PageArgs, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      return paginate(Lead, {
+        searchFields: ["name", "phone", "email"],
+        sortAllow: ["name", "createdAt"],
+        ...page,
+      });
+    },
   },
 
   Mutation: {
@@ -53,6 +68,11 @@ export const leadResolvers = {
         society: clean(args.society),
         block: clean(args.block),
         flat: clean(args.flat),
+        city: clean(args.city),
+        state: clean(args.state),
+        pincode: clean(args.pincode),
+        lat: args.lat ?? undefined,
+        lng: args.lng ?? undefined,
       });
     },
 
@@ -68,6 +88,11 @@ export const leadResolvers = {
       if (rest.society !== undefined) lead.society = clean(rest.society);
       if (rest.block !== undefined) lead.block = clean(rest.block);
       if (rest.flat !== undefined) lead.flat = clean(rest.flat);
+      if (rest.city !== undefined) lead.city = clean(rest.city);
+      if (rest.state !== undefined) lead.state = clean(rest.state);
+      if (rest.pincode !== undefined) lead.pincode = clean(rest.pincode);
+      if (rest.lat !== undefined) lead.lat = rest.lat ?? undefined;
+      if (rest.lng !== undefined) lead.lng = rest.lng ?? undefined;
       await lead.save();
       return lead;
     },
@@ -78,6 +103,14 @@ export const leadResolvers = {
       if (!lead) throw leadNotFound();
       await Lead.findByIdAndDelete(id).exec();
       return true;
+    },
+
+    deleteLeads: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      if (!ids.length) return 0;
+      const res = await Lead.deleteMany({ _id: { $in: ids } }).exec();
+      /* v8 ignore next -- deletedCount is always present on the driver result */
+      return res.deletedCount ?? 0;
     },
   },
 };

@@ -35,6 +35,8 @@ export const societySchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   pincode: optionalPincode,
+  lat: z.number().optional(),
+  lng: z.number().optional(),
   sortOrder,
   isActive: z.boolean(),
 });
@@ -69,6 +71,7 @@ export const expenseSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
   amount: z.coerce.number().positive("Enter an amount above 0"),
   note: z.string().optional(),
+  invoiceUrl: z.string().optional(),
 });
 
 export const sliderSchema = z.object({
@@ -109,6 +112,23 @@ export const leadSchema = z.object({
   society: z.string().optional(),
   block: z.string().optional(),
   flat: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  pincode: optionalPincode,
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+});
+
+export const partyOrderSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  phone: z.string().trim().min(1, "Phone is required"),
+  email: z.string().trim().regex(EMAIL_RE, "Enter a valid email"),
+  eventDate: z.string().optional(),
+  guests: z
+    .union([z.literal(""), z.coerce.number().int().positive("Enter a valid count").max(100000, "Too large")])
+    .optional(),
+  location: z.string().optional(),
+  message: z.string().optional(),
 });
 
 export const riderSchema = z.object({
@@ -194,8 +214,10 @@ export const manualOrderSchema = z
     line1: z.string().optional(),
     line2: z.string().optional(),
     city: z.string().optional(),
+    state: z.string().optional(),
     pincode: z.string().optional(),
     phone: z.string().optional(),
+    couponCode: z.string().optional(),
     discount: z.coerce.number().min(0),
     deliveryFee: z.coerce.number().min(0),
     paymentMethod: z.enum(["COD", "ONLINE"]),
@@ -232,4 +254,5 @@ export type CustomerForm = z.infer<typeof customerSchema>;
 export type ProfileForm = z.infer<typeof profileSchema>;
 export type PaymentForm = z.infer<typeof paymentSchema>;
 export type LeadForm = z.infer<typeof leadSchema>;
+export type PartyOrderForm = z.infer<typeof partyOrderSchema>;
 export type RiderForm = z.infer<typeof riderSchema>;

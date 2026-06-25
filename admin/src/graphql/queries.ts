@@ -54,66 +54,82 @@ export const DASHBOARD = gql`
   }
 `;
 
+const ORDER_FIELDS = `
+  id
+  orderNumber
+  total
+  subtotal
+  discount
+  deliveryFee
+  status
+  orderType
+  source
+  paymentMethod
+  paymentStatus
+  couponCode
+  placedAt
+  notes
+  surveyUrl
+  ratingToken
+  customerName
+  customerPhone
+  user {
+    id
+    name
+    phone
+    email
+  }
+  address {
+    line1
+    line2
+    city
+    state
+    pincode
+    phone
+    lat
+    lng
+  }
+  items {
+    name
+    price
+    qty
+    spiceLevel
+  }
+  statusHistory {
+    status
+    at
+    note
+  }
+  deliveryPartner {
+    id
+    name
+    phone
+  }
+  rating {
+    food
+    delivery
+    comment
+    items {
+      name
+      rating
+    }
+  }
+`;
+
 export const ORDERS = gql`
   query Orders($status: OrderStatus) {
     orders(status: $status) {
-      id
-      orderNumber
+      ${ORDER_FIELDS}
+    }
+  }
+`;
+
+export const ORDERS_PAGE = gql`
+  query OrdersPage($status: OrderStatus, $search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
+    ordersPage(status: $status, search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
       total
-      subtotal
-      discount
-      deliveryFee
-      status
-      orderType
-      source
-      paymentMethod
-      paymentStatus
-      couponCode
-      placedAt
-      notes
-      surveyUrl
-      ratingToken
-      customerName
-      customerPhone
-      user {
-        id
-        name
-        phone
-        email
-      }
-      address {
-        line1
-        line2
-        city
-        pincode
-        phone
-        lat
-        lng
-      }
       items {
-        name
-        price
-        qty
-        spiceLevel
-      }
-      statusHistory {
-        status
-        at
-        note
-      }
-      deliveryPartner {
-        id
-        name
-        phone
-      }
-      rating {
-        food
-        delivery
-        comment
-        items {
-          name
-          rating
-        }
+        ${ORDER_FIELDS}
       }
     }
   }
@@ -170,6 +186,8 @@ export const SOCIETIES = gql`
       city
       state
       pincode
+      lat
+      lng
       sortOrder
       isActive
     }
@@ -200,11 +218,58 @@ export const EXPENSES = gql`
       title
       amount
       note
+      invoiceUrl
       createdAt
       source {
         id
         type
         name
+      }
+    }
+  }
+`;
+
+export const EXPENSES_PAGE = gql`
+  query ExpensesPage($search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
+    expensesPage(search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
+      total
+      items {
+        id
+        title
+        amount
+        note
+        invoiceUrl
+        createdAt
+        source {
+          id
+          type
+          name
+        }
+      }
+    }
+  }
+`;
+
+export const LEADS_PAGE = gql`
+  query LeadsPage($search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
+    leadsPage(search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
+      total
+      items {
+        id
+        name
+        phone
+        email
+        note
+        address
+        society
+        block
+        flat
+        city
+        state
+        pincode
+        lat
+        lng
+        createdAt
       }
     }
   }
@@ -222,7 +287,32 @@ export const LEADS = gql`
       society
       block
       flat
+      city
+      state
+      pincode
+      lat
+      lng
       createdAt
+    }
+  }
+`;
+
+export const PARTY_ORDERS_PAGE = gql`
+  query PartyOrdersPage($status: PartyOrderStatus, $search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
+    partyOrdersPage(status: $status, search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
+      total
+      items {
+        id
+        name
+        phone
+        email
+        eventDate
+        guests
+        location
+        message
+        status
+        createdAt
+      }
     }
   }
 `;
@@ -344,6 +434,23 @@ export const CUSTOMERS = gql`
   }
 `;
 
+export const CUSTOMERS_PAGE = gql`
+  query CustomersPage($search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
+    customersPage(search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
+      total
+      items {
+        id
+        name
+        email
+        phone
+        createdAt
+        orderCount
+        totalSpent
+      }
+    }
+  }
+`;
+
 export const SETTINGS_CORE_FIELDS = `
   brandName
   tagline
@@ -434,6 +541,37 @@ export const SUPPORT_TICKETS = gql`
   }
 `;
 
+export const SUPPORT_TICKETS_PAGE = gql`
+  query SupportTicketsPage($status: TicketStatus, $search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
+    supportTicketsPage(status: $status, search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
+      total
+      items {
+        id
+        subject
+        body
+        imageUrl
+        status
+        createdAt
+        updatedAt
+        messages {
+          by
+          text
+          at
+        }
+        order {
+          id
+          orderNumber
+        }
+        user {
+          name
+          email
+          phone
+        }
+      }
+    }
+  }
+`;
+
 export const SETTINGS = gql`
   query Settings {
     settings {
@@ -491,6 +629,41 @@ export const PAYMENTS = gql`
         type
         at
         data
+      }
+    }
+  }
+`;
+
+export const PAYMENTS_PAGE = gql`
+  query PaymentsPage($status: PaymentRecordStatus, $search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
+    paymentsPage(status: $status, search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
+      total
+      items {
+        id
+        provider
+        providerOrderId
+        providerPaymentId
+        amount
+        currency
+        status
+        method
+        createdAt
+        order {
+          id
+          orderNumber
+          paymentStatus
+        }
+        refunds {
+          providerRefundId
+          amount
+          reason
+          at
+        }
+        events {
+          type
+          at
+          data
+        }
       }
     }
   }

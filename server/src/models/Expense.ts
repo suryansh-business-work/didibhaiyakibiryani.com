@@ -9,6 +9,7 @@ export interface IExpense extends Document {
   title: string;
   amount: number;
   note?: string;
+  invoiceUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,6 +20,7 @@ const expenseSchema = new Schema<IExpense>(
     title: { type: String, required: true, trim: true },
     amount: { type: Number, required: true, min: 0 },
     note: { type: String, trim: true },
+    invoiceUrl: { type: String, trim: true },
   },
   { timestamps: true }
 );

@@ -14,6 +14,11 @@ export interface ILead extends Document {
   society?: string;
   block?: string;
   flat?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  lat?: number;
+  lng?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +33,11 @@ const leadSchema = new Schema<ILead>(
     society: { type: String, trim: true },
     block: { type: String, trim: true },
     flat: { type: String, trim: true },
+    city: { type: String, trim: true },
+    state: { type: String, trim: true },
+    pincode: { type: String, trim: true },
+    lat: { type: Number },
+    lng: { type: Number },
   },
   { timestamps: true }
 );

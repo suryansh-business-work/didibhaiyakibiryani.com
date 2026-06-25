@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
@@ -8,12 +8,14 @@ import {
   UPDATE_ITEM,
   DELETE_ITEM,
   TOGGLE_ITEM,
+  DELETE_MENU_ITEMS,
 } from "../../graphql/mutations";
-import { Alert, Box, Button } from "@mui/material";
+import { Alert, Box, Button, Chip, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
+import { inr } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
-import MenuTable from "./MenuTable";
+import { DataTable, useClientTable, type Column } from "../../components/DataTable";
 import MenuItemModal from "./MenuItemModal";
 import { menuItemSchema, type MenuForm } from "../../form";
 import { BLANK_FORM, type Cat, type Item } from "./types";
@@ -24,6 +26,7 @@ export default function Menu() {
   const [createItem] = useMutation(CREATE_ITEM);
   const [updateItem] = useMutation(UPDATE_ITEM);
   const [deleteItem] = useMutation(DELETE_ITEM);
+  const [deleteMany] = useMutation(DELETE_MENU_ITEMS);
   const [toggle] = useMutation(TOGGLE_ITEM);
 
   const confirm = useConfirm();
@@ -43,6 +46,54 @@ export default function Menu() {
 
   const cats = catData?.categories ?? [];
   const items = data?.menuItems ?? [];
+
+  const columns = useMemo<Column<Item>[]>(() => [
+    {
+      key: "name", label: "Item", sortable: true,
+      searchValue: (it) => `${it.name} ${it.description ?? ""}`, sortValue: (it) => it.name,
+      render: (it) => (
+        <>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography fontWeight={700}>{it.name}</Typography>
+            {it.badge !== "NONE" ? (
+              <Chip size="small" variant="outlined" color={it.badge === "NEW" ? "success" : "primary"} label={it.badge} />
+            ) : null}
+          </Box>
+          <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block", maxWidth: 360 }}>
+            {it.description}
+          </Typography>
+        </>
+      ),
+    },
+    {
+      key: "category", label: "Category", sortable: true,
+      searchValue: (it) => it.category?.name ?? "", sortValue: (it) => it.category?.name ?? "",
+      render: (it) => <Typography variant="body2" color="text.secondary">{it.category?.name ?? "—"}</Typography>,
+    },
+    {
+      key: "spiceLevel", label: "Spice", sortable: true, sortValue: (it) => it.spiceLevel,
+      render: (it) => (it.spiceLevel > 0 ? "🌶️".repeat(it.spiceLevel) : <Typography variant="body2" color="text.secondary">mild</Typography>),
+    },
+    {
+      key: "isAvailable", label: "Available", sortable: true, sortValue: (it) => (it.isAvailable ? 1 : 0),
+      render: (it) => (
+        <Chip
+          size="small"
+          clickable
+          variant="outlined"
+          color={it.isAvailable ? "success" : "error"}
+          label={it.isAvailable ? "In stock" : "Out of stock"}
+          onClick={() => toggleItem(it)}
+        />
+      ),
+    },
+    {
+      key: "price", label: "Price", align: "right", sortable: true, sortValue: (it) => it.price,
+      render: (it) => <Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(it.price)}</Typography>,
+    },
+  ], []);
+
+  const { tableProps } = useClientTable(items, columns, { initialSortKey: "name", initialSortDir: "asc" });
 
   function openNew() {
     setEditing(null);
@@ -101,44 +152,51 @@ export default function Menu() {
   }
 
   async function remove(it: Item) {
-    const ok = await confirm({
-      title: "Delete item",
-      message: `Delete “${it.name}”?`,
-      confirmLabel: "Delete",
-      danger: true,
-    });
-    if (!ok) {
-      return;
-    }
+    const ok = await confirm({ title: "Delete item", message: `Delete “${it.name}”?`, confirmLabel: "Delete", danger: true });
+    if (!ok) return;
     try {
       await deleteItem({ variables: { id: it.id } });
       await refetch();
     } catch (e: unknown) {
-      await notify({
-        title: "Could not delete",
-        message: e instanceof Error ? e.message : "Please try again.",
-      });
+      await notify({ title: "Could not delete", message: e instanceof Error ? e.message : "Please try again." });
+    }
+  }
+
+  async function bulkDelete(ids: string[]) {
+    const ok = await confirm({ title: "Delete items", message: `Delete ${ids.length} selected item(s)?`, confirmLabel: "Delete all", danger: true });
+    if (!ok) return;
+    try {
+      await deleteMany({ variables: { ids } });
+      await refetch();
+    } catch (e: unknown) {
+      await notify({ title: "Could not delete", message: e instanceof Error ? e.message : "Please try again." });
     }
   }
 
   return (
     <Layout title="Menu">
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew} disabled={cats.length === 0}>New item</Button>
-      </Box>
       {cats.length === 0 && (
         <Alert severity="info" sx={{ mb: 2 }}>Create a category first before adding menu items.</Alert>
       )}
 
-      <div className="card">
-        <MenuTable
-          items={items}
-          loading={loading && !data}
-          onEdit={openEdit}
-          onToggle={toggleItem}
-          onDelete={remove}
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        rowKey={(it) => it.id}
+        loading={loading && !data}
+        emptyLabel="No menu items yet."
+        noun="item"
+        searchPlaceholder="Search menu…"
+        onBulkDelete={bulkDelete}
+        renderActions={(it) => (
+          <>
+            <Button size="small" onClick={() => toggleItem(it)}>{it.isAvailable ? "Mark out" : "Mark in"}</Button>
+            <Button size="small" onClick={() => openEdit(it)}>Edit</Button>
+            <Button size="small" color="error" onClick={() => remove(it)}>Delete</Button>
+          </>
+        )}
+        toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew} disabled={cats.length === 0}>New item</Button>}
+        {...tableProps}
+      />
 
       {open && (
         <MenuItemModal

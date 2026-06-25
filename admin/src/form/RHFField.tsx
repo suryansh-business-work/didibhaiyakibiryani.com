@@ -1,6 +1,8 @@
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 import { Checkbox, FormControlLabel, MenuItem, TextField } from "@mui/material";
 
+type FieldMargin = "none" | "dense" | "normal";
+
 interface RHFFieldProps<T extends FieldValues> {
   control: Control<T>;
   name: Path<T>;
@@ -12,6 +14,8 @@ interface RHFFieldProps<T extends FieldValues> {
   hint?: string;
   autoComplete?: string;
   multiline?: boolean;
+  /** Defaults to "dense"; pass "none" when the parent controls spacing (e.g. a Stack gap). */
+  margin?: FieldMargin;
 }
 
 /** A react-hook-form-bound MUI text field with an inline error/hint. */
@@ -26,6 +30,7 @@ export function RHFField<T extends FieldValues>({
   hint,
   autoComplete,
   multiline,
+  margin = "dense",
 }: Readonly<RHFFieldProps<T>>) {
   return (
     <Controller
@@ -46,7 +51,7 @@ export function RHFField<T extends FieldValues>({
           helperText={error ?? hint}
           fullWidth
           size="small"
-          margin="dense"
+          margin={margin}
         />
       )}
     />
@@ -61,10 +66,12 @@ interface RHFSelectProps<T extends FieldValues> {
   error?: string;
   disabled?: boolean;
   emptyLabel?: string;
+  /** Defaults to "dense"; pass "none" when the parent controls spacing (e.g. a Stack gap). */
+  margin?: FieldMargin;
 }
 
 /** A react-hook-form-bound MUI select with an inline error. */
-export function RHFSelect<T extends FieldValues>({ control, name, label, options, error, disabled, emptyLabel = "—" }: Readonly<RHFSelectProps<T>>) {
+export function RHFSelect<T extends FieldValues>({ control, name, label, options, error, disabled, emptyLabel = "—", margin = "dense" }: Readonly<RHFSelectProps<T>>) {
   return (
     <Controller
       control={control}
@@ -80,7 +87,7 @@ export function RHFSelect<T extends FieldValues>({ control, name, label, options
           disabled={disabled}
           fullWidth
           size="small"
-          margin="dense"
+          margin={margin}
         >
           <MenuItem value="">{emptyLabel}</MenuItem>
           {options.map((o) => (

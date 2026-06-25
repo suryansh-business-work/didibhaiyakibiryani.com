@@ -6,7 +6,7 @@ import { Fulfilment } from "./Fulfilment";
 import { OrderLines } from "./OrderLines";
 import { OrderOptions } from "./OrderOptions";
 import type { ManualOrderForm } from "../../../form";
-import type { CustomerOption, LeadOption, Totals } from "./types";
+import type { CouponOption, CustomerOption, LeadOption, SocietyOption, Totals } from "./types";
 
 type OrderType = "DELIVERY" | "TAKEAWAY";
 
@@ -17,6 +17,8 @@ interface Props {
   setValue: UseFormSetValue<ManualOrderForm>;
   customers: CustomerOption[];
   leads: LeadOption[];
+  societies: SocietyOption[];
+  coupons: CouponOption[];
   fields: ReadonlyArray<{ id: string }>;
   totals: Totals;
   isDelivery: boolean;
@@ -43,20 +45,20 @@ function Row({ k, v, strong }: Readonly<{ k: string; v: string; strong?: boolean
 /** The "Current order" panel: customer, line items, options and totals. */
 export function OrderPanel(props: Readonly<Props>) {
   const {
-    control, errors, watch, setValue, customers, leads, fields, totals,
+    control, errors, watch, setValue, customers, leads, societies, coupons, fields, totals,
     isDelivery, orderType, setOrderType, baseStatus, onQty, onRemove, onCreate, isSubmitting, rootError,
     submitLabel = "Create order",
   } = props;
   return (
     <Paper sx={{ width: 400, flexShrink: 0, display: "flex", flexDirection: "column", height: "100%", p: 2 }}>
       <Typography variant="h6" gutterBottom>Current order</Typography>
-      <CustomerSelect control={control} errors={errors} watch={watch} setValue={setValue} customers={customers} leads={leads} />
+      <CustomerSelect control={control} errors={errors} watch={watch} setValue={setValue} customers={customers} leads={leads} societies={societies} />
       <Divider sx={{ my: 1.5 }} />
-      <Fulfilment control={control} errors={errors} isDelivery={isDelivery} orderType={orderType} setOrderType={setOrderType} />
+      <Fulfilment control={control} errors={errors} watch={watch} isDelivery={isDelivery} orderType={orderType} setOrderType={setOrderType} deliveryFee={totals.deliveryFee} />
       <Divider sx={{ my: 1.5 }} />
       <Box sx={{ flex: 1, overflowY: "auto", pr: 0.5 }}>
         <OrderLines fields={fields} watch={watch} onQty={onQty} onRemove={onRemove} />
-        <OrderOptions control={control} baseStatus={baseStatus} />
+        <OrderOptions control={control} baseStatus={baseStatus} coupons={coupons} appliedDiscount={totals.discount} />
       </Box>
       <Divider sx={{ my: 1.5 }} />
       <Stack spacing={0.5}>

@@ -1,6 +1,7 @@
 import { GraphQLError } from "graphql";
 import { Order, Payment, getOrCreateSettings } from "../../models/index.js";
 import { requireAuth, requireRole, type Context } from "../../utils/auth.js";
+import { paginate, type PageArgs } from "../../utils/pagination.js";
 import {
   createProviderOrder,
   refundProviderPayment,
@@ -22,6 +23,20 @@ export const paymentResolvers = {
       requireRole(ctx, "ADMIN");
       const filter = status ? { status } : {};
       return Payment.find(filter).sort({ createdAt: -1 }).limit(300).exec();
+    },
+
+    paymentsPage: async (
+      _: unknown,
+      { status, ...page }: PageArgs & { status?: string },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN");
+      return paginate(Payment, {
+        filter: status ? { status } : {},
+        searchFields: ["method", "providerPaymentId", "providerOrderId"],
+        sortAllow: ["amount", "createdAt", "status"],
+        ...page,
+      });
     },
   },
 

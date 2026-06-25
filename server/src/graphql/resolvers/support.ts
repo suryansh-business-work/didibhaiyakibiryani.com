@@ -2,6 +2,7 @@ import { GraphQLError } from "graphql";
 import { SupportTicket, Order, User } from "../../models/index.js";
 import { requireAuth, requireRole, type Context } from "../../utils/auth.js";
 import { logger } from "../../utils/logger.js";
+import { paginate, type PageArgs } from "../../utils/pagination.js";
 import type { TicketStatus } from "../../models/index.js";
 
 function bad(message: string): GraphQLError {
@@ -35,6 +36,20 @@ export const supportResolvers = {
       requireRole(ctx, "ADMIN", "STAFF");
       const filter = status ? { status } : {};
       return SupportTicket.find(filter).sort({ updatedAt: -1 }).limit(300).exec();
+    },
+
+    supportTicketsPage: async (
+      _: unknown,
+      { status, ...page }: PageArgs & { status?: TicketStatus },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+      return paginate(SupportTicket, {
+        filter: status ? { status } : {},
+        searchFields: ["subject", "body"],
+        sortAllow: ["createdAt", "status"],
+        ...page,
+      });
     },
   },
 
@@ -102,6 +117,14 @@ export const supportResolvers = {
       const deleted = await SupportTicket.findByIdAndDelete(ticketId).exec();
       if (!deleted) throw bad("Ticket not found.");
       return true;
+    },
+
+    deleteSupportTickets: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      if (!ids.length) return 0;
+      const res = await SupportTicket.deleteMany({ _id: { $in: ids } }).exec();
+      /* v8 ignore next -- deletedCount is always present on the driver result */
+      return res.deletedCount ?? 0;
     },
   },
 

@@ -1,6 +1,7 @@
 import { GraphQLError } from "graphql";
 import { Coupon, Order, MenuItem, getOrCreateSettings } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
+import { paginate, type PageArgs } from "../../utils/pagination.js";
 import { evaluateCoupon, computeDeliveryFee } from "../../utils/pricing.js";
 
 interface CouponInput {
@@ -34,6 +35,20 @@ export const couponResolvers = {
     coupons: async (_: unknown, { activeOnly }: { activeOnly?: boolean }) => {
       const filter = activeOnly ? { isActive: true } : {};
       return Coupon.find(filter).sort({ createdAt: -1 }).exec();
+    },
+
+    couponsPage: async (
+      _: unknown,
+      { activeOnly, ...page }: PageArgs & { activeOnly?: boolean },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN");
+      return paginate(Coupon, {
+        filter: activeOnly ? { isActive: true } : {},
+        searchFields: ["code", "title"],
+        sortAllow: ["code", "createdAt", "usedCount"],
+        ...page,
+      });
     },
 
     validateCoupon: async (
@@ -85,6 +100,14 @@ export const couponResolvers = {
       requireRole(ctx, "ADMIN");
       await Coupon.findByIdAndDelete(id);
       return true;
+    },
+
+    deleteCoupons: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      if (!ids.length) return 0;
+      const res = await Coupon.deleteMany({ _id: { $in: ids } }).exec();
+      /* v8 ignore next -- deletedCount is always present on the driver result */
+      return res.deletedCount ?? 0;
     },
   },
 

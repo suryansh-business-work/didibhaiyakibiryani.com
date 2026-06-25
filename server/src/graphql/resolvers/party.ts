@@ -10,6 +10,7 @@ import {
 } from "../../emails/party.js";
 import { sendMailAsync } from "../../utils/mailer.js";
 import { logger } from "../../utils/logger.js";
+import { paginate, type PageArgs } from "../../utils/pagination.js";
 import type { PartyOrderStatus } from "../../models/index.js";
 
 const MENU_URL = process.env.PUBLIC_ORDER_URL || "https://native.didibhaiyakibiryani.com";
@@ -48,6 +49,20 @@ export const partyResolvers = {
       requireRole(ctx, "ADMIN", "STAFF");
       const filter = status ? { status } : {};
       return PartyOrder.find(filter).sort({ createdAt: -1 }).limit(300).exec();
+    },
+
+    partyOrdersPage: async (
+      _: unknown,
+      { status, ...page }: PageArgs & { status?: PartyOrderStatus },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+      return paginate(PartyOrder, {
+        filter: status ? { status } : {},
+        searchFields: ["name", "phone", "email", "location"],
+        sortAllow: ["name", "createdAt", "status"],
+        ...page,
+      });
     },
   },
 
@@ -89,6 +104,25 @@ export const partyResolvers = {
       return true;
     },
 
+    createPartyOrder: async (_: unknown, { input }: { input: PartyOrderInput }, ctx: Context) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+      const name = input.name.trim();
+      const phone = input.phone.trim();
+      const email = input.email.toLowerCase().trim();
+      if (!name || !phone || !email) throw bad("Name, phone and email are required.");
+      if (!EMAIL_RE.test(email)) throw bad("Please enter a valid email address.");
+      // Staff-entered party orders skip captcha and the customer/admin email blast.
+      return PartyOrder.create({
+        name,
+        phone,
+        email,
+        eventDate: input.eventDate?.trim() || undefined,
+        guests: input.guests ?? undefined,
+        location: input.location?.trim() || undefined,
+        message: input.message?.trim() || undefined,
+      });
+    },
+
     updatePartyOrderStatus: async (
       _: unknown,
       { id, status }: { id: string; status: PartyOrderStatus },
@@ -98,6 +132,14 @@ export const partyResolvers = {
       const party = await PartyOrder.findByIdAndUpdate(id, { status }, { new: true }).exec();
       if (!party) throw bad("Party order not found.");
       return party;
+    },
+
+    deletePartyOrders: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+      if (!ids.length) return 0;
+      const res = await PartyOrder.deleteMany({ _id: { $in: ids } }).exec();
+      /* v8 ignore next -- deletedCount is always present on the driver result */
+      return res.deletedCount ?? 0;
     },
   },
 };

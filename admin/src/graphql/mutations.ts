@@ -244,8 +244,27 @@ export const CREATE_LEAD = gql`
     $society: String
     $block: String
     $flat: String
+    $city: String
+    $state: String
+    $pincode: String
+    $lat: Float
+    $lng: Float
   ) {
-    createLead(name: $name, phone: $phone, email: $email, note: $note, address: $address, society: $society, block: $block, flat: $flat) {
+    createLead(
+      name: $name
+      phone: $phone
+      email: $email
+      note: $note
+      address: $address
+      society: $society
+      block: $block
+      flat: $flat
+      city: $city
+      state: $state
+      pincode: $pincode
+      lat: $lat
+      lng: $lng
+    ) {
       id
     }
   }
@@ -261,8 +280,28 @@ export const UPDATE_LEAD = gql`
     $society: String
     $block: String
     $flat: String
+    $city: String
+    $state: String
+    $pincode: String
+    $lat: Float
+    $lng: Float
   ) {
-    updateLead(id: $id, name: $name, phone: $phone, email: $email, note: $note, address: $address, society: $society, block: $block, flat: $flat) {
+    updateLead(
+      id: $id
+      name: $name
+      phone: $phone
+      email: $email
+      note: $note
+      address: $address
+      society: $society
+      block: $block
+      flat: $flat
+      city: $city
+      state: $state
+      pincode: $pincode
+      lat: $lat
+      lng: $lng
+    ) {
       id
     }
   }
@@ -278,6 +317,14 @@ export const UPDATE_PARTY_ORDER_STATUS = gql`
     updatePartyOrderStatus(id: $id, status: $status) {
       id
       status
+    }
+  }
+`;
+
+export const CREATE_PARTY_ORDER = gql`
+  mutation CreatePartyOrder($input: PartyOrderInput!) {
+    createPartyOrder(input: $input) {
+      id
     }
   }
 `;
@@ -436,3 +483,17 @@ export const SEND_CAMPAIGN = gql`
     }
   }
 `;
+
+// ─── Bulk-delete mutations (multi-select on admin tables) ───
+export const DELETE_CATEGORIES = gql`mutation DeleteCategories($ids: [ID!]!) { deleteCategories(ids: $ids) }`;
+export const DELETE_MENU_ITEMS = gql`mutation DeleteMenuItems($ids: [ID!]!) { deleteMenuItems(ids: $ids) }`;
+export const DELETE_COUPONS = gql`mutation DeleteCoupons($ids: [ID!]!) { deleteCoupons(ids: $ids) }`;
+export const DELETE_SOCIETIES = gql`mutation DeleteSocieties($ids: [ID!]!) { deleteSocieties(ids: $ids) }`;
+export const DELETE_SLIDERS = gql`mutation DeleteBanners($ids: [ID!]!) { deleteBanners(ids: $ids) }`;
+export const DELETE_EXPENSE_SOURCES = gql`mutation DeleteExpenseSources($ids: [ID!]!) { deleteExpenseSources(ids: $ids) }`;
+export const DELETE_EXPENSES = gql`mutation DeleteExpenses($ids: [ID!]!) { deleteExpenses(ids: $ids) }`;
+export const DELETE_LEADS = gql`mutation DeleteLeads($ids: [ID!]!) { deleteLeads(ids: $ids) }`;
+export const DELETE_CUSTOMERS = gql`mutation DeleteCustomers($ids: [ID!]!) { deleteCustomers(ids: $ids) }`;
+export const DELETE_PARTY_ORDERS = gql`mutation DeletePartyOrders($ids: [ID!]!) { deletePartyOrders(ids: $ids) }`;
+export const DELETE_SUPPORT_TICKETS = gql`mutation DeleteSupportTickets($ids: [ID!]!) { deleteSupportTickets(ids: $ids) }`;
+export const DELETE_STAFF_USERS = gql`mutation DeleteStaffUsers($ids: [ID!]!) { deleteStaffUsers(ids: $ids) }`;

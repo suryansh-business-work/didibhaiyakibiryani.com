@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
-import { EXPENSES, EXPENSE_SOURCES } from "../../graphql/queries";
-import { CREATE_EXPENSE, UPDATE_EXPENSE, DELETE_EXPENSE } from "../../graphql/mutations";
-import { Box, Button, Chip, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { EXPENSES_PAGE, EXPENSE_SOURCES } from "../../graphql/queries";
+import { CREATE_EXPENSE, UPDATE_EXPENSE, DELETE_EXPENSE, DELETE_EXPENSES } from "../../graphql/mutations";
+import { Button, Chip, Link, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
-import { AsyncList, FormActions, Modal, inr, fmtDate } from "../../components/ui";
+import { FormActions, Modal, inr, fmtDate } from "../../components/ui";
 import { IPlus } from "../../components/icons";
+import { DataTable, useServerTable, type Column } from "../../components/DataTable";
 import { useAlert, useConfirm } from "../../components/dialog";
+import ImageUpload from "../../components/ImageUpload";
 import { RHFField, RHFSelect, expenseSchema, type ExpenseForm } from "../../form";
 
 interface SourceRef {
@@ -21,22 +23,25 @@ interface Expense {
   title: string;
   amount: number;
   note?: string;
+  invoiceUrl?: string;
   createdAt: string;
   source?: SourceRef | null;
 }
 
-const BLANK: ExpenseForm = { sourceId: "", title: "", amount: 0, note: "" };
+const BLANK: ExpenseForm = { sourceId: "", title: "", amount: 0, note: "", invoiceUrl: "" };
 
 function sourceLabel(s: SourceRef): string {
   return `${s.name} — ${s.type === "PERSON" ? "Person" : "Account"}`;
 }
 
 export default function Expenses() {
-  const { data, loading, refetch } = useQuery<{ expenses: Expense[] }>(EXPENSES);
+  const { variables, tableProps } = useServerTable({ initialSortKey: "createdAt", initialSortDir: "desc" });
+  const { data, loading, refetch } = useQuery<{ expensesPage: { items: Expense[]; total: number } }>(EXPENSES_PAGE, { variables });
   const { data: srcData } = useQuery<{ expenseSources: SourceRef[] }>(EXPENSE_SOURCES);
   const [create] = useMutation(CREATE_EXPENSE);
   const [update] = useMutation(UPDATE_EXPENSE);
   const [del] = useMutation(DELETE_EXPENSE);
+  const [delMany] = useMutation(DELETE_EXPENSES);
 
   const confirm = useConfirm();
   const notify = useAlert();
@@ -48,11 +53,26 @@ export default function Expenses() {
     handleSubmit,
     reset,
     setError,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ExpenseForm>({ resolver: zodResolver(expenseSchema), defaultValues: { ...BLANK } });
 
-  const expenses = data?.expenses ?? [];
+  const expenses = data?.expensesPage.items ?? [];
+  const total = data?.expensesPage.total ?? 0;
   const sourceOptions = (srcData?.expenseSources ?? []).map((s) => ({ value: s.id, label: sourceLabel(s) }));
+
+  const columns = useMemo<Column<Expense>[]>(() => [
+    { key: "title", label: "Title", sortable: true, render: (e) => (
+      <>
+        <Typography fontWeight={700}>{e.title}</Typography>
+        {e.invoiceUrl ? <Link href={e.invoiceUrl} target="_blank" rel="noreferrer" variant="caption">View invoice</Link> : null}
+      </>
+    ) },
+    { key: "source", label: "Source", render: (e) => (e.source ? <Chip size="small" variant="outlined" label={sourceLabel(e.source)} /> : <Typography variant="body2" color="text.secondary">—</Typography>) },
+    { key: "createdAt", label: "Date", sortable: true, render: (e) => <Typography variant="body2" color="text.secondary">{fmtDate(e.createdAt)}</Typography> },
+    { key: "amount", label: "Amount", align: "right", sortable: true, render: (e) => <Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(e.amount)}</Typography> },
+  ], []);
 
   function openNew() {
     setEditing(null);
@@ -61,7 +81,7 @@ export default function Expenses() {
   }
   function openEdit(e: Expense) {
     setEditing(e);
-    reset({ sourceId: e.source?.id ?? "", title: e.title, amount: e.amount, note: e.note ?? "" });
+    reset({ sourceId: e.source?.id ?? "", title: e.title, amount: e.amount, note: e.note ?? "", invoiceUrl: e.invoiceUrl ?? "" });
     setOpen(true);
   }
 
@@ -71,6 +91,7 @@ export default function Expenses() {
       title: form.title.trim(),
       amount: form.amount,
       note: form.note?.trim() || undefined,
+      invoiceUrl: form.invoiceUrl?.trim() || undefined,
     };
     try {
       if (editing) await update({ variables: { id: editing.id, input } });
@@ -83,12 +104,7 @@ export default function Expenses() {
   }
 
   async function remove(e: Expense) {
-    const ok = await confirm({
-      title: "Delete expense",
-      message: `Delete “${e.title}”?`,
-      confirmLabel: "Delete",
-      danger: true,
-    });
+    const ok = await confirm({ title: "Delete expense", message: `Delete “${e.title}”?`, confirmLabel: "Delete", danger: true });
     if (!ok) return;
     try {
       await del({ variables: { id: e.id } });
@@ -98,46 +114,38 @@ export default function Expenses() {
     }
   }
 
+  async function bulkDelete(ids: string[]) {
+    const ok = await confirm({ title: "Delete expenses", message: `Delete ${ids.length} selected expense(s)?`, confirmLabel: "Delete all", danger: true });
+    if (!ok) return;
+    try {
+      await delMany({ variables: { ids } });
+      await refetch();
+    } catch (err: unknown) {
+      await notify({ title: "Could not delete", message: err instanceof Error ? err.message : "Could not delete." });
+    }
+  }
+
   return (
     <Layout title="Manage Expenses">
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-        <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New expense</Button>
-      </Box>
-
-      <div className="card">
-        <AsyncList loading={loading && !data} empty={expenses.length === 0} emptyLabel="No expenses yet.">
-          <Box sx={{ overflowX: "auto" }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Title</TableCell><TableCell>Source</TableCell><TableCell>Date</TableCell>
-                  <TableCell align="right">Amount</TableCell><TableCell />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {expenses.map((e) => (
-                  <TableRow key={e.id} hover>
-                    <TableCell><Typography fontWeight={700}>{e.title}</Typography></TableCell>
-                    <TableCell>
-                      {e.source ? (
-                        <Chip size="small" variant="outlined" label={sourceLabel(e.source)} />
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">—</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell><Typography variant="body2" color="text.secondary">{fmtDate(e.createdAt)}</Typography></TableCell>
-                    <TableCell align="right"><Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(e.amount)}</Typography></TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                      <Button size="small" onClick={() => openEdit(e)}>Edit</Button>
-                      <Button size="small" color="error" onClick={() => remove(e)}>Delete</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        </AsyncList>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={expenses}
+        total={total}
+        rowKey={(e) => e.id}
+        loading={loading && !data}
+        emptyLabel="No expenses yet."
+        noun="expense"
+        searchPlaceholder="Search expense title…"
+        onBulkDelete={bulkDelete}
+        renderActions={(e) => (
+          <>
+            <Button size="small" onClick={() => openEdit(e)}>Edit</Button>
+            <Button size="small" color="error" onClick={() => remove(e)}>Delete</Button>
+          </>
+        )}
+        toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New expense</Button>}
+        {...tableProps}
+      />
 
       {open && (
         <Modal
@@ -149,6 +157,13 @@ export default function Expenses() {
           <RHFField control={control} name="title" label="Title" placeholder="e.g. Vegetables, Rent" error={errors.title?.message} />
           <RHFField control={control} name="amount" label="Amount (₹)" type="number" error={errors.amount?.message} />
           <RHFField control={control} name="note" label="Note (optional)" multiline error={errors.note?.message} />
+          <ImageUpload
+            folder="/expenses"
+            label="Invoice (optional)"
+            accept="image/*,application/pdf"
+            currentUrl={watch("invoiceUrl")}
+            onUploaded={(url) => setValue("invoiceUrl", url, { shouldValidate: true })}
+          />
           {errors.root ? <Typography color="error" variant="body2" sx={{ mt: 1 }}>{errors.root.message}</Typography> : null}
         </Modal>
       )}

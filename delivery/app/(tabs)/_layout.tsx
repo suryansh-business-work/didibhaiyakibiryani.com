@@ -29,6 +29,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="track"
+        options={{
+          title: "Track",
+          tabBarIcon: ({ color, size }) => <MaterialDesignIcons name="map-marker-radius" color={color} size={size ?? 24} />,
+        }}
+      />
+      <Tabs.Screen
         name="earnings"
         options={{
           title: "Earnings",

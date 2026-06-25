@@ -12,6 +12,8 @@ export interface ISociety extends Document {
   city?: string;
   state?: string;
   pincode?: string;
+  lat?: number;
+  lng?: number;
   sortOrder: number;
   isActive: boolean;
   createdAt: Date;
@@ -26,6 +28,8 @@ const societySchema = new Schema<ISociety>(
     city: { type: String, trim: true },
     state: { type: String, trim: true },
     pincode: { type: String, trim: true },
+    lat: { type: Number },
+    lng: { type: Number },
     sortOrder: { type: Number, default: 0, index: true },
     isActive: { type: Boolean, default: true, index: true },
   },

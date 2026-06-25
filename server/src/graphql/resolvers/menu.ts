@@ -1,6 +1,7 @@
 import { GraphQLError } from "graphql";
 import { Category, MenuItem } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
+import { paginate, type PageArgs } from "../../utils/pagination.js";
 import { slugify } from "../../utils/helpers.js";
 
 interface CategoryInput {
@@ -52,6 +53,23 @@ export const menuResolvers = {
       if (slug) return MenuItem.findOne({ slug }).exec();
       return null;
     },
+
+    menuItemsPage: async (
+      _: unknown,
+      { categoryId, availableOnly, ...page }: PageArgs & { categoryId?: string; availableOnly?: boolean },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+      const filter: Record<string, unknown> = {};
+      if (categoryId) filter.category = categoryId;
+      if (availableOnly) filter.isAvailable = true;
+      return paginate(MenuItem, {
+        filter,
+        searchFields: ["name", "description"],
+        sortAllow: ["name", "price", "createdAt"],
+        ...page,
+      });
+    },
   },
 
   Mutation: {
@@ -86,6 +104,19 @@ export const menuResolvers = {
       return true;
     },
 
+    deleteCategories: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      if (!ids.length) return 0;
+      // Mirror the single-delete guard: skip any category still in use by items.
+      const inUse = await MenuItem.find({ category: { $in: ids } }).distinct("category");
+      const blocked = new Set(inUse.map(String));
+      const deletable = ids.filter((id) => !blocked.has(id));
+      if (!deletable.length) return 0;
+      const res = await Category.deleteMany({ _id: { $in: deletable } }).exec();
+      /* v8 ignore next -- deletedCount is always present on the driver result */
+      return res.deletedCount ?? 0;
+    },
+
     createMenuItem: async (_: unknown, { input }: { input: MenuItemInput }, ctx: Context) => {
       requireRole(ctx, "ADMIN");
       const { categoryId, ...rest } = input;
@@ -114,6 +145,14 @@ export const menuResolvers = {
       requireRole(ctx, "ADMIN");
       await MenuItem.findByIdAndDelete(id);
       return true;
+    },
+
+    deleteMenuItems: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      if (!ids.length) return 0;
+      const res = await MenuItem.deleteMany({ _id: { $in: ids } }).exec();
+      /* v8 ignore next -- deletedCount is always present on the driver result */
+      return res.deletedCount ?? 0;
     },
 
     toggleItemAvailability: async (_: unknown, { id }: { id: string }, ctx: Context) => {

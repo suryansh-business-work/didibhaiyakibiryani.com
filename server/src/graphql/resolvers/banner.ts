@@ -41,5 +41,13 @@ export const bannerResolvers = {
       await Banner.findByIdAndDelete(id);
       return true;
     },
+
+    deleteBanners: async (_: unknown, { ids }: { ids: string[] }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      if (!ids.length) return 0;
+      const res = await Banner.deleteMany({ _id: { $in: ids } }).exec();
+      /* v8 ignore next -- deletedCount is always present on the driver result */
+      return res.deletedCount ?? 0;
+    },
   },
 };
