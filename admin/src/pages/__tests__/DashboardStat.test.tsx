@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { Stat, PeriodSummary, type PeriodStats } from "../DashboardStat";
 import { inr } from "../../components/ui";
 
@@ -22,6 +22,22 @@ describe("Stat", () => {
   it("applies the inline color style when valueColor is provided", () => {
     render(<Stat label="L" value="V" sub="S" icon={<i />} valueColor="#16a34a" />);
     expect(screen.getByText("V")).toHaveStyle({ color: "rgb(22, 163, 74)" });
+  });
+
+  it("is a clickable button (mouse + Enter/Space, ignores other keys) when onClick is given", () => {
+    const onClick = vi.fn();
+    render(<Stat label="L" value="V" sub="S" icon={<i />} onClick={onClick} />);
+    const tile = screen.getByRole("button");
+    fireEvent.click(tile);
+    fireEvent.keyDown(tile, { key: "Enter" });
+    fireEvent.keyDown(tile, { key: " " });
+    fireEvent.keyDown(tile, { key: "a" });
+    expect(onClick).toHaveBeenCalledTimes(3);
+  });
+
+  it("is not a button when onClick is omitted", () => {
+    render(<Stat label="L" value="V" sub="S" icon={<i />} />);
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });
 
@@ -60,5 +76,12 @@ describe("PeriodSummary", () => {
   it("colors a negative profit red", () => {
     render(<PeriodSummary s={{ ...base, periodProfit: -1500 }} />);
     expect(screen.getByText(inr(-1500))).toHaveStyle({ color: "rgb(220, 38, 38)" });
+  });
+
+  it("invokes onComplimentaryClick when the Complimentary tile is clicked", () => {
+    const onComplimentaryClick = vi.fn();
+    render(<PeriodSummary s={base} onComplimentaryClick={onComplimentaryClick} />);
+    fireEvent.click(screen.getByRole("button"));
+    expect(onComplimentaryClick).toHaveBeenCalledTimes(1);
   });
 });

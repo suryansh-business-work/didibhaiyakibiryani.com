@@ -8,6 +8,7 @@ import { Spinner, StatusBadge, inr, fmtDate } from "../components/ui";
 import { IOrders, IRupee, IClock, IUsers } from "../components/icons";
 import DashboardFilter, { rangeForPreset, type Preset, type DateRange } from "./DashboardFilter";
 import { Stat, PeriodSummary } from "./DashboardStat";
+import ComplimentaryDialog from "./ComplimentaryDialog";
 
 interface TopItem { name: string; qty: number; revenue: number; }
 interface DishRating { name: string; rating: number; count: number; }
@@ -36,6 +37,7 @@ export default function Dashboard() {
   const [preset, setPreset] = useState<Preset>("month");
   const [customFrom, setCustomFrom] = useState<Date | null>(null);
   const [customTo, setCustomTo] = useState<Date | null>(null);
+  const [compOpen, setCompOpen] = useState(false);
 
   const range = useMemo<DateRange>(
     () => (preset === "custom" ? customRange(customFrom, customTo) : rangeForPreset(preset)),
@@ -60,7 +62,9 @@ export default function Dashboard() {
         loading={loading && !data}
         error={error?.message}
         stats={data?.dashboardStats}
+        onComplimentaryClick={() => setCompOpen(true)}
       />
+      {compOpen && <ComplimentaryDialog range={range} onClose={() => setCompOpen(false)} />}
     </Layout>
   );
 }
@@ -69,7 +73,8 @@ function DashboardContent({
   loading,
   error,
   stats,
-}: Readonly<{ loading: boolean; error?: string; stats?: Stats }>) {
+  onComplimentaryClick,
+}: Readonly<{ loading: boolean; error?: string; stats?: Stats; onComplimentaryClick: () => void }>) {
   if (loading) {
     return <Spinner label="Crunching numbers…" />;
   }
@@ -86,14 +91,14 @@ function DashboardContent({
   if (!stats) {
     return null;
   }
-  return <Body s={stats} />;
+  return <Body s={stats} onComplimentaryClick={onComplimentaryClick} />;
 }
 
-function Body({ s }: Readonly<{ s: Stats }>) {
+function Body({ s, onComplimentaryClick }: Readonly<{ s: Stats; onComplimentaryClick: () => void }>) {
   const maxRev = Math.max(1, ...s.revenueByDay.map((d) => d.revenue));
   return (
     <>
-      <PeriodSummary s={s} />
+      <PeriodSummary s={s} onComplimentaryClick={onComplimentaryClick} />
 
       <div className="stat-grid section-gap">
         <Stat label="Today's revenue" value={inr(s.todayRevenue)} sub={`${s.todayOrders} orders today`} icon={<IRupee />} />

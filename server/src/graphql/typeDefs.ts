@@ -333,6 +333,15 @@ export const typeDefs = /* GraphQL */ `
     revenue: Float!
   }
 
+  # A complimentary (free) line given on an order — for the dashboard drill-down.
+  type ComplimentaryItem {
+    orderNumber: String!
+    name: String!
+    qty: Int!
+    value: Float!
+    placedAt: DateTime!
+  }
+
   type DishRating {
     name: String!
     rating: Float!
@@ -872,6 +881,7 @@ export const typeDefs = /* GraphQL */ `
     customers(search: String): [User!]! # admin
     leads(search: String): [Lead!]! # admin — non-signup contacts
     dashboardStats(from: DateTime, to: DateTime): DashboardStats! # admin
+    complimentaryItems(from: DateTime, to: DateTime): [ComplimentaryItem!]! # admin — free items given in range
 
     integrationSettings: IntegrationSettings! # admin: SMTP / ImageKit config (secrets masked)
 

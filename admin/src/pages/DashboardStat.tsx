@@ -17,9 +17,17 @@ export function Stat({
   sub,
   icon,
   valueColor,
-}: Readonly<{ label: string; value: string; sub: string; icon: ReactNode; valueColor?: string }>) {
+  onClick,
+}: Readonly<{ label: string; value: string; sub: string; icon: ReactNode; valueColor?: string; onClick?: () => void }>) {
   return (
-    <div className="stat">
+    <div
+      className="stat"
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      style={onClick ? { cursor: "pointer" } : undefined}
+      onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
+    >
       <div className="stat__icon">{icon}</div>
       <div className="stat__label">{label}</div>
       <div className="stat__value" style={valueColor ? { color: valueColor } : undefined}>{value}</div>
@@ -28,8 +36,8 @@ export function Stat({
   );
 }
 
-/** Headline card for the selected date range: orders, revenue, expenses, net profit. */
-export function PeriodSummary({ s }: Readonly<{ s: PeriodStats }>) {
+/** Headline card for the selected date range: orders, revenue, profit, expenses, complimentary. */
+export function PeriodSummary({ s, onComplimentaryClick }: Readonly<{ s: PeriodStats; onComplimentaryClick?: () => void }>) {
   const profitColor = s.periodProfit >= 0 ? "#16a34a" : "#dc2626";
   return (
     <div className="card section-gap" style={{ padding: 20 }}>
@@ -45,7 +53,7 @@ export function PeriodSummary({ s }: Readonly<{ s: PeriodStats }>) {
           valueColor={profitColor}
         />
         <Stat label="Expenses" value={inr(s.periodExpenses)} sub="Tracked separately" icon={<IRupee />} />
-        <Stat label="Complimentary" value={inr(s.periodComplimentary)} sub="Free items given" icon={<IRupee />} />
+        <Stat label="Complimentary" value={inr(s.periodComplimentary)} sub="Free items given · tap to view" icon={<IRupee />} onClick={onComplimentaryClick} />
       </div>
     </div>
   );

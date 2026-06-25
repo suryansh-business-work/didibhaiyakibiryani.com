@@ -60,6 +60,18 @@ export const DASHBOARD = gql`
   }
 `;
 
+export const COMPLIMENTARY_ITEMS = gql`
+  query ComplimentaryItems($from: DateTime, $to: DateTime) {
+    complimentaryItems(from: $from, to: $to) {
+      orderNumber
+      name
+      qty
+      value
+      placedAt
+    }
+  }
+`;
+
 const ORDER_FIELDS = `
   id
   orderNumber

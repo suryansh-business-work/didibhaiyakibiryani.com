@@ -245,6 +245,27 @@ describe("dashboard / delivery / payment / passwordReset / integrations", () => 
     expect(stats.periodComplimentary).toBe(0);
   });
 
+  it("complimentaryItems lists the free lines given (range + all-time)", async () => {
+    const cust = await makeUser();
+    const at = new Date("2026-04-10T10:00:00.000Z");
+    await makeOrder(cust.id, {
+      status: "DELIVERED",
+      placedAt: at,
+      items: [
+        { name: "Biryani", price: 200, qty: 1 },
+        { name: "Lassi", price: 60, qty: 2, complimentary: true },
+      ],
+    });
+    const from = new Date("2026-04-01T00:00:00.000Z");
+    const to = new Date("2026-04-30T23:59:59.999Z");
+    const ranged = await dashboardResolvers.Query.complimentaryItems(null, { from, to }, admin);
+    expect(ranged).toHaveLength(1);
+    expect(ranged[0]).toMatchObject({ name: "Lassi", qty: 2, value: 120, orderNumber: expect.any(String) });
+    // No-args path (default {} + no date bounds) returns it too.
+    const allTime = await dashboardResolvers.Query.complimentaryItems(null, undefined, admin);
+    expect(allTime).toHaveLength(1);
+  });
+
   it("myDeliveries honours default + capped limits", async () => {
     const rider = await makeUser("DELIVERY");
     const riderCtx = ctxFor(rider.id, "DELIVERY");

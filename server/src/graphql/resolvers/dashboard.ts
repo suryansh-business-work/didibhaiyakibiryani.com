@@ -251,6 +251,31 @@ export const dashboardResolvers = {
         recentOrders,
       };
     },
+
+    complimentaryItems: async (
+      _: unknown,
+      { from, to }: { from?: Date; to?: Date } = {},
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN");
+      const range = dateRangeFilter(from, to, "placedAt");
+      return Order.aggregate([
+        { $match: { status: { $in: REVENUE_STATUSES }, "items.complimentary": true, ...range } },
+        { $unwind: "$items" },
+        { $match: { "items.complimentary": true } },
+        {
+          $project: {
+            _id: 0,
+            orderNumber: 1,
+            name: "$items.name",
+            qty: "$items.qty",
+            value: { $multiply: ["$items.price", "$items.qty"] },
+            placedAt: 1,
+          },
+        },
+        { $sort: { placedAt: -1 } },
+      ]);
+    },
   },
 
   Mutation: {
