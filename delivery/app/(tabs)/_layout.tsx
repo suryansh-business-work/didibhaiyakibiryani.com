@@ -3,6 +3,7 @@ import MaterialDesignIcons from "@react-native-vector-icons/material-design-icon
 import { useAuth } from "../../src/auth";
 import { Loading } from "../../src/ui";
 import { brand } from "../../src/theme";
+import LocationBroadcaster from "../../src/LocationBroadcaster";
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
@@ -11,7 +12,10 @@ export default function TabsLayout() {
   if (!user) return <Redirect href="/login" />;
 
   return (
-    <Tabs
+    <>
+      {/* Pushes the rider's live GPS from any tab while signed in. */}
+      <LocationBroadcaster />
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: { backgroundColor: brand.card, borderTopColor: brand.border },
@@ -49,6 +53,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <MaterialDesignIcons name="headset" color={color} size={size ?? 24} />,
         }}
       />
-    </Tabs>
+      </Tabs>
+    </>
   );
 }

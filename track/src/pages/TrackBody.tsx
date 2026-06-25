@@ -11,15 +11,31 @@ interface Props {
 }
 
 function DeliveryView({ order }: Readonly<Props>) {
-  if (!order.destination) {
+  const destination = order.destination ?? null;
+  const rider = order.rider ? { lat: order.rider.lat, lng: order.rider.lng } : null;
+
+  if (!destination && !rider) {
+    const waiting =
+      order.status === "OUT_FOR_DELIVERY"
+        ? "Your delivery partner is on the way."
+        : "We'll show your delivery partner on the live map once they head out.";
     return (
       <Typography variant="body2" color="text.secondary">
-        Your order will be ready for pickup.
+        {waiting}
       </Typography>
     );
   }
-  const rider = order.rider ? { lat: order.rider.lat, lng: order.rider.lng } : null;
-  return <TrackMap destination={order.destination} rider={rider} />;
+
+  return (
+    <Stack spacing={1}>
+      <TrackMap destination={destination} rider={rider} />
+      {rider ? (
+        <Typography variant="caption" sx={{ color: "success.main", fontWeight: 700 }}>
+          ● Live — your delivery partner is on the way
+        </Typography>
+      ) : null}
+    </Stack>
+  );
 }
 
 export default function TrackBody({ order }: Readonly<Props>) {

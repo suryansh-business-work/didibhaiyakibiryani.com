@@ -22,26 +22,32 @@ const destinationIcon = new L.Icon({
 // A distinct rider marker rendered as a scooter emoji via a divIcon.
 const riderIcon = L.divIcon({
   className: "ddb-rider-marker",
-  html: '<div style="font-size:26px;line-height:1">\u{1F6F5}</div>',
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
+  html: '<div style="font-size:28px;line-height:1">\u{1F6F5}</div>',
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
 });
 
 interface Props {
-  destination: LatLng;
+  destination: LatLng | null;
   rider: LatLng | null;
 }
 
-function FitBounds({ destination, rider }: Readonly<Props>) {
+/** Keeps the view tracking the delivery partner as they move (and the drop point
+ * in frame when we know it), re-running whenever the rider's position updates. */
+function Follow({ destination, rider }: Readonly<Props>) {
   const map = useMap();
   useEffect(() => {
-    if (rider) {
-      const bounds = L.latLngBounds([
-        [destination.lat, destination.lng],
-        [rider.lat, rider.lng],
-      ]);
-      map.fitBounds(bounds, { padding: [40, 40] });
-    } else {
+    if (rider && destination) {
+      map.fitBounds(
+        L.latLngBounds([
+          [rider.lat, rider.lng],
+          [destination.lat, destination.lng],
+        ]),
+        { padding: [50, 50], maxZoom: 16 }
+      );
+    } else if (rider) {
+      map.setView([rider.lat, rider.lng], 16);
+    } else if (destination) {
       map.setView([destination.lat, destination.lng], 15);
     }
   }, [map, destination, rider]);
@@ -49,20 +55,18 @@ function FitBounds({ destination, rider }: Readonly<Props>) {
 }
 
 export default function TrackMap({ destination, rider }: Readonly<Props>) {
+  const center = rider ?? destination;
+  if (!center) return null;
   return (
-    <Box sx={{ height: 280, borderRadius: 2, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
-      <MapContainer
-        center={[destination.lat, destination.lng]}
-        zoom={15}
-        style={{ height: "100%", width: "100%" }}
-      >
+    <Box sx={{ height: 300, borderRadius: 2, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
+      <MapContainer center={[center.lat, center.lng]} zoom={15} style={{ height: "100%", width: "100%" }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={[destination.lat, destination.lng]} icon={destinationIcon} />
+        {destination ? <Marker position={[destination.lat, destination.lng]} icon={destinationIcon} /> : null}
         {rider ? <Marker position={[rider.lat, rider.lng]} icon={riderIcon} /> : null}
-        <FitBounds destination={destination} rider={rider} />
+        <Follow destination={destination} rider={rider} />
       </MapContainer>
     </Box>
   );
