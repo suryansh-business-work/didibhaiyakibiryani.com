@@ -48,6 +48,7 @@ interface ManualOrderItemInput {
   price?: number;
   qty: number;
   spiceLevel?: number;
+  complimentary?: boolean;
 }
 interface ManualOrderInput {
   userId?: string;
@@ -106,17 +107,18 @@ async function buildManualItems(items: ManualOrderItemInput[]): Promise<IOrderIt
 
   return items.map((ci) => {
     if (!Number.isInteger(ci.qty) || ci.qty < 1) throw badInput("Each item needs a quantity of at least 1.");
+    const complimentary = ci.complimentary ?? false;
     if (ci.menuItemId) {
       const dbItem = map.get(ci.menuItemId);
       if (!dbItem) throw badInput("A selected menu item no longer exists.");
-      return { menuItem: dbItem._id, name: dbItem.name, price: dbItem.price, qty: ci.qty, spiceLevel: ci.spiceLevel ?? dbItem.spiceLevel };
+      return { menuItem: dbItem._id, name: dbItem.name, price: dbItem.price, makingCost: dbItem.makingCost ?? 0, qty: ci.qty, spiceLevel: ci.spiceLevel ?? dbItem.spiceLevel, complimentary };
     }
     const name = ci.name?.trim();
     if (!name) throw badInput("Custom items need a name.");
     if (typeof ci.price !== "number" || !Number.isFinite(ci.price) || ci.price < 0) {
       throw badInput("Custom items need a valid price.");
     }
-    return { name, price: ci.price, qty: ci.qty, spiceLevel: ci.spiceLevel ?? 0 };
+    return { name, price: ci.price, makingCost: 0, qty: ci.qty, spiceLevel: ci.spiceLevel ?? 0, complimentary };
   });
 }
 
@@ -139,7 +141,11 @@ async function buildManualOrderFields(input: ManualOrderInput) {
     throw badInput("Delivery orders need an address (at least a street line and city).");
   }
   const items = await buildManualItems(input.items);
-  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  if (items.filter((i) => i.complimentary).length > 1) {
+    throw badInput("Only one complimentary item is allowed per order.");
+  }
+  // Complimentary lines keep their price (for reporting) but bill at ₹0.
+  const subtotal = items.reduce((s, i) => s + (i.complimentary ? 0 : i.price * i.qty), 0);
   const discount = clampMoney(input.discount, subtotal);
   const deliveryFee = isDelivery ? clampMoney(input.deliveryFee, Number.MAX_SAFE_INTEGER) : 0;
   const total = Math.max(0, subtotal - discount) + deliveryFee;
@@ -297,6 +303,7 @@ export const orderResolvers = {
           menuItem: dbItem._id,
           name: dbItem.name,
           price: dbItem.price,
+          makingCost: dbItem.makingCost ?? 0,
           qty: ci.qty,
           spiceLevel: ci.spiceLevel ?? dbItem.spiceLevel,
         };
@@ -340,6 +347,7 @@ export const orderResolvers = {
               menuItem: free._id,
               name: `${free.name} (Free)`,
               price: 0,
+              makingCost: free.makingCost ?? 0,
               qty: 1,
               spiceLevel: free.spiceLevel,
             });

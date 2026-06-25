@@ -127,7 +127,7 @@ export interface Totals {
 /** Live order totals for the summary panel (server re-derives authoritatively). */
 export function computeTotals(v: ManualOrderForm): Totals {
   const subtotal = (v.items ?? []).reduce(
-    (s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 0),
+    (s, it) => s + (it.complimentary ? 0 : (Number(it.price) || 0) * (Number(it.qty) || 0)),
     0
   );
   const discount = Math.min(Number(v.discount) || 0, subtotal);
@@ -158,11 +158,15 @@ export function deliveryFeeFor(settings: DeliverySettings, subtotal: number, fre
 
 /** Merge duplicate lines of the same dish so an order shows one row per dish. */
 function mergeItemsByName(items: Order["items"]) {
-  const map = new Map<string, { name: string; price: number; qty: number; spiceLevel: number }>();
+  const map = new Map<string, { name: string; price: number; qty: number; spiceLevel: number; complimentary: boolean }>();
   for (const it of items) {
     const existing = map.get(it.name);
-    if (existing) existing.qty += it.qty;
-    else map.set(it.name, { name: it.name, price: it.price, qty: it.qty, spiceLevel: it.spiceLevel ?? 0 });
+    if (existing) {
+      existing.qty += it.qty;
+      existing.complimentary = existing.complimentary || Boolean(it.complimentary);
+    } else {
+      map.set(it.name, { name: it.name, price: it.price, qty: it.qty, spiceLevel: it.spiceLevel ?? 0, complimentary: Boolean(it.complimentary) });
+    }
   }
   return [...map.values()];
 }
@@ -200,8 +204,8 @@ export function buildManualInput(v: ManualOrderForm) {
   const isDelivery = v.orderType === "DELIVERY";
   const items = v.items.map((it) =>
     it.menuItemId
-      ? { menuItemId: it.menuItemId, qty: Number(it.qty), spiceLevel: Number(it.spiceLevel) }
-      : { name: it.name?.trim(), price: Number(it.price), qty: Number(it.qty), spiceLevel: Number(it.spiceLevel) }
+      ? { menuItemId: it.menuItemId, qty: Number(it.qty), spiceLevel: Number(it.spiceLevel), complimentary: Boolean(it.complimentary) }
+      : { name: it.name?.trim(), price: Number(it.price), qty: Number(it.qty), spiceLevel: Number(it.spiceLevel), complimentary: Boolean(it.complimentary) }
   );
   const address = isDelivery
     ? {

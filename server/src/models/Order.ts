@@ -20,8 +20,12 @@ export interface IOrderItem {
   menuItem?: Types.ObjectId;
   name: string;
   price: number;
+  /** Cost to make one unit, snapshot from the menu item — used for profit/COGS. */
+  makingCost?: number;
   qty: number;
   spiceLevel?: number;
+  /** POS: this line is given free — it keeps its price but adds ₹0 to the total. */
+  complimentary?: boolean;
 }
 
 export interface IOrderAddress {
@@ -94,8 +98,10 @@ const orderItemSchema = new Schema<IOrderItem>(
     menuItem: { type: Schema.Types.ObjectId, ref: "MenuItem" },
     name: { type: String, required: true },
     price: { type: Number, required: true },
+    makingCost: { type: Number, default: 0 },
     qty: { type: Number, required: true, min: 1 },
     spiceLevel: { type: Number, default: 0 },
+    complimentary: { type: Boolean, default: false },
   },
   { _id: false }
 );

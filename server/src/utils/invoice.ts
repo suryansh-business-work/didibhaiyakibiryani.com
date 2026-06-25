@@ -122,10 +122,10 @@ function itemsTable(doc: PDFKit.PDFDocument, order: IOrder): void {
   doc.font("Helvetica").fillColor(DARK);
   for (const it of order.items) {
     const rowY = doc.y;
-    doc.text(it.name, left, rowY, { width: 290 });
+    doc.text(it.complimentary ? `${it.name} (Complimentary)` : it.name, left, rowY, { width: 290 });
     doc.text(String(it.qty), qtyX, rowY);
     doc.text(money(it.price), rateX, rowY);
-    doc.text(money(it.price * it.qty), amtX, rowY);
+    doc.text(it.complimentary ? "Free" : money(it.price * it.qty), amtX, rowY);
     doc.moveDown(0.3);
   }
   doc.moveDown(0.4);

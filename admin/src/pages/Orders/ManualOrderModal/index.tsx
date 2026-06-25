@@ -92,7 +92,17 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
     // incremented instead of appended as a duplicate.
     const idx = items.findIndex((it) => it.name === m.name);
     if (idx >= 0) update(idx, { ...items[idx], menuItemId: m.id, qty: Number(items[idx].qty) + 1 });
-    else append({ menuItemId: m.id, name: m.name, price: m.price, qty: 1, spiceLevel: 0 });
+    else append({ menuItemId: m.id, name: m.name, price: m.price, qty: 1, spiceLevel: 0, complimentary: false });
+  }
+
+  // Mark a line free. Only one complimentary item per order — enabling one clears the rest.
+  function toggleComplimentary(index: number) {
+    const items = getValues("items");
+    const enable = !items[index].complimentary;
+    items.forEach((it, i) => {
+      const next = i === index ? enable : false;
+      if (Boolean(it.complimentary) !== next) update(i, { ...it, complimentary: next });
+    });
   }
 
   function changeQty(index: number, delta: number) {
@@ -146,6 +156,7 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
           baseStatus={editOrder?.status ?? "PLACED"}
           onQty={changeQty}
           onRemove={remove}
+          onToggleComplimentary={toggleComplimentary}
           onCreate={handleSubmit(onSave)}
           isSubmitting={isSubmitting}
           rootError={errors.root?.message}

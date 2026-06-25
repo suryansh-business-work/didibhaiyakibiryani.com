@@ -20,7 +20,7 @@ interface Stats {
   totalOrders: number; totalRevenue: number; todayOrders: number; todayRevenue: number;
   pendingOrders: number; totalCustomers: number; repeatCustomers: number; avgOrderValue: number;
   avgFoodRating: number; avgDeliveryRating: number; ratingCount: number;
-  periodOrders: number; periodRevenue: number; periodExpenses: number; periodProfit: number;
+  periodOrders: number; periodRevenue: number; periodExpenses: number; periodProfit: number; periodComplimentary: number;
   dishRatings: DishRating[];
   topItems: TopItem[]; revenueByDay: RevPoint[]; recentOrders: RecentOrder[];
 }

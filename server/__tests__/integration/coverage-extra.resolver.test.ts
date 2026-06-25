@@ -196,7 +196,10 @@ describe("dashboard / delivery / payment / passwordReset / integrations", () => 
       status: "DELIVERED",
       placedAt: at,
       total: 500,
-      items: [{ menuItem: item._id, name: item.name, price: 199, qty: 2 }],
+      items: [
+        { menuItem: item._id, name: item.name, price: 199, qty: 2, makingCost: 50 },
+        { name: "Welcome dessert", price: 80, qty: 1, makingCost: 30, complimentary: true },
+      ],
     });
     // Cancelled order in range counts toward periodOrders but not revenue.
     await makeOrder(cust.id, { status: "CANCELLED", placedAt: at, total: 999 });
@@ -223,7 +226,9 @@ describe("dashboard / delivery / payment / passwordReset / integrations", () => 
     expect(stats.periodOrders).toBe(1);
     expect(stats.periodRevenue).toBe(500);
     expect(stats.periodExpenses).toBe(150);
-    expect(stats.periodProfit).toBe(350);
+    // Profit = revenue − COGS (makingCost): 500 − (50×2 + 30×1) = 370. Expenses NOT subtracted.
+    expect(stats.periodProfit).toBe(370);
+    expect(stats.periodComplimentary).toBe(80);
   });
 
   it("dashboardStats period stats fall back to all-time with no date args", async () => {
@@ -235,7 +240,9 @@ describe("dashboard / delivery / payment / passwordReset / integrations", () => 
     expect(stats.periodOrders).toBe(1);
     expect(stats.periodRevenue).toBe(300);
     expect(stats.periodExpenses).toBe(80);
-    expect(stats.periodProfit).toBe(220);
+    // Default fixture item has no makingCost → COGS 0 → profit = revenue.
+    expect(stats.periodProfit).toBe(300);
+    expect(stats.periodComplimentary).toBe(0);
   });
 
   it("myDeliveries honours default + capped limits", async () => {
@@ -313,6 +320,7 @@ describe("more guard coverage", () => {
     expect(stats.totalRevenue).toBe(0);
     expect(stats.periodExpenses).toBe(0);
     expect(stats.periodProfit).toBe(0);
+    expect(stats.periodComplimentary).toBe(0);
     expect(stats.repeatCustomers).toBe(0);
     const u = await makeUser();
     expect(await dashboardResolvers.User.totalSpent({ _id: u._id })).toBe(0);

@@ -3,6 +3,7 @@ export interface OrderItem {
   price: number;
   qty: number;
   spiceLevel?: number;
+  complimentary?: boolean;
 }
 
 export interface OrderAddress {

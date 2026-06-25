@@ -91,6 +91,20 @@ export default function Menu() {
       key: "price", label: "Price", align: "right", sortable: true, sortValue: (it) => it.price,
       render: (it) => <Typography sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(it.price)}</Typography>,
     },
+    {
+      key: "profit", label: "Profit", align: "right", sortable: true,
+      sortValue: (it) => it.price - (it.makingCost ?? 0),
+      render: (it) => {
+        const profit = it.price - (it.makingCost ?? 0);
+        const margin = it.price > 0 ? Math.round((profit / it.price) * 100) : 0;
+        return (
+          <>
+            <Typography fontWeight={700} sx={{ fontVariantNumeric: "tabular-nums" }} color={profit >= 0 ? "success.main" : "error"}>{inr(profit)}</Typography>
+            <Typography variant="caption" color="text.secondary" display="block">{margin}% margin</Typography>
+          </>
+        );
+      },
+    },
   ], []);
 
   const { tableProps } = useClientTable(items, columns, { initialSortKey: "name", initialSortDir: "asc" });

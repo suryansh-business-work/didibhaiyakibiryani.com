@@ -233,7 +233,7 @@ describe("buildManualInput", () => {
       userId: "u1",
       customerName: null,
       customerPhone: null,
-      items: [{ menuItemId: "m1", qty: 2, spiceLevel: 1 }],
+      items: [{ menuItemId: "m1", qty: 2, spiceLevel: 1, complimentary: false }],
       address: {
         line1: "12 Main",
         line2: "Apt 4",
@@ -270,7 +270,25 @@ describe("buildManualInput", () => {
     expect(input.customerPhone).toBe("123");
     expect(input.address).toBeNull();
     expect(input.deliveryFee).toBe(0);
-    expect(input.items).toEqual([{ name: "Custom Dish", price: 150, qty: 1, spiceLevel: 0 }]);
+    expect(input.items).toEqual([{ name: "Custom Dish", price: 150, qty: 1, spiceLevel: 0, complimentary: false }]);
+  });
+
+  it("excludes a complimentary line from the bill and forwards the flag", () => {
+    const v = form({
+      orderType: "TAKEAWAY",
+      customerMode: "WALKIN",
+      customerName: "Ravi",
+      items: [
+        { menuItemId: "m1", name: "Biryani", price: 200, qty: 1, spiceLevel: 0 },
+        { menuItemId: "m2", name: "Dessert", price: 80, qty: 1, spiceLevel: 0, complimentary: true },
+      ],
+    });
+    expect(computeTotals(v).subtotal).toBe(200);
+    const input = buildManualInput(v);
+    expect(input.items).toEqual([
+      { menuItemId: "m1", qty: 1, spiceLevel: 0, complimentary: false },
+      { menuItemId: "m2", qty: 1, spiceLevel: 0, complimentary: true },
+    ]);
   });
 
   it("nulls optional address/customer/notes trims when blank and placedAt when empty", () => {
@@ -344,7 +362,7 @@ describe("orderToManualForm", () => {
         },
         items: [
           { name: "Biryani", price: 200, qty: 1, spiceLevel: 2 },
-          { name: "Biryani", price: 200, qty: 2, spiceLevel: 2 },
+          { name: "Biryani", price: 200, qty: 2, spiceLevel: 2, complimentary: true },
           { name: "Roti", price: 30, qty: 1 },
         ],
       })
@@ -354,9 +372,10 @@ describe("orderToManualForm", () => {
     expect(f.userId).toBe("u1");
     expect(f.customerName).toBe("Asha");
     expect(f.customerPhone).toBe("111");
+    // Merged Biryani keeps the complimentary flag from either line (OR-merge).
     expect(f.items).toEqual([
-      { menuItemId: "", name: "Biryani", price: 200, qty: 3, spiceLevel: 2 },
-      { menuItemId: "", name: "Roti", price: 30, qty: 1, spiceLevel: 0 },
+      { menuItemId: "", name: "Biryani", price: 200, qty: 3, spiceLevel: 2, complimentary: true },
+      { menuItemId: "", name: "Roti", price: 30, qty: 1, spiceLevel: 0, complimentary: false },
     ]);
     expect(f.line1).toBe("12 Main");
     expect(f.phone).toBe("555");

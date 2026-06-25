@@ -137,4 +137,16 @@ describe("generateInvoicePdf", () => {
     const pdf = await generateInvoicePdf(bare, settings);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
   });
+
+  it("prints a complimentary line as Free while still billing the paid items", async () => {
+    const withComp = {
+      ...order,
+      items: [
+        { name: "Paneer Tikka Biryani", price: 289, qty: 2 },
+        { name: "Welcome Lassi", price: 60, qty: 1, complimentary: true },
+      ],
+    } as unknown as IOrder;
+    const pdf = await generateInvoicePdf(withComp, settings);
+    expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
+  });
 });

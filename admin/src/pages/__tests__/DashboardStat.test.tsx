@@ -31,17 +31,20 @@ describe("PeriodSummary", () => {
     periodRevenue: 5000,
     periodExpenses: 2000,
     periodProfit: 3000,
+    periodComplimentary: 500,
   };
 
-  it("renders the four metric tiles with formatted values", () => {
+  it("renders the metric tiles with formatted values", () => {
     render(<PeriodSummary s={base} />);
     expect(screen.getByText("Period summary")).toBeInTheDocument();
     expect(screen.getByText("Orders")).toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.getByText(inr(5000))).toBeInTheDocument();
     expect(screen.getByText(inr(2000))).toBeInTheDocument();
-    expect(screen.getByText("Net profit")).toBeInTheDocument();
+    expect(screen.getByText("Profit")).toBeInTheDocument();
     expect(screen.getByText(inr(3000))).toBeInTheDocument();
+    expect(screen.getByText("Complimentary")).toBeInTheDocument();
+    expect(screen.getByText(inr(500))).toBeInTheDocument();
   });
 
   it("colors a non-negative profit green", () => {

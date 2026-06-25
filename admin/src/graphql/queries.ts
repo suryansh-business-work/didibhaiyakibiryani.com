@@ -30,6 +30,7 @@ export const DASHBOARD = gql`
       periodRevenue
       periodExpenses
       periodProfit
+      periodComplimentary
       dishRatings {
         name
         rating
@@ -100,6 +101,7 @@ const ORDER_FIELDS = `
     price
     qty
     spiceLevel
+    complimentary
   }
   statusHistory {
     status

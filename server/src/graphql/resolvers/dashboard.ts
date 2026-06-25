@@ -91,6 +91,7 @@ export const dashboardResolvers = {
         periodOrders,
         periodRevenueAgg,
         periodExpensesAgg,
+        periodMarginAgg,
       ] = await Promise.all([
         Order.countDocuments({ status: { $ne: "CANCELLED" } }),
         Order.aggregate([
@@ -180,11 +181,32 @@ export const dashboardResolvers = {
           { $match: { ...expensesRange } },
           { $group: { _id: null, total: { $sum: "$amount" } } },
         ]),
+        // Cost-of-goods (from each item's snapshot makingCost) and the retail
+        // value given away as complimentary, over revenue orders in the range.
+        Order.aggregate([
+          { $match: { status: { $in: REVENUE_STATUSES }, ...ordersRange } },
+          { $unwind: "$items" },
+          {
+            $group: {
+              _id: null,
+              cogs: { $sum: { $multiply: [{ $ifNull: ["$items.makingCost", 0] }, "$items.qty"] } },
+              complimentary: {
+                $sum: {
+                  $cond: [{ $eq: ["$items.complimentary", true] }, { $multiply: ["$items.price", "$items.qty"] }, 0],
+                },
+              },
+            },
+          },
+        ]),
       ]);
 
       const periodRevenue = periodRevenueAgg[0]?.total ?? 0;
       const periodExpenses = periodExpensesAgg[0]?.total ?? 0;
-      const periodProfit = periodRevenue - periodExpenses;
+      // Profit is the menu-finance gross margin: revenue minus cost-of-goods.
+      // Operating expenses are reported separately, NOT subtracted here.
+      const periodCogs = periodMarginAgg[0]?.cogs ?? 0;
+      const periodComplimentary = periodMarginAgg[0]?.complimentary ?? 0;
+      const periodProfit = periodRevenue - periodCogs;
 
       const totalRevenue = revenueAgg[0]?.total ?? 0;
       const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
@@ -209,6 +231,7 @@ export const dashboardResolvers = {
         periodRevenue,
         periodExpenses,
         periodProfit,
+        periodComplimentary,
         dishRatings: dishRatingsAgg.map((d) => ({
           name: d._id,
           rating: Math.round(d.rating * 10) / 10,

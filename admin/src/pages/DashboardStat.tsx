@@ -7,6 +7,7 @@ export interface PeriodStats {
   periodRevenue: number;
   periodExpenses: number;
   periodProfit: number;
+  periodComplimentary: number;
 }
 
 /** A single labelled metric tile used across the dashboard grids. */
@@ -36,14 +37,15 @@ export function PeriodSummary({ s }: Readonly<{ s: PeriodStats }>) {
       <div className="stat-grid">
         <Stat label="Orders" value={String(s.periodOrders)} sub="In selected range" icon={<IOrders />} />
         <Stat label="Revenue" value={inr(s.periodRevenue)} sub="In selected range" icon={<IRupee />} />
-        <Stat label="Expenses" value={inr(s.periodExpenses)} sub="In selected range" icon={<IRupee />} />
         <Stat
-          label="Net profit"
+          label="Profit"
           value={inr(s.periodProfit)}
-          sub="Revenue − expenses"
+          sub="Revenue − cost (menu finance)"
           icon={<span style={{ color: profitColor }}>₹</span>}
           valueColor={profitColor}
         />
+        <Stat label="Expenses" value={inr(s.periodExpenses)} sub="Tracked separately" icon={<IRupee />} />
+        <Stat label="Complimentary" value={inr(s.periodComplimentary)} sub="Free items given" icon={<IRupee />} />
       </div>
     </div>
   );

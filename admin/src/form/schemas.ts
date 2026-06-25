@@ -205,6 +205,7 @@ export const manualOrderItemSchema = z
     price: z.coerce.number().min(0),
     qty: z.coerce.number().int().positive("Qty must be at least 1"),
     spiceLevel: z.coerce.number().int().min(0).max(3),
+    complimentary: z.boolean().optional(),
   })
   .superRefine((it, ctx) => {
     if (it.menuItemId) return;

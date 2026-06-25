@@ -230,8 +230,10 @@ export const typeDefs = /* GraphQL */ `
   type OrderItem {
     name: String!
     price: Float!
+    makingCost: Float
     qty: Int!
     spiceLevel: Int
+    complimentary: Boolean
     menuItem: MenuItem
   }
 
@@ -359,6 +361,7 @@ export const typeDefs = /* GraphQL */ `
     periodRevenue: Float!
     periodExpenses: Float!
     periodProfit: Float!
+    periodComplimentary: Float!
     dishRatings: [DishRating!]!
     topItems: [TopItem!]!
     revenueByDay: [RevenuePoint!]!
@@ -506,6 +509,7 @@ export const typeDefs = /* GraphQL */ `
     price: Float
     qty: Int!
     spiceLevel: Int
+    complimentary: Boolean
   }
 
   # Staff-entered (POS) order. Bypasses store-hours/payment-enabled checks and

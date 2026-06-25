@@ -163,6 +163,46 @@ describe("order resolver — createManualOrder (POS)", () => {
     expect(order.notes).toBe("extra raita");
   });
 
+  it("bills a complimentary line at zero (price kept), snapshots making cost, caps at one per order", async () => {
+    const item = await makeItem({ makingCost: 60 });
+    const order = await M.createManualOrder(
+      null,
+      {
+        input: {
+          orderType: "TAKEAWAY",
+          customerName: "Walk-in",
+          items: [
+            { menuItemId: item.id, qty: 1 },
+            { name: "Gulab Jamun", price: 80, qty: 1, complimentary: true },
+          ],
+        },
+      },
+      admin
+    );
+    // The complimentary line adds ₹0 to the bill but keeps its price for reporting.
+    expect(order.subtotal).toBe(199);
+    expect(order.total).toBe(199);
+    expect(order.items.find((i) => i.complimentary)?.price).toBe(80);
+    expect(order.items[0]?.makingCost).toBe(60);
+
+    await expect(
+      M.createManualOrder(
+        null,
+        {
+          input: {
+            orderType: "TAKEAWAY",
+            customerName: "Walk-in",
+            items: [
+              { name: "A", price: 10, qty: 1, complimentary: true },
+              { name: "B", price: 20, qty: 1, complimentary: true },
+            ],
+          },
+        },
+        admin
+      )
+    ).rejects.toThrow(/one complimentary/i);
+  });
+
   it("creates a back-dated delivered order for an existing customer (marks PAID, snapshots name)", async () => {
     const user = await makeUser("CUSTOMER", { name: "Asha", phone: "9000000001" });
     const item = await makeItem();
