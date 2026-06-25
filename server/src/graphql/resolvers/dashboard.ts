@@ -261,18 +261,26 @@ export const dashboardResolvers = {
         { $unwind: "$items" },
         // Free items have ₹0 revenue and are reported in the complimentary view.
         { $match: { "items.complimentary": { $ne: true } } },
+        // Pull each line's CURRENT menu finance (price + making cost) so profit reflects
+        // what's set in the item's Finance section; fall back to the order-time snapshot
+        // for custom/unlinked lines so nothing is dropped.
+        { $lookup: { from: "menuitems", localField: "items.menuItem", foreignField: "_id", as: "mi" } },
+        { $set: { mi: { $arrayElemAt: ["$mi", 0] } } },
+        {
+          $set: {
+            curName: { $ifNull: ["$mi.name", "$items.name"] },
+            curPrice: { $ifNull: ["$mi.price", "$items.price"] },
+            curCost: { $ifNull: ["$mi.makingCost", { $ifNull: ["$items.makingCost", 0] }] },
+          },
+        },
         {
           $group: {
-            _id: "$items.name",
-            price: { $first: "$items.price" },
-            makingCost: { $first: { $ifNull: ["$items.makingCost", 0] } },
+            _id: "$curName",
+            price: { $first: "$curPrice" },
+            makingCost: { $first: "$curCost" },
             qty: { $sum: "$items.qty" },
             // Total profit (Profit/Unit × Qty) — kept only to rank the most profitable dishes first.
-            profit: {
-              $sum: {
-                $multiply: [{ $subtract: ["$items.price", { $ifNull: ["$items.makingCost", 0] }] }, "$items.qty"],
-              },
-            },
+            profit: { $sum: { $multiply: [{ $subtract: ["$curPrice", "$curCost"] }, "$items.qty"] } },
           },
         },
         { $project: { _id: 0, name: "$_id", price: 1, makingCost: 1, qty: 1 } },

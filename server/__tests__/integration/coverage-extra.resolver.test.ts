@@ -266,6 +266,19 @@ describe("dashboard / delivery / payment / passwordReset / integrations", () => 
     expect(names.indexOf("Biryani")).toBeLessThan(names.indexOf("Roti"));
   });
 
+  it("profitItems picks up the item's CURRENT menu finance, not the stale order snapshot", async () => {
+    const cust = await makeUser();
+    const item = await makeItem({ name: "Paneer Tikka", price: 100, makingCost: 40 });
+    // The booked line is stale (price 90, cost 0); the live Finance setting is 100/40.
+    await makeOrder(cust.id, {
+      status: "DELIVERED",
+      items: [{ menuItem: item._id, name: "Old Name", price: 90, makingCost: 0, qty: 3 }],
+    });
+    const rows = await dashboardResolvers.Query.profitItems(null, undefined, admin);
+    const row = rows.find((r: { name: string }) => r.name === "Paneer Tikka");
+    expect(row).toMatchObject({ name: "Paneer Tikka", price: 100, makingCost: 40, qty: 3 });
+  });
+
   it("complimentaryItemsPage searches, sorts and paginates the free items", async () => {
     const cust = await makeUser();
     await makeOrder(cust.id, {
