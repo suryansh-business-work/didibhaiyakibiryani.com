@@ -144,6 +144,9 @@ async function buildManualOrderFields(input: ManualOrderInput) {
   if (items.filter((i) => i.complimentary).length > 1) {
     throw badInput("Only one complimentary item is allowed per order.");
   }
+  if (items.some((i) => i.complimentary && i.qty > 1)) {
+    throw badInput("A complimentary item must be a single unit.");
+  }
   // Complimentary lines keep their price (for reporting) but bill at ₹0.
   const subtotal = items.reduce((s, i) => s + (i.complimentary ? 0 : i.price * i.qty), 0);
   const discount = clampMoney(input.discount, subtotal);

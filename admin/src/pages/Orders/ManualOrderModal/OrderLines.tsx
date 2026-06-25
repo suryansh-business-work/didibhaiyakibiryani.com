@@ -30,6 +30,8 @@ export function OrderLines({ fields, watch, onQty, onRemove, onToggleComplimenta
       {fields.map((f, i) => {
         const line = watch(`items.${i}`);
         const free = Boolean(line?.complimentary);
+        // Complimentary is for a single unit only — disable the toggle past qty 1.
+        const freeDisabled = !free && (Number(line?.qty) || 1) > 1;
         return (
           <Stack key={f.id} direction="row" alignItems="center" spacing={0.5} sx={{ pt: 1 }}>
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -44,6 +46,7 @@ export function OrderLines({ fields, watch, onQty, onRemove, onToggleComplimenta
               label="Free"
               color={free ? "success" : "default"}
               variant={free ? "filled" : "outlined"}
+              disabled={freeDisabled}
               onClick={() => onToggleComplimentary(i)}
             />
             <IconButton size="small" onClick={() => onQty(i, -1)} aria-label="Decrease quantity">

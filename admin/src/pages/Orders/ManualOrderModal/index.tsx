@@ -91,7 +91,8 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
     // Match by name so a prefilled (edit-mode) line of the same dish is
     // incremented instead of appended as a duplicate.
     const idx = items.findIndex((it) => it.name === m.name);
-    if (idx >= 0) update(idx, { ...items[idx], menuItemId: m.id, qty: Number(items[idx].qty) + 1 });
+    // Re-adding bumps qty past 1, so the line can no longer be complimentary.
+    if (idx >= 0) update(idx, { ...items[idx], menuItemId: m.id, qty: Number(items[idx].qty) + 1, complimentary: false });
     else append({ menuItemId: m.id, name: m.name, price: m.price, qty: 1, spiceLevel: 0, complimentary: false });
   }
 
@@ -99,6 +100,7 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
   function toggleComplimentary(index: number) {
     const items = getValues("items");
     const enable = !items[index].complimentary;
+    if (enable && Number(items[index].qty) > 1) return; // free is single-unit only
     items.forEach((it, i) => {
       const next = i === index ? enable : false;
       if (Boolean(it.complimentary) !== next) update(i, { ...it, complimentary: next });
@@ -109,7 +111,8 @@ export default function ManualOrderModal({ onClose, onCreated, editOrder }: Read
     const items = getValues("items");
     const next = Number(items[index].qty) + delta;
     if (next <= 0) remove(index);
-    else update(index, { ...items[index], qty: next });
+    // Free applies to a single unit only — drop it once qty goes above 1.
+    else update(index, { ...items[index], qty: next, complimentary: next > 1 ? false : items[index].complimentary });
   }
 
   async function onSave(values: ManualOrderForm) {

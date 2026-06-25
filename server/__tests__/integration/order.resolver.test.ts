@@ -201,6 +201,21 @@ describe("order resolver — createManualOrder (POS)", () => {
         admin
       )
     ).rejects.toThrow(/one complimentary/i);
+
+    // A complimentary line must be a single unit.
+    await expect(
+      M.createManualOrder(
+        null,
+        {
+          input: {
+            orderType: "TAKEAWAY",
+            customerName: "Walk-in",
+            items: [{ name: "A", price: 10, qty: 2, complimentary: true }],
+          },
+        },
+        admin
+      )
+    ).rejects.toThrow(/single unit/i);
   });
 
   it("creates a back-dated delivered order for an existing customer (marks PAID, snapshots name)", async () => {
