@@ -6,10 +6,10 @@ import { evaluateCoupon, computeDeliveryFee, haversineKm } from "../../utils/pri
 import { assertOrderingAvailable } from "../../utils/ordering.js";
 import { genOrderNumber } from "../../utils/helpers.js";
 import { notifyOrderEmail, notifyOrderTrackingWhatsApp } from "../../emails/notify.js";
-import { trackingUrlFor } from "../../utils/links.js";
+import { trackingUrlFor, ratingUrlFor, receiptUrlFor } from "../../utils/links.js";
 import { liveState } from "../../utils/orderTracking.js";
 import { saveOrderRating, isValidStars } from "../../utils/rating.js";
-import { generateInvoicePdf } from "../../utils/invoice.js";
+import { generateReceiptPdf } from "../../utils/receipt.js";
 import type {
   IOrder,
   IOrderItem,
@@ -265,12 +265,12 @@ export const orderResolvers = {
       });
     },
 
-    invoicePdf: async (_: unknown, { orderId }: { orderId: string }, ctx: Context) => {
+    receiptPdf: async (_: unknown, { orderId }: { orderId: string }, ctx: Context) => {
       requireRole(ctx, "ADMIN", "STAFF");
       const order = await Order.findById(orderId);
       if (!order) throw new GraphQLError("Order not found.");
       const settings = await getOrCreateSettings();
-      const pdf = await generateInvoicePdf(order, settings);
+      const pdf = await generateReceiptPdf(order, settings);
       return pdf.toString("base64");
     },
 
@@ -289,6 +289,7 @@ export const orderResolvers = {
         placedAt: order.placedAt,
         alreadyRated: Boolean(order.rating),
         canRate: order.status === "DELIVERED" && !order.rating,
+        receiptUrl: receiptUrlFor(order),
         rating: order.rating ?? null,
       };
     },
@@ -311,6 +312,7 @@ export const orderResolvers = {
         destination,
         rider: riderFix,
         etaMinutes,
+        receiptUrl: receiptUrlFor(order),
         placedAt: order.placedAt,
       };
     },
@@ -555,6 +557,8 @@ export const orderResolvers = {
 
   Order: {
     trackingUrl: (parent: { orderNumber: string }) => trackingUrlFor(parent),
+    ratingUrl: (parent: { orderNumber: string }) => ratingUrlFor(parent),
+    receiptUrl: (parent: { _id: unknown; ratingToken: string }) => receiptUrlFor(parent),
     user: (parent: { user: unknown }) => {
       const usr = parent.user as { name?: string } | string | null;
       /* v8 ignore next 2 -- populated-vs-id paths both exercised; null short-circuit is defensive */

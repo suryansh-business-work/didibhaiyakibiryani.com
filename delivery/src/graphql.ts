@@ -38,6 +38,7 @@ const ORDER_FIELDS = `
   paymentStatus
   placedAt
   notes
+  receiptUrl
   user { name phone }
   address { line1 line2 city pincode phone lat lng }
   items { name qty }
@@ -60,6 +61,7 @@ export const MY_DELIVERIES = gql`
       deliveryFee
       paymentMethod
       placedAt
+      receiptUrl
       address { city pincode }
     }
   }

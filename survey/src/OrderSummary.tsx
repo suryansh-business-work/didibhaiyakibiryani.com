@@ -1,12 +1,43 @@
-import { Card, CardContent, Divider, Stack, Typography } from "@mui/material";
+import { Button, Card, CardContent, Divider, Stack, Typography } from "@mui/material";
 import type { SurveyItem } from "./graphql";
 import { inr } from "./components";
 
-/** Read-only recap of the order: line items + total. */
+interface OrderSummaryProps {
+  items: SurveyItem[];
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
+  total: number;
+  receiptUrl: string;
+}
+
+/** A label + value row in the totals breakdown. */
+function TotalRow({
+  label,
+  value,
+  strong = false,
+}: Readonly<{ label: string; value: string; strong?: boolean }>) {
+  return (
+    <Stack direction="row" justifyContent="space-between">
+      <Typography variant={strong ? "body1" : "body2"} fontWeight={strong ? 800 : 400} color={strong ? "text.primary" : "text.secondary"}>
+        {label}
+      </Typography>
+      <Typography variant={strong ? "body1" : "body2"} fontWeight={strong ? 800 : 400} color={strong ? "primary" : "text.primary"}>
+        {value}
+      </Typography>
+    </Stack>
+  );
+}
+
+/** Read-only recap of the order: line items, full totals breakdown + receipt download. */
 export default function OrderSummary({
   items,
+  subtotal,
+  discount,
+  deliveryFee,
   total,
-}: Readonly<{ items: SurveyItem[]; total: number }>) {
+  receiptUrl,
+}: Readonly<OrderSummaryProps>) {
   return (
     <Card variant="outlined">
       <CardContent>
@@ -24,12 +55,23 @@ export default function OrderSummary({
           ))}
         </Stack>
         <Divider sx={{ my: 1.5 }} />
-        <Stack direction="row" justifyContent="space-between">
-          <Typography fontWeight={800}>Total</Typography>
-          <Typography fontWeight={800} color="primary">
-            {inr(total)}
-          </Typography>
+        <Stack spacing={0.5}>
+          <TotalRow label="Subtotal" value={inr(subtotal)} />
+          {discount > 0 ? <TotalRow label="Discount" value={`− ${inr(discount)}`} /> : null}
+          <TotalRow label="Delivery" value={deliveryFee === 0 ? "Free" : inr(deliveryFee)} />
+          <TotalRow label="Total" value={inr(total)} strong />
         </Stack>
+        <Button
+          component="a"
+          href={receiptUrl}
+          target="_blank"
+          rel="noreferrer"
+          variant="outlined"
+          fullWidth
+          sx={{ mt: 2 }}
+        >
+          ⬇ Download receipt (PDF)
+        </Button>
       </CardContent>
     </Card>
   );

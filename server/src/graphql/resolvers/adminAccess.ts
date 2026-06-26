@@ -5,9 +5,8 @@ import { adminCredentialsEmail } from "../../emails/auth.js";
 import { loadEmailBrand } from "../../emails/marketing.js";
 import { sendMailAsync } from "../../utils/mailer.js";
 import { logger } from "../../utils/logger.js";
+import { ADMIN_PUBLIC_URL } from "../../utils/links.js";
 import { GraphQLError } from "graphql";
-
-const ADMIN_URL = process.env.PUBLIC_ADMIN_URL || "https://admin.didibhaiyakibiryani.com";
 
 export const adminAccessResolvers = {
   Query: {
@@ -47,7 +46,7 @@ export const adminAccessResolvers = {
       await admin.save();
 
       const brand = await loadEmailBrand();
-      const content = adminCredentialsEmail(brand, admin.name, admin.email, newPassword, ADMIN_URL);
+      const content = adminCredentialsEmail(brand, admin.name, admin.email, newPassword, ADMIN_PUBLIC_URL);
       sendMailAsync({ to: admin.email, ...content });
       logger.info({ userId: admin.id }, "Admin credentials emailed (password rotated)");
       return true;

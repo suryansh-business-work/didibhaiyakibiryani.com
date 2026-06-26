@@ -125,11 +125,16 @@ export default function OrdersTable({
     setCols((prev) => ({ ...prev, [key]: !prev[key] }));
   }
   function copySurvey(o: Order) {
-    navigator.clipboard.writeText(`https://survey.didibhaiyakibiryani.com/${o.orderNumber}`).catch(() => undefined);
+    if (!o.ratingUrl) return;
+    navigator.clipboard.writeText(o.ratingUrl).catch(() => undefined);
   }
   function copyTracking(o: Order) {
     if (!o.trackingUrl) return;
     navigator.clipboard.writeText(o.trackingUrl).catch(() => undefined);
+  }
+  function copyReceipt(o: Order) {
+    if (!o.receiptUrl) return;
+    navigator.clipboard.writeText(o.receiptUrl).catch(() => undefined);
   }
   function shareTrackingWhatsApp(o: Order) {
     if (!o.trackingUrl) return;
@@ -295,6 +300,14 @@ export default function OrdersTable({
           }}
         >
           Copy survey link
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuOrder) copyReceipt(menuOrder);
+            closeMenu();
+          }}
+        >
+          Copy receipt link
         </MenuItem>
       </Menu>
     </Box>

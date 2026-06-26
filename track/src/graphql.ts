@@ -1,5 +1,15 @@
 import { gql } from "@apollo/client";
 
+/** Public brand logo (admin-configured); the tracking page falls back to the
+ * bundled logo when none is set. */
+export const SETTINGS_LOGO = gql`
+  query SettingsLogo {
+    settings {
+      logoUrl
+    }
+  }
+`;
+
 export type OrderStatus =
   | "PLACED"
   | "CONFIRMED"
@@ -23,6 +33,7 @@ export interface TrackOrderResult {
     total: number;
     deliveryFee: number | null;
     paymentMethod: string | null;
+    receiptUrl: string;
     statusHistory: { status: OrderStatus; at: string }[];
     items: { name: string; qty: number }[];
     address: {
@@ -49,6 +60,7 @@ export const TRACK_ORDER = gql`
       total
       deliveryFee
       paymentMethod
+      receiptUrl
       statusHistory {
         status
         at

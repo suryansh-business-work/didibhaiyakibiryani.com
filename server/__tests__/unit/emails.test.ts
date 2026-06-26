@@ -61,7 +61,7 @@ describe("email templates compile to valid MJML and carry the data", () => {
     expect(await renders(mjml)).toContain("password");
   });
 
-  it("orderConfirmedEmail renders a full invoice (items, discount, total)", async () => {
+  it("orderConfirmedEmail renders a full receipt (items, discount, total)", async () => {
     const { subject, mjml } = orderConfirmedEmail(
       DEFAULT_BRAND,
       "Ananya",

@@ -4,7 +4,7 @@ import type { IOrder } from "../models/index.js";
 
 const inr = (n: number): string => `₹${Math.round(n).toLocaleString("en-IN")}`;
 
-function invoiceTable(order: IOrder): string {
+function receiptTable(order: IOrder): string {
   const rows = order.items
     .map(
       (it) => `
@@ -47,7 +47,7 @@ export function orderConfirmedEmail(
   const body = cardSection(`
     <mj-text color="#f5ece0" font-size="18px" font-weight="700">Order confirmed — ${order.orderNumber} 🍛</mj-text>
     <mj-text color="#cdbfb0">Thanks ${name}! Your biryani is headed for the dum. Here's your receipt:</mj-text>
-    ${invoiceTable(order)}
+    ${receiptTable(order)}
     <mj-text color="#8d8073" font-size="13px" padding-top="10px">
       <strong style="color:#cdbfb0">Payment:</strong> ${payLabel}<br/>
       <strong style="color:#cdbfb0">Deliver to:</strong> ${addr}

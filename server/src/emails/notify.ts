@@ -2,13 +2,11 @@ import { User, getOrCreateSettings } from "../models/index.js";
 import type { IOrder } from "../models/index.js";
 import { loadEmailBrand } from "./marketing.js";
 import { orderConfirmedEmail, orderDeliveredEmail } from "./order.js";
-import { generateInvoicePdf } from "../utils/invoice.js";
+import { generateReceiptPdf } from "../utils/receipt.js";
 import { sendMail } from "../utils/mailer.js";
 import { sendWhatsApp, whatsappConfigured } from "../utils/whatsapp.js";
-import { ratingUrlFor, trackingUrlFor } from "../utils/links.js";
+import { ratingUrlFor, trackingUrlFor, ORDER_PUBLIC_URL } from "../utils/links.js";
 import { logger } from "../utils/logger.js";
-
-const APP_URL = process.env.PUBLIC_ORDER_URL || "https://native.didibhaiyakibiryani.com";
 
 // Re-exported so existing callers/tests keep importing the link helpers here.
 export { ratingUrlFor, trackingUrlFor };
@@ -27,16 +25,16 @@ async function buildJob(order: IOrder, kind: "CONFIRMED" | "DELIVERED") {
     return { to: customer.email, ...content };
   }
 
-  // Delivered: attach the PDF invoice and link the rating survey.
-  const content = orderDeliveredEmail(brand, customer.name, order, APP_URL, ratingUrlFor(order));
-  const invoice = await generateInvoicePdf(order, settings);
+  // Delivered: attach the PDF receipt and link the rating survey.
+  const content = orderDeliveredEmail(brand, customer.name, order, ORDER_PUBLIC_URL, ratingUrlFor(order));
+  const receipt = await generateReceiptPdf(order, settings);
   return {
     to: customer.email,
     ...content,
     attachments: [
       {
         filename: `receipt-${order.orderNumber}.pdf`,
-        content: invoice,
+        content: receipt,
         contentType: "application/pdf",
       },
     ],

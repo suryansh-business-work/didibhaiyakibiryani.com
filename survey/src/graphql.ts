@@ -9,6 +9,7 @@ export const SURVEY_ORDER = gql`
       placedAt
       alreadyRated
       canRate
+      receiptUrl
       items {
         name
         qty
@@ -72,6 +73,7 @@ export interface SurveyOrder {
   placedAt?: string | null;
   alreadyRated: boolean;
   canRate: boolean;
+  receiptUrl: string;
   items: SurveyItem[];
   subtotal: number;
   discount: number;

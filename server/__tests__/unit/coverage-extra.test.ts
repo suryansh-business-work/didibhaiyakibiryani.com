@@ -3,7 +3,7 @@ import { evaluateCoupon } from "../../src/utils/pricing";
 import { verifyOtpHash } from "../../src/utils/otp";
 import { orderConfirmedEmail, orderDeliveredEmail } from "../../src/emails/order";
 import { marketingEmail } from "../../src/emails/marketing";
-import { generateInvoicePdf } from "../../src/utils/invoice";
+import { generateReceiptPdf } from "../../src/utils/receipt";
 import type { ICoupon, IOrder, ISettings } from "../../src/models/index.js";
 import type { EmailBrand } from "../../src/emails/layout";
 
@@ -94,7 +94,7 @@ describe("order email — discount with no coupon code", () => {
   });
 });
 
-describe("invoice — no line2 / no phone / no discount / online / free delivery", () => {
+describe("receipt — no line2 / no phone / no discount / online / free delivery", () => {
   it("generates a non-empty PDF", async () => {
     const settings = {
       brandName: "DDB", companyName: "D&B", companyAddress: "",
@@ -112,7 +112,7 @@ describe("invoice — no line2 / no phone / no discount / online / free delivery
       total: 100,
       address: { line1: "1 St", city: "BLR", pincode: "560001" },
     } as IOrder;
-    const pdf = await generateInvoicePdf(order, settings);
+    const pdf = await generateReceiptPdf(order, settings);
     expect(pdf.length).toBeGreaterThan(100);
   });
 
@@ -123,6 +123,6 @@ describe("invoice — no line2 / no phone / no discount / online / free delivery
       items: [{ name: "X", price: 100, qty: 1 }], subtotal: 100, discount: 25, deliveryFee: 39, total: 114,
       address: { line1: "1 St", line2: "Near park", city: "BLR", pincode: "560001", phone: "9" },
     } as IOrder;
-    expect((await generateInvoicePdf(order, settings)).length).toBeGreaterThan(100);
+    expect((await generateReceiptPdf(order, settings)).length).toBeGreaterThan(100);
   });
 });

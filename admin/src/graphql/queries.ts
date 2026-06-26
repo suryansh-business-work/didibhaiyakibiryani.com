@@ -104,6 +104,8 @@ const ORDER_FIELDS = `
   surveyUrl
   ratingToken
   trackingUrl
+  ratingUrl
+  receiptUrl
   customerName
   customerPhone
   customerOrderCount
@@ -425,9 +427,9 @@ export const COUPONS = gql`
   }
 `;
 
-export const INVOICE_PDF = gql`
-  query InvoicePdf($orderId: ID!) {
-    invoicePdf(orderId: $orderId)
+export const RECEIPT_PDF = gql`
+  query ReceiptPdf($orderId: ID!) {
+    receiptPdf(orderId: $orderId)
   }
 `;
 

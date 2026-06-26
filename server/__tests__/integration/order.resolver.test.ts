@@ -128,6 +128,8 @@ describe("order resolver — queries / lifecycle", () => {
     expect(orderResolvers.Order.user({ user: { name: "Pre" } })).toEqual({ name: "Pre" });
     expect(await orderResolvers.Order.deliveryPartner({ deliveryPartner: undefined })).toBeNull();
     expect(orderResolvers.Order.trackingUrl({ orderNumber: "DDB-ZZZ9" })).toContain("/DDB-ZZZ9");
+    expect(orderResolvers.Order.ratingUrl({ orderNumber: "DDB-ZZZ9" })).toContain("/DDB-ZZZ9");
+    expect(orderResolvers.Order.receiptUrl({ _id: "abc123", ratingToken: "tok" })).toContain("/receipt/abc123/tok");
   });
 });
 
@@ -393,13 +395,13 @@ describe("order resolver — createManualOrder (POS)", () => {
     ).rejects.toThrow(/not found/i);
   });
 
-  it("invoicePdf returns a base64 PDF (admin/staff only)", async () => {
+  it("receiptPdf returns a base64 PDF (admin/staff only)", async () => {
     const user = await makeUser();
     const order = await makeOrder(user.id, { surveyUrl: "https://forms.gle/xyz" });
-    const b64 = await Q.invoicePdf(null, { orderId: order.id }, admin);
+    const b64 = await Q.receiptPdf(null, { orderId: order.id }, admin);
     expect(Buffer.from(b64, "base64").subarray(0, 5).toString("utf8")).toBe("%PDF-");
-    await expect(Q.invoicePdf(null, { orderId: new Types.ObjectId().toString() }, admin)).rejects.toThrow(/not found/i);
-    await expect(Q.invoicePdf(null, { orderId: order.id }, ctxFor("cust", "CUSTOMER"))).rejects.toThrow();
+    await expect(Q.receiptPdf(null, { orderId: new Types.ObjectId().toString() }, admin)).rejects.toThrow(/not found/i);
+    await expect(Q.receiptPdf(null, { orderId: order.id }, ctxFor("cust", "CUSTOMER"))).rejects.toThrow();
   });
 
   it("Order.user resolver returns null for walk-in orders", async () => {
@@ -417,6 +419,7 @@ describe("order resolver — survey (public, by order number)", () => {
     expect(s.canRate).toBe(true);
     expect(s.alreadyRated).toBe(false);
     expect(s.items.length).toBeGreaterThan(0);
+    expect(s.receiptUrl).toContain(`/receipt/${order.id}/`);
   });
 
   it("uses the walk-in snapshot name and reflects a submitted rating", async () => {

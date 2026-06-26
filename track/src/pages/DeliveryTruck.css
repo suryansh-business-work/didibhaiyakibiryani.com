@@ -1,0 +1,424 @@
+/*
+ * Pure-CSS delivery-truck animation, adapted to the Didi Bhaiya maroon/gold
+ * theme. Based on donnervetter's "Delivery truck animation"
+ * (https://codepen.io/donnervetter/pen/VjzLgE), recolored, scaled into a
+ * banner and fully scoped under .ddb-truck so the generic class names
+ * (.car, .body, .wheel …) never leak into the rest of the app.
+ */
+
+.ddb-truck {
+  position: relative;
+  width: 100%;
+  height: 155px;
+  overflow: hidden;
+  border-radius: 14px;
+  font-size: 8.5px; /* the scene is em-based; this scales the whole truck */
+  background: linear-gradient(180deg, #4a1512 0%, #7a2a1c 100%);
+  border: 1px solid rgba(232, 200, 140, 0.16);
+}
+
+.ddb-truck .container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  display: table;
+  overflow: hidden;
+}
+
+.ddb-truck .car-wrapper {
+  display: table-cell;
+  vertical-align: middle;
+  width: 100%;
+}
+
+.ddb-truck .car-wrapper_inner {
+  position: relative;
+  z-index: 4;
+}
+
+/* ── Background: parallax light beams + gold ground ─────────────── */
+.ddb-truck .background-stuff {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  animation: ddb-wrapperIn 1.2s;
+}
+.ddb-truck .bg {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: #8f3a26;
+  animation: ddb-bgIn 4s 0s linear infinite;
+  transform: skewX(10deg);
+  z-index: 1;
+}
+.ddb-truck .bg-2 {
+  background: #a14a2f;
+  animation: ddb-bgIn 4s 1s linear infinite;
+}
+.ddb-truck .bg-3 {
+  background: #6e2418;
+  animation: ddb-bgIn 4s 2s linear infinite;
+}
+.ddb-truck .ground {
+  position: absolute;
+  bottom: 0;
+  margin-bottom: -1.875em;
+  height: 50%;
+  width: 100%;
+  background: #e4b65c;
+  z-index: 2;
+}
+
+/* ── The truck ─────────────────────────────────────────────────── */
+.ddb-truck .car_outter {
+  transform: translateX(-100%);
+  position: relative;
+  animation: ddb-carDrive 5s 1s cubic-bezier(0.88, 0.08, 0.16, 1.1) infinite;
+}
+.ddb-truck .car {
+  width: 20em;
+  height: 12.5em;
+  position: relative;
+  opacity: 1;
+  margin-left: auto;
+  margin-right: auto;
+  z-index: 4;
+  animation: ddb-carMove 0.3s infinite;
+}
+.ddb-truck .body {
+  position: absolute;
+  top: 0;
+  left: 0.875em;
+  width: 14.375em;
+  height: 10em;
+  background: #fdf6ea;
+}
+.ddb-truck .body:before {
+  content: "";
+  position: absolute;
+  left: -0.875em;
+  border-radius: 10px 10px 0 0;
+  width: 15.875em;
+  z-index: 2;
+  height: 0.75em;
+  background: #b9852f;
+}
+.ddb-truck .body div {
+  position: absolute;
+  background: #fdf6ea;
+  width: 18.125em;
+  height: 3.75em;
+  bottom: -0.625em;
+  border-radius: 0 0 10px 10px;
+}
+.ddb-truck .body div:before {
+  content: "";
+  background: #fdf6ea;
+  position: absolute;
+  top: -1.8125em;
+  right: 0;
+  width: 5em;
+  height: 2.5em;
+  z-index: 1;
+  border-radius: 0 14px 0 0;
+  transform: rotate(17deg);
+}
+.ddb-truck .body div:after {
+  content: "";
+  background: #fdf6ea;
+  position: absolute;
+  top: -5.125em;
+  right: 1.0625em;
+  width: 5.625em;
+  height: 2.5em;
+  z-index: 1;
+  border-radius: 10px 0 0 0;
+  transform: rotate(75deg);
+}
+.ddb-truck .wheel {
+  position: absolute;
+  width: 3.75em;
+  height: 3.75em;
+  background: #241712;
+  border-radius: 50%;
+  bottom: 0;
+  left: 3em;
+  z-index: 14;
+  animation: ddb-carMove 0.3s 0.2s;
+}
+.ddb-truck .wheel:before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: #fdf6ea;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.ddb-truck .wheel:nth-of-type(2) {
+  left: 13.125em;
+}
+.ddb-truck .decos {
+  width: 18.125em;
+  height: 10.5em;
+  position: absolute;
+  z-index: 12;
+  top: 0;
+  left: 0.875em;
+}
+.ddb-truck .line-bot {
+  position: absolute;
+  bottom: 0.5625em;
+  height: 3px;
+  width: 100%;
+  background: #e8d8bf;
+}
+.ddb-truck .door {
+  position: absolute;
+  left: 7.5em;
+  bottom: 0;
+  width: 3.75em;
+  height: 8.8125em;
+  border-radius: 10px 10px 0 0;
+  border: 3px solid #e8d8bf;
+  border-bottom: 0;
+  background: #fdf6ea;
+}
+.ddb-truck .door:after {
+  content: "";
+  position: absolute;
+  top: 0.375em;
+  left: 0.4375em;
+  width: 2.875em;
+  height: 2.5em;
+  border-radius: 4px;
+  background: #f0b94f;
+}
+.ddb-truck .door .handle {
+  position: absolute;
+  right: 0.625em;
+  top: 4.375em;
+  width: 0.625em;
+  height: 0.625em;
+  background: #e8d8bf;
+  border-radius: 50%;
+}
+.ddb-truck .door .handle:after {
+  content: "";
+  width: 1.25em;
+  height: 0.25em;
+  border-radius: 10px;
+  background: #e8d8bf;
+  position: absolute;
+  top: 50%;
+  left: -0.3125em;
+  margin-top: -0.125em;
+}
+.ddb-truck .door .bottom {
+  position: absolute;
+  bottom: 0.375em;
+  left: 0.6875em;
+  width: 2.375em;
+  height: 0.75em;
+}
+.ddb-truck .door .bottom:before,
+.ddb-truck .door .bottom:after {
+  content: "";
+  display: block;
+  width: 100%;
+  background: #e8d8bf;
+  height: 0.25em;
+  border-radius: 10px;
+  margin-bottom: 0.25em;
+}
+.ddb-truck .window {
+  position: absolute;
+  top: 1.125em;
+  left: 12.5em;
+  width: 2em;
+  background: #f0b94f;
+  height: 4.5em;
+  border-radius: 10px 10px 0 10px;
+}
+.ddb-truck .window:before {
+  content: "";
+  height: 1.25em;
+  background: #f0b94f;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 2.9375em;
+  border-radius: 0 10px 10px 10px;
+}
+.ddb-truck .window:after {
+  content: "";
+  height: 1.25em;
+  background: #f0b94f;
+  position: absolute;
+  top: 1.0625em;
+  left: -0.8125em;
+  width: 4.1875em;
+  transform-origin: bottom;
+  transform: rotate(74deg);
+  border-radius: 10px;
+}
+.ddb-truck .light {
+  position: absolute;
+  width: 0.625em;
+  height: 0.625em;
+  background: #ff8c40;
+  right: 3.75em;
+  bottom: 3.125em;
+  border-radius: 3px;
+}
+.ddb-truck .light-front {
+  position: absolute;
+  width: 0.5em;
+  height: 0.5em;
+  background: #ff8c40;
+  right: -0.1875em;
+  bottom: 3.5625em;
+  border-radius: 3px;
+}
+.ddb-truck .light-front:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background: #ff8c40;
+  top: 100%;
+  height: 0.9375em;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+.ddb-truck .antenna {
+  position: absolute;
+  width: 1.625em;
+  height: 0.625em;
+  background: #fdf6ea;
+  bottom: 100%;
+  left: 1.0625em;
+  border-radius: 4px 4px 0 0;
+}
+.ddb-truck .antenna:before {
+  content: "";
+  position: absolute;
+  width: 2.375em;
+  height: 0.25em;
+  background: #fdf6ea;
+  bottom: 0;
+  left: -1.375em;
+  transform: rotate(55deg);
+  transform-origin: right;
+  border-radius: 4px;
+}
+/* Brand logo decal on the side panel (replaces the original food emblem). */
+.ddb-truck .brand {
+  position: absolute;
+  left: 1.4em;
+  top: 2.1em;
+  width: 5.6em;
+  height: 5.6em;
+  z-index: 13;
+  box-sizing: border-box;
+  background: #fdf6ea;
+  border: 0.3em solid #b9852f;
+  border-radius: 0.6em;
+  overflow: hidden;
+  box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.18);
+}
+.ddb-truck .brand-logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Speed lines trailing the truck ────────────────────────────── */
+.ddb-truck .wind {
+  position: absolute;
+  z-index: -1;
+  right: 100%;
+  height: 100%;
+  margin-right: -1.25em;
+}
+.ddb-truck .wind .p {
+  position: absolute;
+  background: #f5ece0;
+  border-radius: 0.625em;
+  height: 0.625em;
+}
+.ddb-truck .wind .p1 {
+  width: 4.375em;
+  right: 0;
+  top: 1.5625em;
+  animation: ddb-wind 1s -1s linear infinite;
+}
+.ddb-truck .wind .p2 {
+  width: 6.25em;
+  right: 2.5em;
+  top: 3.75em;
+  animation: ddb-wind 1s -2s linear infinite;
+}
+.ddb-truck .wind .p3 {
+  width: 3.125em;
+  right: 0;
+  top: 6.5625em;
+  animation: ddb-wind 1s -1s linear infinite;
+}
+.ddb-truck .wind .p4 {
+  width: 3.75em;
+  right: 6.25em;
+  top: 8.4375em;
+  animation: ddb-wind 1s 1s linear infinite;
+}
+.ddb-truck .wind .p5 {
+  width: 4.375em;
+  right: 1.875em;
+  top: 9.0625em;
+  animation: ddb-wind 1s -1.5s linear infinite;
+}
+
+@keyframes ddb-carMove {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
+}
+@keyframes ddb-wind {
+  0% { transform: translateX(100%); opacity: 1; }
+  100% { transform: translateX(-400%); opacity: 0; }
+}
+@keyframes ddb-carDrive {
+  0% { transform: translateX(-100%); }
+  25% { transform: translateX(0%); }
+  70% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes ddb-bgIn {
+  0% { left: 100%; }
+  100% { left: -100%; }
+}
+@keyframes ddb-wrapperIn {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Honour users who prefer reduced motion: park the truck, keep the scene. */
+@media (prefers-reduced-motion: reduce) {
+  .ddb-truck .car_outter,
+  .ddb-truck .car,
+  .ddb-truck .wheel,
+  .ddb-truck .bg,
+  .ddb-truck .background-stuff,
+  .ddb-truck .wind .p {
+    animation: none;
+  }
+  .ddb-truck .car_outter {
+    transform: translateX(0);
+  }
+}

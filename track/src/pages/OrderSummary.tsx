@@ -1,4 +1,4 @@
-import { Box, Divider, Stack, Typography } from "@mui/material";
+import { Box, Button, Divider, Stack, Typography } from "@mui/material";
 
 interface Item {
   name: string;
@@ -8,13 +8,14 @@ interface Item {
 interface Props {
   items: ReadonlyArray<Item>;
   total: number;
+  receiptUrl: string;
 }
 
 function formatRupees(amount: number): string {
   return `₹${amount.toLocaleString("en-IN")}`;
 }
 
-export default function OrderSummary({ items, total }: Readonly<Props>) {
+export default function OrderSummary({ items, total, receiptUrl }: Readonly<Props>) {
   return (
     <Box>
       <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>
@@ -38,6 +39,17 @@ export default function OrderSummary({ items, total }: Readonly<Props>) {
           {formatRupees(total)}
         </Typography>
       </Stack>
+      <Button
+        component="a"
+        href={receiptUrl}
+        target="_blank"
+        rel="noreferrer"
+        variant="outlined"
+        fullWidth
+        sx={{ mt: 2 }}
+      >
+        ⬇ Download receipt (PDF)
+      </Button>
     </Box>
   );
 }

@@ -2,7 +2,7 @@ import { ScrollView } from "react-native";
 import { useQuery } from "@apollo/client";
 import { YStack, XStack, Text } from "tamagui";
 import { MY_DELIVERIES } from "../../src/graphql";
-import { Loading, Empty, RiderHeader } from "../../src/ui";
+import { Loading, Empty, RiderHeader, ReceiptButton } from "../../src/ui";
 import { brand, inr, fmtDate } from "../../src/theme";
 import type { DeliveredOrder } from "../../src/types";
 
@@ -50,9 +50,10 @@ export default function Earnings() {
                   <Text color={brand.muted} fontSize={12}>{d.address.city} · {d.address.pincode}</Text>
                   <Text color={brand.faint} fontSize={11}>{fmtDate(d.placedAt)}</Text>
                 </YStack>
-                <YStack alignItems="flex-end">
+                <YStack alignItems="flex-end" gap={6}>
                   <Text color={brand.gold} fontWeight="800">+{inr(d.deliveryFee)}</Text>
                   <Text color={brand.muted} fontSize={12}>order {inr(d.total)}</Text>
+                  <ReceiptButton receiptUrl={d.receiptUrl} />
                 </YStack>
               </XStack>
             ))

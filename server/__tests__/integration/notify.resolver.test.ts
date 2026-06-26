@@ -15,7 +15,7 @@ import { getOrCreateSettings } from "../../src/models/index.js";
 useTestDb();
 
 describe("notify emails", () => {
-  it("sends CONFIRMED and DELIVERED (with PDF invoice) order emails", async () => {
+  it("sends CONFIRMED and DELIVERED (with PDF receipt) order emails", async () => {
     await getOrCreateSettings();
     const user = await makeUser("CUSTOMER", { email: "buyer@b.com" });
     const order = await makeOrder(user.id, { status: "DELIVERED" });

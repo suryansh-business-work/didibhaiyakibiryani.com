@@ -11,7 +11,7 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import { logger } from "./utils/logger.js";
 import { connectDBWithRetry } from "./config/db.js";
 import { razorpayWebhook } from "./webhooks/razorpay.js";
-import { invoiceRouter } from "./routes/invoice.js";
+import { receiptRouter } from "./routes/receipt.js";
 import { healthRouter } from "./routes/health.js";
 import { typeDefs } from "./graphql/typeDefs.js";
 import { resolvers } from "./graphql/resolvers/index.js";
@@ -59,10 +59,10 @@ async function start() {
     razorpayWebhook
   );
 
-  // Public token-gated invoice PDF (download link). The customer survey + live
+  // Public token-gated receipt PDF (download link). The customer survey + live
   // tracking pages are now standalone React apps (survey./track. subdomains)
   // that read the public surveyOrder/trackOrder GraphQL queries by order number.
-  app.use(invoiceRouter);
+  app.use(receiptRouter);
 
   app.use(
     "/graphql",

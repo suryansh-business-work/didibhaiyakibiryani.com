@@ -12,8 +12,8 @@ import { sendMailAsync } from "../../utils/mailer.js";
 import { logger } from "../../utils/logger.js";
 import { paginate, type PageArgs } from "../../utils/pagination.js";
 import type { PartyOrderStatus } from "../../models/index.js";
+import { ORDER_PUBLIC_URL } from "../../utils/links.js";
 
-const MENU_URL = process.env.PUBLIC_ORDER_URL || "https://native.didibhaiyakibiryani.com";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface PartyOrderInput {
@@ -71,7 +71,7 @@ async function notifyPartyEmails(details: PartyOrderDetails): Promise<void> {
   if (adminTo) {
     sendMailAsync({ to: adminTo, ...partyOrderAdminEmail(brand, details) });
   }
-  sendMailAsync({ to: details.email, ...partyOrderCustomerEmail(brand, details, MENU_URL) });
+  sendMailAsync({ to: details.email, ...partyOrderCustomerEmail(brand, details, ORDER_PUBLIC_URL) });
 }
 
 export const partyResolvers = {

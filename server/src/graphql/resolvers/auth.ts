@@ -18,14 +18,14 @@ import {
   isExpired,
   OTP_MAX_ATTEMPTS,
 } from "../../utils/otp.js";
+import { ORDER_PUBLIC_URL } from "../../utils/links.js";
 import { logger } from "../../utils/logger.js";
 
-const ORDER_URL = process.env.PUBLIC_ORDER_URL || "https://native.didibhaiyakibiryani.com";
 const SIGNUP_OTP = "EMAIL_VERIFY" as const;
 
 function notifySignup(email: string, name: string): void {
   loadEmailBrand()
-    .then((brand) => sendMailAsync({ to: email, ...signupEmail(brand, name, ORDER_URL) }))
+    .then((brand) => sendMailAsync({ to: email, ...signupEmail(brand, name, ORDER_PUBLIC_URL) }))
     .catch(() => undefined);
 }
 

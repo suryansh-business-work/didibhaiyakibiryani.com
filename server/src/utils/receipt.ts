@@ -15,7 +15,7 @@ function pngLogoUrl(url: string): string {
   return `${url}${sep}tr=w-160,h-160,f-png`;
 }
 
-/** Fetch the brand logo bytes for the invoice header; null if none / unreachable. */
+/** Fetch the brand logo bytes for the receipt header; null if none / unreachable. */
 async function loadLogo(settings: ISettings): Promise<Buffer | null> {
   const url = settings.logoUrl?.trim();
   if (!url) return null;
@@ -160,8 +160,8 @@ function totals(doc: PDFKit.PDFDocument, order: IOrder): void {
   );
 }
 
-/** Render the order invoice as a single-page A4 PDF buffer. */
-export async function generateInvoicePdf(order: IOrder, settings: ISettings): Promise<Buffer> {
+/** Render the order receipt as a single-page A4 PDF buffer. */
+export async function generateReceiptPdf(order: IOrder, settings: ISettings): Promise<Buffer> {
   const surveyUrl = effectiveSurveyUrl(order, settings);
   const qr = surveyUrl
     ? await QRCode.toBuffer(surveyUrl, { width: 140, margin: 1, color: { dark: DARK, light: "#ffffff" } })

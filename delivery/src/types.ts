@@ -8,6 +8,7 @@ export interface QueueOrder {
   paymentStatus: string;
   placedAt: string;
   notes?: string;
+  receiptUrl: string;
   user?: { name: string; phone?: string } | null;
   address: {
     line1: string;
@@ -28,6 +29,7 @@ export interface DeliveredOrder {
   deliveryFee: number;
   paymentMethod: string;
   placedAt: string;
+  receiptUrl: string;
   address: { city: string; pincode: string };
 }
 

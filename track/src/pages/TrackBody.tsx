@@ -3,6 +3,7 @@ import type { TrackOrderResult } from "../graphql";
 import TrackTimeline from "./TrackTimeline";
 import TrackMap from "./TrackMap";
 import OrderSummary from "./OrderSummary";
+import DeliveryTruck from "./DeliveryTruck";
 
 type Order = NonNullable<TrackOrderResult["trackOrder"]>;
 
@@ -48,10 +49,11 @@ export default function TrackBody({ order }: Readonly<Props>) {
   }
   return (
     <Stack spacing={2.5}>
+      <DeliveryTruck />
       <TrackTimeline status={order.status} history={order.statusHistory} />
       <DeliveryView order={order} />
       <Divider />
-      <OrderSummary items={order.items} total={order.total} />
+      <OrderSummary items={order.items} total={order.total} receiptUrl={order.receiptUrl} />
     </Stack>
   );
 }

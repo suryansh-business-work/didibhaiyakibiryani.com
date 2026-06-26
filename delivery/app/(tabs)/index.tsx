@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { DELIVERY_QUEUE, UPDATE_ORDER_STATUS } from "../../src/graphql";
-import { Loading, Empty, StatusBadge, RiderHeader } from "../../src/ui";
+import { Loading, Empty, StatusBadge, RiderHeader, ReceiptButton } from "../../src/ui";
 import { brand, inr, fmtDate } from "../../src/theme";
 import type { QueueOrder } from "../../src/types";
 
@@ -67,6 +67,7 @@ function OrderCard({ order, saving, onMove }: Readonly<CardProps>) {
             Call
           </Button>
         ) : null}
+        <ReceiptButton receiptUrl={order.receiptUrl} />
         {action ? (
           <Button size="$2" backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" disabled={saving} onPress={() => onMove(order, action.to)}>
             {saving ? <Spinner color="#2a1a06" /> : action.label}

@@ -42,7 +42,14 @@ export default function SurveyPage() {
   return (
     <SurveyShell subtitle={subtitle}>
       <Stack spacing={2}>
-        <OrderSummary items={order.items} total={order.total} />
+        <OrderSummary
+          items={order.items}
+          subtotal={order.subtotal}
+          discount={order.discount}
+          deliveryFee={order.deliveryFee}
+          total={order.total}
+          receiptUrl={order.receiptUrl}
+        />
         <SurveyBody order={order} done={done} onDone={() => setDone(true)} />
       </Stack>
     </SurveyShell>

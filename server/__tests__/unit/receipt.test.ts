@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { generateInvoicePdf } from "../../src/utils/invoice";
+import { generateReceiptPdf } from "../../src/utils/receipt";
 import type { IOrder, ISettings } from "../../src/models";
 
 // 1×1 transparent PNG — a valid image pdfkit can embed.
@@ -53,9 +53,9 @@ const order = {
   },
 } as IOrder;
 
-describe("generateInvoicePdf", () => {
+describe("generateReceiptPdf", () => {
   it("produces a non-trivial PDF document", async () => {
-    const pdf = await generateInvoicePdf(order, settings);
+    const pdf = await generateReceiptPdf(order, settings);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
     expect(pdf.length).toBeGreaterThan(1500);
   });
@@ -63,7 +63,7 @@ describe("generateInvoicePdf", () => {
   it("works without optional compliance fields", async () => {
     const minimal = { ...settings, gstNumber: "", gstLegalName: "", fssaiLicense: "", website: "", feedbackEmail: "", supportEmail: "", supportPhone: "" } as ISettings;
     const noDiscount = { ...order, discount: 0, couponCode: undefined, deliveryFee: 0 } as IOrder;
-    const pdf = await generateInvoicePdf(noDiscount, minimal);
+    const pdf = await generateReceiptPdf(noDiscount, minimal);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
   });
 
@@ -76,7 +76,7 @@ describe("generateInvoicePdf", () => {
       customerPhone: "9812345670",
       surveyUrl: "https://forms.gle/abc",
     } as unknown as IOrder;
-    const pdf = await generateInvoicePdf(takeaway, settings);
+    const pdf = await generateReceiptPdf(takeaway, settings);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
   });
 
@@ -89,19 +89,19 @@ describe("generateInvoicePdf", () => {
       customerName: undefined,
       customerPhone: undefined,
     } as unknown as IOrder;
-    const pdf = await generateInvoicePdf(walkin, s2);
+    const pdf = await generateReceiptPdf(walkin, s2);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
   });
 
   it("renders a POS delivery order showing the customer name", async () => {
     const posDelivery = { ...order, customerName: "Asha", surveyUrl: "https://forms.gle/x" } as IOrder;
-    const pdf = await generateInvoicePdf(posDelivery, settings);
+    const pdf = await generateReceiptPdf(posDelivery, settings);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
   });
 
   it("embeds an ImageKit logo (requests a PNG transform)", async () => {
     mockFetchOk(PNG_1x1);
-    const pdf = await generateInvoicePdf(order, { ...settings, logoUrl: "https://ik.imagekit.io/x/logo.png" } as ISettings);
+    const pdf = await generateReceiptPdf(order, { ...settings, logoUrl: "https://ik.imagekit.io/x/logo.png" } as ISettings);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("tr=w-160,h-160,f-png"));
   });
@@ -110,21 +110,21 @@ describe("generateInvoicePdf", () => {
     vi.stubGlobal("fetch", vi.fn(async () => {
       throw new Error("network down");
     }));
-    const pdf = await generateInvoicePdf(order, { ...settings, logoUrl: "https://ik.imagekit.io/x/logo.png?v=2" } as ISettings);
+    const pdf = await generateReceiptPdf(order, { ...settings, logoUrl: "https://ik.imagekit.io/x/logo.png?v=2" } as ISettings);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("&tr="));
   });
 
   it("uses a non-ImageKit url as-is and drops the logo on a non-ok response", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, arrayBuffer: async () => new ArrayBuffer(0) })));
-    const pdf = await generateInvoicePdf(order, { ...settings, logoUrl: "https://cdn.example.com/logo.png" } as ISettings);
+    const pdf = await generateReceiptPdf(order, { ...settings, logoUrl: "https://cdn.example.com/logo.png" } as ISettings);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
     expect(fetch).toHaveBeenCalledWith("https://cdn.example.com/logo.png");
   });
 
   it("skips an unembeddable logo image without failing", async () => {
     mockFetchOk(Buffer.from("this is not an image"));
-    const pdf = await generateInvoicePdf(order, { ...settings, logoUrl: "https://cdn.example.com/logo.bin" } as ISettings);
+    const pdf = await generateReceiptPdf(order, { ...settings, logoUrl: "https://cdn.example.com/logo.bin" } as ISettings);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
   });
 
@@ -134,7 +134,7 @@ describe("generateInvoicePdf", () => {
       customerName: undefined,
       address: { line1: "Plot 9", city: "Bengaluru" },
     } as unknown as IOrder;
-    const pdf = await generateInvoicePdf(bare, settings);
+    const pdf = await generateReceiptPdf(bare, settings);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
   });
 
@@ -146,7 +146,7 @@ describe("generateInvoicePdf", () => {
         { name: "Welcome Lassi", price: 60, qty: 1, complimentary: true },
       ],
     } as unknown as IOrder;
-    const pdf = await generateInvoicePdf(withComp, settings);
+    const pdf = await generateReceiptPdf(withComp, settings);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
   });
 });

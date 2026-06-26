@@ -298,6 +298,8 @@ export const typeDefs = /* GraphQL */ `
     surveyUrl: String
     ratingToken: String!
     trackingUrl: String! # public, no-login live tracking link
+    ratingUrl: String! # public, no-login feedback-survey link (keyed by order number)
+    receiptUrl: String! # public, no-login PDF receipt link (gated by ratingToken)
     notes: String
     placedAt: DateTime!
   }
@@ -315,6 +317,7 @@ export const typeDefs = /* GraphQL */ `
     placedAt: DateTime!
     alreadyRated: Boolean!
     canRate: Boolean!
+    receiptUrl: String! # public, no-login PDF receipt link (gated by ratingToken)
     rating: OrderRating
   }
 
@@ -344,6 +347,7 @@ export const typeDefs = /* GraphQL */ `
     destination: LatLng
     rider: RiderFix
     etaMinutes: Int
+    receiptUrl: String! # public, no-login PDF receipt link (gated by ratingToken)
     placedAt: DateTime!
   }
 
@@ -908,7 +912,7 @@ export const typeDefs = /* GraphQL */ `
     myOrders: [Order!]!
     order(id: ID!): Order
     orders(status: OrderStatus): [Order!]! # admin/staff
-    invoicePdf(orderId: ID!): String! # admin/staff — base64-encoded themed PDF
+    receiptPdf(orderId: ID!): String! # admin/staff — base64-encoded themed PDF
     surveyOrder(orderNumber: String!): SurveyOrder # public — no login, keyed by order number
     trackOrder(orderNumber: String!): TrackOrder # public — no login, live order tracking
 

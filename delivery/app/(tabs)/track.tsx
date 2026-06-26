@@ -1,13 +1,42 @@
 import { useCallback, useRef } from "react";
+import { ScrollView } from "react-native";
 import { useMutation, useQuery } from "@apollo/client";
-import { YStack } from "tamagui";
+import { YStack, XStack, Text } from "tamagui";
 import { DELIVERY_QUEUE, UPDATE_RIDER_LOCATION } from "../../src/graphql";
-import { Loading, Empty, RiderHeader } from "../../src/ui";
+import { Loading, Empty, RiderHeader, ReceiptButton } from "../../src/ui";
 import { brand } from "../../src/theme";
 import TrackMap from "../../src/TrackMap";
 import type { QueueOrder } from "../../src/types";
 
 const LOCATION_PUSH_MS = 30000;
+
+/** Horizontal strip of the active orders, each with a receipt download. */
+function ReceiptStrip({ orders }: Readonly<{ orders: ReadonlyArray<QueueOrder> }>) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8, gap: 8 }}
+    >
+      {orders.map((o) => (
+        <XStack
+          key={o.id}
+          alignItems="center"
+          gap={8}
+          backgroundColor={brand.card}
+          borderColor={brand.border}
+          borderWidth={1}
+          borderRadius={12}
+          paddingHorizontal={12}
+          paddingVertical={8}
+        >
+          <Text color={brand.text} fontWeight="700" fontSize={13}>{o.orderNumber}</Text>
+          <ReceiptButton receiptUrl={o.receiptUrl} />
+        </XStack>
+      ))}
+    </ScrollView>
+  );
+}
 
 export default function Track() {
   const { data, loading } = useQuery<{ deliveryQueue: QueueOrder[] }>(DELIVERY_QUEUE, {
@@ -42,6 +71,7 @@ export default function Track() {
   return (
     <YStack flex={1} backgroundColor={brand.bg}>
       <RiderHeader title="Track" />
+      {orders.length > 0 ? <ReceiptStrip orders={orders} /> : null}
       {body}
     </YStack>
   );

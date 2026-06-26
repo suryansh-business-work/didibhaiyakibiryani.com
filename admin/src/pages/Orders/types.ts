@@ -41,6 +41,8 @@ export interface Order {
   surveyUrl?: string;
   ratingToken?: string;
   trackingUrl?: string;
+  ratingUrl?: string;
+  receiptUrl?: string;
   customerName?: string;
   customerPhone?: string;
   customerOrderCount?: number;

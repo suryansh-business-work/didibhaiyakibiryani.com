@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { Chip, Rating, Stack, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
-import { INVOICE_PDF } from "../../graphql/queries";
+import { RECEIPT_PDF } from "../../graphql/queries";
 import { Modal, StatusBadge, inr, fmtDate } from "../../components/ui";
 import { LABEL, NEXT, type Order, type Rider } from "./types";
 
@@ -37,14 +37,14 @@ export default function OrderDetail({
 }: Readonly<OrderDetailProps>) {
   const active = order;
   const canAssign = !["DELIVERED", "CANCELLED"].includes(active.status);
-  const [fetchInvoice, { loading: invoiceLoading, error: invoiceError }] = useLazyQuery<{ invoicePdf: string }>(
-    INVOICE_PDF,
+  const [fetchReceipt, { loading: receiptLoading, error: receiptError }] = useLazyQuery<{ receiptPdf: string }>(
+    RECEIPT_PDF,
     { fetchPolicy: "network-only" }
   );
 
-  async function onDownloadInvoice() {
-    const { data } = await fetchInvoice({ variables: { orderId: active.id } });
-    if (data?.invoicePdf) downloadBase64Pdf(data.invoicePdf, `receipt-${active.orderNumber}.pdf`);
+  async function onDownloadReceipt() {
+    const { data } = await fetchReceipt({ variables: { orderId: active.id } });
+    if (data?.receiptPdf) downloadBase64Pdf(data.receiptPdf, `receipt-${active.orderNumber}.pdf`);
   }
 
   const customerName = active.user?.name ?? active.customerName ?? "Walk-in customer";
@@ -110,10 +110,10 @@ export default function OrderDetail({
       </div>
 
       <div style={{ marginBottom: 14 }}>
-        <button className="btn btn-ghost btn-sm" onClick={onDownloadInvoice} disabled={invoiceLoading}>
-          {invoiceLoading ? "Preparing…" : "⬇ Download receipt (PDF)"}
+        <button className="btn btn-ghost btn-sm" onClick={onDownloadReceipt} disabled={receiptLoading}>
+          {receiptLoading ? "Preparing…" : "⬇ Download receipt (PDF)"}
         </button>
-        {invoiceError ? <div className="field-error">Could not generate the receipt. Try again.</div> : null}
+        {receiptError ? <div className="field-error">Could not generate the receipt. Try again.</div> : null}
       </div>
 
       {active.rating && (

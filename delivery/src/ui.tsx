@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Linking } from "react-native";
 import { useQuery } from "@apollo/client";
 import { YStack, XStack, Text, Button, Image, Spinner as TamaguiSpinner } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -61,6 +62,24 @@ export function Empty({ children }: Readonly<{ children: ReactNode }>) {
       <MaterialDesignIcons name="moped-outline" size={44} color={brand.muted} />
       <Text color={brand.muted} textAlign="center">{children}</Text>
     </YStack>
+  );
+}
+
+/** Opens the order's public PDF receipt in the device browser. Reused on the
+ * queue, earnings and track screens. */
+export function ReceiptButton({ receiptUrl }: Readonly<{ receiptUrl: string }>) {
+  return (
+    <Button
+      size="$2"
+      backgroundColor={brand.cardSoft}
+      borderColor={brand.border}
+      borderWidth={1}
+      color={brand.dim}
+      icon={<MaterialDesignIcons name="file-download-outline" size={16} color={brand.dim} />}
+      onPress={() => Linking.openURL(receiptUrl).catch(() => undefined)}
+    >
+      Receipt
+    </Button>
   );
 }
 
