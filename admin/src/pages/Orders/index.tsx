@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery } from "@apollo/client";
 import { ORDERS_PAGE, RIDERS } from "../../graphql/queries";
 import { ASSIGN_RIDER, UPDATE_ORDER_STATUS, DELETE_ORDER, DELETE_ORDERS } from "../../graphql/mutations";
-import { Button } from "@mui/material";
+import { Alert, Button } from "@mui/material";
 import Layout from "../../components/Layout";
 import { AsyncList } from "../../components/ui";
 import { IPlus } from "../../components/icons";
@@ -13,12 +14,20 @@ import OrderMap from "./OrderMap";
 import OrdersTable, { type SortKey } from "./OrdersTable";
 import ManualOrderModal from "./ManualOrderModal";
 import LockedOrderEdit from "./LockedOrderEdit";
-import SurveyMessageDialog from "./SurveyMessageDialog";
+import GenerateMessageDialog from "./GenerateMessageDialog";
 import OrderTimelineDialog from "./OrderTimelineDialog";
+import type { MessageKind } from "../../constants/messageTemplates";
 import { FILTERS, type Order, type Rider } from "./types";
 
 export default function Orders() {
   const [filter, setFilter] = useState("ALL");
+  // Optional customer/contact scope, deep-linked from the People lists:
+  // ?userId= for signed-up customers, ?phone= for manual contacts (+ ?name= label).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const customerId = searchParams.get("userId");
+  const customerPhone = searchParams.get("phone");
+  const customerName = searchParams.get("name");
+  const scopedToCustomer = Boolean(customerId || customerPhone);
   // Server-side search / sort / pagination (page resets internally on input change).
   const { variables, tableProps, setPage } = useServerTable({ initialSortKey: "placedAt", initialSortDir: "desc" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -28,7 +37,7 @@ export default function Orders() {
   const [posOpen, setPosOpen] = useState(false);
   const [editPos, setEditPos] = useState<Order | null>(null);
   const [statusOrder, setStatusOrder] = useState<Order | null>(null);
-  const [messageOrder, setMessageOrder] = useState<Order | null>(null);
+  const [messageTarget, setMessageTarget] = useState<{ order: Order; kind: MessageKind } | null>(null);
   const [timelineOrder, setTimelineOrder] = useState<Order | null>(null);
 
   // Delivered orders are locked from full editing — route them (and the
@@ -39,7 +48,7 @@ export default function Orders() {
   }
 
   const { data, loading, refetch } = useQuery<{ ordersPage: { items: Order[]; total: number } }>(ORDERS_PAGE, {
-    variables: { ...variables, status: filter === "ALL" ? null : filter },
+    variables: { ...variables, status: filter === "ALL" ? null : filter, userId: customerId, phone: customerPhone },
   });
   const { data: riderData } = useQuery<{ riders: Rider[] }>(RIDERS);
   const [updateStatus, { loading: savingStatus }] = useMutation(UPDATE_ORDER_STATUS);
@@ -59,6 +68,10 @@ export default function Orders() {
   function onFilter(f: string) {
     setFilter(f);
     setSelected(new Set());
+    setPage(1);
+  }
+  function clearCustomerFilter() {
+    setSearchParams({});
     setPage(1);
   }
   function toggleRow(id: string) {
@@ -154,6 +167,15 @@ export default function Orders() {
 
   return (
     <Layout title="Orders">
+      {scopedToCustomer && (
+        <Alert
+          severity="info"
+          sx={{ mb: 2 }}
+          action={<Button color="inherit" size="small" onClick={clearCustomerFilter}>Show all orders</Button>}
+        >
+          Showing orders for {customerName || customerPhone || "the selected customer"}
+        </Alert>
+      )}
       <div className="toolbar">
         <div className="chips">
           {FILTERS.map((f) => (
@@ -197,7 +219,7 @@ export default function Orders() {
             onOpen={setActive}
             onEditPos={openEdit}
             onChangeStatus={setStatusOrder}
-            onGenerateMessage={setMessageOrder}
+            onGenerateMessage={(o, kind) => setMessageTarget({ order: o, kind })}
             onViewTimeline={setTimelineOrder}
             onDelete={removeOne}
             onShowMap={setMapOrder}
@@ -235,7 +257,13 @@ export default function Orders() {
           }}
         />
       )}
-      {messageOrder && <SurveyMessageDialog order={messageOrder} onClose={() => setMessageOrder(null)} />}
+      {messageTarget && (
+        <GenerateMessageDialog
+          order={messageTarget.order}
+          kind={messageTarget.kind}
+          onClose={() => setMessageTarget(null)}
+        />
+      )}
       {timelineOrder && <OrderTimelineDialog order={timelineOrder} onClose={() => setTimelineOrder(null)} />}
       {(posOpen || editPos) && (
         <ManualOrderModal

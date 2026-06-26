@@ -55,6 +55,27 @@ describe("paginated *Page queries", () => {
     await expect(orderResolvers.Query.ordersPage(null, {}, customer)).rejects.toThrow();
   });
 
+  it("ordersPage: scopes to one customer (userId) or contact (phone)", async () => {
+    const cust = await makeUser("CUSTOMER");
+    const other = await makeUser("CUSTOMER");
+    await makeOrder(cust.id);
+    await makeOrder(cust.id);
+    await makeOrder(other.id);
+    // A non-signup contact's POS order, matched by snapshotted phone (no user).
+    await makeOrder(cust.id, { user: undefined, customerPhone: "98200", customerName: "Walk In" });
+
+    const byUser = await orderResolvers.Query.ordersPage(null, { userId: cust.id }, admin);
+    expect(byUser.total).toBe(2);
+
+    const byPhone = await orderResolvers.Query.ordersPage(null, { phone: "98200" }, admin);
+    expect(byPhone.total).toBe(1);
+    expect(byPhone.items[0].customerPhone).toBe("98200");
+
+    // userId wins when both are supplied.
+    const both = await orderResolvers.Query.ordersPage(null, { userId: cust.id, phone: "98200" }, admin);
+    expect(both.total).toBe(2);
+  });
+
   it("paymentsPage: filters by status, searches and guards", async () => {
     const order = await makeOrder((await makeUser()).id);
     await Payment.create({

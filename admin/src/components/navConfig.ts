@@ -67,8 +67,8 @@ export const NAV_GROUPS: ReadonlyArray<NavGroup> = [
   {
     label: "People",
     items: [
-      { to: "/customers", label: "Customers", icon: IUsers },
-      { to: "/contacts", label: "Contacts", icon: IContact },
+      { to: "/customers", label: "Signup Customer", icon: IUsers },
+      { to: "/contacts", label: "Manual Customer Contacts", icon: IContact },
       { to: "/riders", label: "Riders", icon: IBike },
       { to: "/societies", label: "Societies", icon: IBuilding },
     ],
@@ -77,8 +77,15 @@ export const NAV_GROUPS: ReadonlyArray<NavGroup> = [
     label: "Engagement",
     items: [
       { to: "/campaigns", label: "Campaigns", icon: ISend },
-      { to: "/survey-message", label: "Survey Message", icon: IMessage },
       { to: "/support", label: "Support", icon: IHeadset },
+    ],
+  },
+  {
+    label: "Generate Messages Configuration",
+    items: [
+      { to: "/messages/tracking", label: "Tracking Message", icon: IBike },
+      { to: "/messages/survey", label: "Survey Message", icon: IMessage },
+      { to: "/messages/receipt", label: "Receipt Message", icon: IReceipt },
     ],
   },
   {

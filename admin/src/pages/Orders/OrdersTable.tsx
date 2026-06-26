@@ -20,18 +20,10 @@ import PlaceIcon from "@mui/icons-material/Place";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import { StatusBadge, inr, fmtDate } from "../../components/ui";
+import type { MessageKind } from "../../constants/messageTemplates";
 import type { Order } from "./types";
 
 export type SortKey = "orderNumber" | "customer" | "status" | "placedAt" | "total";
-
-/** Normalise a stored phone to a wa.me recipient (India): strip non-digits + a
- * leading trunk 0, and add the 91 country code for a bare 10-digit number. */
-function waNumber(raw: string): string {
-  let d = raw.replace(/\D/g, "");
-  if (d.startsWith("0")) d = d.slice(1);
-  if (d.length === 10) d = `91${d}`;
-  return d;
-}
 
 interface OrdersTableProps {
   orders: Order[];
@@ -45,7 +37,7 @@ interface OrdersTableProps {
   onOpen: (order: Order) => void;
   onEditPos: (order: Order) => void;
   onChangeStatus: (order: Order) => void;
-  onGenerateMessage: (order: Order) => void;
+  onGenerateMessage: (order: Order, kind: MessageKind) => void;
   onViewTimeline: (order: Order) => void;
   onDelete: (order: Order) => void;
   onShowMap: (order: Order) => void;
@@ -124,27 +116,10 @@ export default function OrdersTable({
   function toggleCol(key: string) {
     setCols((prev) => ({ ...prev, [key]: !prev[key] }));
   }
-  function copySurvey(o: Order) {
-    if (!o.ratingUrl) return;
-    navigator.clipboard.writeText(o.ratingUrl).catch(() => undefined);
+  function runMenu(action: (o: Order) => void) {
+    if (menuOrder) action(menuOrder);
+    closeMenu();
   }
-  function copyTracking(o: Order) {
-    if (!o.trackingUrl) return;
-    navigator.clipboard.writeText(o.trackingUrl).catch(() => undefined);
-  }
-  function copyReceipt(o: Order) {
-    if (!o.receiptUrl) return;
-    navigator.clipboard.writeText(o.receiptUrl).catch(() => undefined);
-  }
-  function shareTrackingWhatsApp(o: Order) {
-    if (!o.trackingUrl) return;
-    const text = `Track your order ${o.orderNumber}: ${o.trackingUrl}`;
-    const withCc = waNumber(o.customerPhone ?? o.user?.phone ?? "");
-    const base = withCc ? `https://wa.me/${withCc}` : "https://wa.me/";
-    window.open(`${base}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
-  }
-
-  const menuDelivered = menuOrder?.status === "DELIVERED";
 
   return (
     <Box>
@@ -251,64 +226,11 @@ export default function OrdersTable({
       </Menu>
 
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-        <MenuItem
-          onClick={() => {
-            if (menuOrder) onViewTimeline(menuOrder);
-            closeMenu();
-          }}
-        >
-          View status timeline
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (menuOrder) onChangeStatus(menuOrder);
-            closeMenu();
-          }}
-        >
-          Change delivery status
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (menuOrder) copyTracking(menuOrder);
-            closeMenu();
-          }}
-        >
-          Copy tracking link
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (menuOrder) shareTrackingWhatsApp(menuOrder);
-            closeMenu();
-          }}
-        >
-          Share tracking on WhatsApp
-        </MenuItem>
-        <MenuItem
-          disabled={!menuDelivered}
-          onClick={() => {
-            if (menuOrder) onGenerateMessage(menuOrder);
-            closeMenu();
-          }}
-        >
-          Generate survey message
-        </MenuItem>
-        <MenuItem
-          disabled={!menuDelivered}
-          onClick={() => {
-            if (menuOrder) copySurvey(menuOrder);
-            closeMenu();
-          }}
-        >
-          Copy survey link
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (menuOrder) copyReceipt(menuOrder);
-            closeMenu();
-          }}
-        >
-          Copy receipt link
-        </MenuItem>
+        <MenuItem onClick={() => runMenu(onViewTimeline)}>View status timeline</MenuItem>
+        <MenuItem onClick={() => runMenu(onChangeStatus)}>Change delivery status</MenuItem>
+        <MenuItem onClick={() => runMenu((o) => onGenerateMessage(o, "tracking"))}>Generate tracking message</MenuItem>
+        <MenuItem onClick={() => runMenu((o) => onGenerateMessage(o, "survey"))}>Generate survey message</MenuItem>
+        <MenuItem onClick={() => runMenu((o) => onGenerateMessage(o, "receipt"))}>Generate receipt message</MenuItem>
       </Menu>
     </Box>
   );

@@ -4,7 +4,7 @@ import { useTestDb, ctxFor } from "../helpers/db";
 import { makeUser, makeOrder } from "../helpers/fixtures";
 import { deliveryResolvers } from "../../src/graphql/resolvers/delivery";
 import { dashboardResolvers } from "../../src/graphql/resolvers/dashboard";
-import { Review, MenuItem, User } from "../../src/models/index.js";
+import { Review, MenuItem, User, Lead } from "../../src/models/index.js";
 
 useTestDb();
 const adminCtx = ctxFor("admin1", "ADMIN");
@@ -74,6 +74,8 @@ describe("dashboard resolver", () => {
     });
     await makeOrder(cust.id, { status: "PLACED" });
     await Review.create({ authorName: "Asha", text: "Great", rating: 5, isPublished: true });
+    // A manual contact is counted separately from signed-up customers.
+    await Lead.create({ name: "Walk-in Ravi", phone: "98200" });
 
     expect((await dashboardResolvers.Query.reviews(null, {})).length).toBe(1);
     expect((await dashboardResolvers.Query.customers(null, {}, adminCtx)).length).toBe(1);
@@ -82,6 +84,7 @@ describe("dashboard resolver", () => {
     const stats = await dashboardResolvers.Query.dashboardStats(null, {}, adminCtx);
     expect(stats.totalOrders).toBe(2);
     expect(stats.totalCustomers).toBe(1);
+    expect(stats.totalLeads).toBe(1);
     expect(stats.avgFoodRating).toBe(5);
     expect(stats.avgDeliveryRating).toBe(4);
     expect(stats.ratingCount).toBe(1);

@@ -21,6 +21,7 @@ export const DASHBOARD = gql`
       todayRevenue
       pendingOrders
       totalCustomers
+      totalLeads
       repeatCustomers
       avgOrderValue
       avgFoodRating
@@ -162,8 +163,8 @@ export const ORDERS = gql`
 `;
 
 export const ORDERS_PAGE = gql`
-  query OrdersPage($status: OrderStatus, $search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
-    ordersPage(status: $status, search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
+  query OrdersPage($status: OrderStatus, $userId: ID, $phone: String, $search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
+    ordersPage(status: $status, userId: $userId, phone: $phone, search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
       total
       items {
         ${ORDER_FIELDS}
@@ -309,6 +310,8 @@ export const LEADS_PAGE = gql`
         lat
         lng
         createdAt
+        orderCount
+        totalSpent
       }
     }
   }
@@ -543,6 +546,8 @@ export const SETTINGS_CORE_FIELDS = `
   gstNumber
   surveyUrl
   surveyMessageTemplate
+  trackingMessageTemplate
+  receiptMessageTemplate
   codEnabled
   onlineEnabled
   supportSubjects

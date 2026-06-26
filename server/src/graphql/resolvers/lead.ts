@@ -1,7 +1,10 @@
 import { GraphQLError } from "graphql";
-import { Lead } from "../../models/index.js";
+import { Lead, Order } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
 import { paginate, type PageArgs } from "../../utils/pagination.js";
+
+// Statuses that represent realised revenue (mirrors the dashboard resolver).
+const REVENUE_STATUSES = ["CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"];
 
 function leadNotFound(): GraphQLError {
   return new GraphQLError("Contact not found.", { extensions: { code: "BAD_USER_INPUT" } });
@@ -111,6 +114,20 @@ export const leadResolvers = {
       const res = await Lead.deleteMany({ _id: { $in: ids } }).exec();
       /* v8 ignore next -- deletedCount is always present on the driver result */
       return res.deletedCount ?? 0;
+    },
+  },
+
+  // A contact's orders are POS orders snapshotted against their phone number
+  // (non-signup contacts never carry a `user` id).
+  Lead: {
+    orderCount: (parent: { phone: string }) =>
+      Order.countDocuments({ customerPhone: parent.phone }).exec(),
+    totalSpent: async (parent: { phone: string }) => {
+      const agg = await Order.aggregate([
+        { $match: { customerPhone: parent.phone, status: { $in: REVENUE_STATUSES } } },
+        { $group: { _id: null, total: { $sum: "$total" } } },
+      ]);
+      return agg[0]?.total ?? 0;
     },
   },
 };

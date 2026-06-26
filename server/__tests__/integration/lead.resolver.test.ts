@@ -1,12 +1,29 @@
 import { describe, it, expect } from "vitest";
 import { Types } from "mongoose";
 import { useTestDb, ctxFor } from "../helpers/db";
+import { Order } from "../../src/models/index.js";
 import { leadResolvers } from "../../src/graphql/resolvers/lead";
 
 useTestDb();
 const adminCtx = ctxFor("admin1", "ADMIN");
 const Q = leadResolvers.Query;
 const M = leadResolvers.Mutation;
+const L = leadResolvers.Lead;
+
+let orderSeq = 0;
+async function posOrder(phone: string, status: string, total: number) {
+  orderSeq += 1;
+  return Order.create({
+    orderNumber: `POS-${2000 + orderSeq}`,
+    customerPhone: phone,
+    customerName: "Walk In",
+    source: "POS",
+    items: [{ name: "Biryani", price: total, qty: 1 }],
+    subtotal: total,
+    total,
+    status,
+  });
+}
 
 describe("lead resolver", () => {
   it("creates, lists (with/without search), updates and deletes contacts", async () => {
@@ -56,5 +73,22 @@ describe("lead resolver", () => {
     const ghost = new Types.ObjectId().toString();
     await expect(M.updateLead(null, { id: ghost, name: "x" }, adminCtx)).rejects.toThrow(/not found/i);
     await expect(M.deleteLead(null, { id: ghost }, adminCtx)).rejects.toThrow(/not found/i);
+  });
+
+  it("Lead.orderCount counts all phone-matched orders; totalSpent sums revenue only", async () => {
+    const phone = "98765";
+    // 2 orders for this contact: a delivered (revenue) one + a placed one.
+    await posOrder(phone, "DELIVERED", 500);
+    await posOrder(phone, "PLACED", 100);
+    // A different contact's order must not leak in.
+    await posOrder("11111", "DELIVERED", 999);
+
+    expect(await L.orderCount({ phone })).toBe(2);
+    // Only the DELIVERED order is realised revenue.
+    expect(await L.totalSpent({ phone })).toBe(500);
+
+    // A contact with no orders → zero count and zero spend (empty-aggregate branch).
+    expect(await L.orderCount({ phone: "00000" })).toBe(0);
+    expect(await L.totalSpent({ phone: "00000" })).toBe(0);
   });
 });

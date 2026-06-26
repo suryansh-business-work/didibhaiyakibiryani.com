@@ -12,30 +12,47 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { SETTINGS } from "../../graphql/queries";
-import { DEFAULT_SURVEY_TEMPLATE, fillSurveyTemplate } from "../../constants/surveyTemplate";
+import {
+  messageConfig,
+  fillMessageTemplate,
+  type MessageKind,
+  type MessageSettingsKey,
+} from "../../constants/messageTemplates";
 import type { Order } from "./types";
 
 interface Props {
   order: Order;
+  kind: MessageKind;
   onClose: () => void;
 }
 
-export default function SurveyMessageDialog({ order, onClose }: Readonly<Props>) {
-  const { data } = useQuery<{ settings?: { brandName?: string; website?: string; surveyMessageTemplate?: string } }>(SETTINGS);
+type SettingsShape = { brandName?: string; website?: string } & Partial<Record<MessageSettingsKey, string>>;
+
+/** The per-order link this message kind links to. */
+function linkFor(order: Order, kind: MessageKind): string {
+  if (kind === "tracking") return order.trackingUrl ?? "";
+  if (kind === "receipt") return order.receiptUrl ?? "";
+  return order.ratingUrl ?? "";
+}
+
+/** Editable preview of a generated customer message (tracking / survey / receipt). */
+export default function GenerateMessageDialog({ order, kind, onClose }: Readonly<Props>) {
+  const { data } = useQuery<{ settings?: SettingsShape }>(SETTINGS);
+  const cfg = messageConfig(kind);
   const brandName = data?.settings?.brandName || "Didi Bhaiya ki Biryani";
   const website = data?.settings?.website || "didibhaiyakibiryani.com";
-  const template = data?.settings?.surveyMessageTemplate || DEFAULT_SURVEY_TEMPLATE;
+  const template = data?.settings?.[cfg.settingsKey] || cfg.defaultTemplate;
 
   const message = useMemo(
     () =>
-      fillSurveyTemplate(template, {
+      fillMessageTemplate(template, cfg, {
         name: order.user?.name ?? order.customerName ?? "there",
-        surveyLink: order.ratingUrl ?? "",
+        link: linkFor(order, kind),
         orderNumber: order.orderNumber,
         brandName,
         website,
       }),
-    [order, brandName, website, template]
+    [order, kind, cfg, brandName, website, template]
   );
 
   const ref = useRef<HTMLDivElement>(null);
@@ -55,12 +72,12 @@ export default function SurveyMessageDialog({ order, onClose }: Readonly<Props>)
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        Survey message — {order.orderNumber}
+        {cfg.label} — {order.orderNumber}
         <IconButton size="small" onClick={onClose} aria-label="Close"><CloseIcon fontSize="small" /></IconButton>
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" gutterBottom>
-          Edit if you like, then copy and send it to the customer. Manage the template under Survey Message.
+          Edit if you like, then copy and send it to the customer. Manage the template under Generate Messages → {cfg.label}.
         </Typography>
         <Box
           ref={ref}

@@ -62,6 +62,10 @@ export interface ISettings extends Document {
   surveyUrl: string;
   /** Template for the admin "Generate survey message" action (supports {{tokens}}). */
   surveyMessageTemplate: string;
+  /** Template for the admin "Generate tracking message" action (supports {{tokens}}). */
+  trackingMessageTemplate: string;
+  /** Template for the admin "Generate receipt message" action (supports {{tokens}}). */
+  receiptMessageTemplate: string;
   // Finance — payment options
   codEnabled: boolean;
   onlineEnabled: boolean;
@@ -137,6 +141,8 @@ const settingsSchema = new Schema<ISettings>(
     gstNumber: { type: String, default: "" },
     surveyUrl: { type: String, default: "" },
     surveyMessageTemplate: { type: String, default: "" },
+    trackingMessageTemplate: { type: String, default: "" },
+    receiptMessageTemplate: { type: String, default: "" },
     codEnabled: { type: Boolean, default: true },
     onlineEnabled: { type: Boolean, default: true },
     supportSubjects: {

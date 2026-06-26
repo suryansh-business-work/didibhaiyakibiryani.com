@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
@@ -6,18 +7,13 @@ import { Button, Stack, Typography } from "@mui/material";
 import { LEADS_PAGE, SOCIETIES } from "../graphql/queries";
 import { CREATE_LEAD, UPDATE_LEAD, DELETE_LEAD, DELETE_LEADS } from "../graphql/mutations";
 import Layout from "../components/Layout";
-import { FormActions, Modal, fmtDate } from "../components/ui";
+import { FormActions, Modal } from "../components/ui";
 import { IPlus } from "../components/icons";
-import { DataTable, useServerTable, type Column } from "../components/DataTable";
+import { DataTable, useServerTable } from "../components/DataTable";
 import { useAlert, useConfirm } from "../components/dialog";
 import { RHFField, leadSchema, type LeadForm } from "../form";
 import ContactAddressFields, { type SocietyRef } from "./ContactAddressFields";
-
-interface Lead {
-  id: string; name: string; phone: string; email?: string; note?: string;
-  address?: string; society?: string; block?: string; flat?: string;
-  city?: string; state?: string; pincode?: string; lat?: number; lng?: number; createdAt: string;
-}
+import { contactColumns, type Lead } from "./contactsColumns";
 
 const BLANK: LeadForm = {
   name: "", phone: "", email: "", note: "", addressMode: "ADDRESS",
@@ -25,14 +21,10 @@ const BLANK: LeadForm = {
   city: "", state: "", pincode: "", lat: undefined, lng: undefined,
 };
 
-function leadAddress(l: Lead): string {
-  if (l.society) return [l.flat ? `Flat ${l.flat}` : "", l.block, l.society].filter(Boolean).join(", ");
-  return l.address ?? "";
-}
-
 /** Non-signup contacts (leads). Added here, selectable in POS, and auto-removed
  * once the same email signs up for an account. */
 export default function Contacts() {
+  const navigate = useNavigate();
   const { variables, tableProps } = useServerTable({ initialSortKey: "createdAt", initialSortDir: "desc" });
   const { data, loading, refetch } = useQuery<{ leadsPage: { items: Lead[]; total: number } }>(LEADS_PAGE, { variables });
   const { data: socData } = useQuery<{ societies: SocietyRef[] }>(SOCIETIES);
@@ -56,18 +48,13 @@ export default function Contacts() {
   const societies = socData?.societies ?? [];
   const open = adding || Boolean(editing);
 
-  const columns = useMemo<Column<Lead>[]>(() => [
-    { key: "name", label: "Name", sortable: true, render: (l) => <Typography fontWeight={700}>{l.name}</Typography> },
-    { key: "contact", label: "Contact", render: (l) => (
-      <>
-        <Typography variant="body2" color="text.secondary">{l.phone}</Typography>
-        <Typography variant="caption" color="text.secondary">{l.email}</Typography>
-      </>
-    ) },
-    { key: "address", label: "Address", render: (l) => <Typography variant="body2" color="text.secondary">{leadAddress(l) || "—"}</Typography> },
-    { key: "note", label: "Note", render: (l) => <Typography variant="body2" color="text.secondary">{l.note}</Typography> },
-    { key: "createdAt", label: "Added", sortable: true, render: (l) => <Typography variant="body2" color="text.secondary">{fmtDate(l.createdAt)}</Typography> },
-  ], []);
+  const columns = useMemo(
+    () =>
+      contactColumns((l) =>
+        navigate(`/orders?phone=${encodeURIComponent(l.phone)}&name=${encodeURIComponent(l.name)}`)
+      ),
+    [navigate]
+  );
 
   function openAdd() {
     setEditing(null);
@@ -145,7 +132,7 @@ export default function Contacts() {
   }
 
   return (
-    <Layout title="Contacts">
+    <Layout title="Manual Customer Contacts">
       <DataTable
         columns={columns}
         rows={leads}

@@ -14,7 +14,7 @@ import Coupons from "./pages/Coupons";
 import Customers from "./pages/Customers";
 import Contacts from "./pages/Contacts";
 import Profile from "./pages/Profile";
-import SurveyTemplate from "./pages/SurveyTemplate";
+import MessageConfig from "./pages/MessageConfig";
 import Branding from "./pages/Branding";
 import Integrations from "./pages/Integrations";
 import Payments from "./pages/Payments";
@@ -53,7 +53,9 @@ export default function App() {
       <Route path="/customers" element={<Protected><Customers /></Protected>} />
       <Route path="/contacts" element={<Protected><Contacts /></Protected>} />
       <Route path="/profile" element={<Protected><Profile /></Protected>} />
-      <Route path="/survey-message" element={<Protected><SurveyTemplate /></Protected>} />
+      <Route path="/messages/tracking" element={<Protected><MessageConfig kind="tracking" /></Protected>} />
+      <Route path="/messages/survey" element={<Protected><MessageConfig kind="survey" /></Protected>} />
+      <Route path="/messages/receipt" element={<Protected><MessageConfig kind="receipt" /></Protected>} />
       <Route path="/branding" element={<Protected><Branding /></Protected>} />
       <Route path="/integrations" element={<Protected><Integrations /></Protected>} />
       <Route path="/payments" element={<Protected><Payments /></Protected>} />

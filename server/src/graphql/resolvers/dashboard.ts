@@ -1,6 +1,6 @@
 import { GraphQLError } from "graphql";
 import type { PipelineStage } from "mongoose";
-import { Order, User, MenuItem, Review, Expense } from "../../models/index.js";
+import { Order, User, MenuItem, Review, Expense, Lead } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
 import { paginate, type PageArgs } from "../../utils/pagination.js";
 
@@ -83,6 +83,7 @@ export const dashboardResolvers = {
         todayRevenueAgg,
         pendingOrders,
         totalCustomers,
+        totalLeads,
         repeatAgg,
         topItemsAgg,
         revenueByDayAgg,
@@ -106,6 +107,9 @@ export const dashboardResolvers = {
         ]),
         Order.countDocuments({ status: { $in: ["PLACED", "CONFIRMED", "PREPARING"] } }),
         User.countDocuments({ role: "CUSTOMER" }),
+        // Manual (non-signup) contacts — counted alongside signed-up customers so
+        // the dashboard "Customers" tile reflects the whole audience.
+        Lead.countDocuments({}),
         // Repeat customers (all-time): group every non-cancelled order by its
         // unified identity (signed-up user id, else walk-in phone) and count the
         // identities that appear more than once.
@@ -223,6 +227,7 @@ export const dashboardResolvers = {
         todayRevenue: todayRevenueAgg[0]?.total ?? 0,
         pendingOrders,
         totalCustomers,
+        totalLeads,
         repeatCustomers: repeatAgg[0]?.n ?? 0,
         avgOrderValue,
         avgFoodRating,

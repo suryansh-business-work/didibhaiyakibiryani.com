@@ -252,12 +252,23 @@ export const orderResolvers = {
 
     ordersPage: async (
       _: unknown,
-      { status, ...page }: PageArgs & { status?: OrderStatus },
+      { status, userId, phone, ...page }: PageArgs & { status?: OrderStatus; userId?: string; phone?: string },
       ctx: Context
     ) => {
       requireRole(ctx, "ADMIN", "STAFF", "DELIVERY");
+      // Optional scope to a single customer/contact: signed-up customers match on
+      // their user id; non-signup contacts match on their snapshotted phone.
+      const filter: Record<string, unknown> = {};
+      if (status) {
+        filter.status = status;
+      }
+      if (userId) {
+        filter.user = userId;
+      } else if (phone) {
+        filter.customerPhone = phone;
+      }
       return paginate(Order, {
-        filter: status ? { status } : {},
+        filter,
         searchFields: ["orderNumber", "customerName", "customerPhone"],
         sortAllow: ["placedAt", "total", "createdAt", "status"],
         defaultSort: "placedAt",

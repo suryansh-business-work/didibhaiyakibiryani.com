@@ -20,7 +20,7 @@ interface RecentOrder {
 }
 interface Stats {
   totalOrders: number; totalRevenue: number; todayOrders: number; todayRevenue: number;
-  pendingOrders: number; totalCustomers: number; repeatCustomers: number; avgOrderValue: number;
+  pendingOrders: number; totalCustomers: number; totalLeads: number; repeatCustomers: number; avgOrderValue: number;
   avgFoodRating: number; avgDeliveryRating: number; ratingCount: number;
   periodOrders: number; periodRevenue: number; periodExpenses: number; periodProfit: number; periodComplimentary: number;
   dishRatings: DishRating[];
@@ -112,7 +112,12 @@ function Body({
         <Stat label="Today's revenue" value={inr(s.todayRevenue)} sub={`${s.todayOrders} orders today`} icon={<IRupee />} />
         <Stat label="Total revenue" value={inr(s.totalRevenue)} sub={`Avg ${inr(s.avgOrderValue)} / order`} icon={<IOrders />} />
         <Stat label="Pending orders" value={String(s.pendingOrders)} sub="Need attention" icon={<IClock />} />
-        <Stat label="Customers" value={String(s.totalCustomers)} sub={`${s.totalOrders} lifetime orders`} icon={<IUsers />} />
+        <Stat
+          label="Customers"
+          value={String(s.totalCustomers + s.totalLeads)}
+          sub={`${s.totalCustomers} signup + ${s.totalLeads} manual contacts`}
+          icon={<IUsers />}
+        />
         <Stat label="Repeat customers" value={String(s.repeatCustomers)} sub="ordered more than once" icon={<IUsers />} />
         <Stat label="Food rating" value={s.ratingCount ? `${s.avgFoodRating} ★` : "—"} sub={`${s.ratingCount} rating(s)`} icon={<span>★</span>} />
         <Stat label="Delivery rating" value={s.ratingCount ? `${s.avgDeliveryRating} ★` : "—"} sub={`${s.ratingCount} rating(s)`} icon={<span>★</span>} />

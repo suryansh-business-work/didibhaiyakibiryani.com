@@ -69,6 +69,7 @@ export const resolvers = {
   MenuItem: menuResolvers.MenuItem,
   Coupon: couponResolvers.Coupon,
   Order: orderResolvers.Order,
+  Lead: leadResolvers.Lead,
   OrderItem: dashboardResolvers.OrderItem,
   TopItem: dashboardResolvers.TopItem,
   User: dashboardResolvers.User,

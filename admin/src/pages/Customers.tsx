@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
-import { Button, Chip, Typography } from "@mui/material";
+import { Button, Chip, Link, Tooltip, Typography } from "@mui/material";
 import { CUSTOMERS_PAGE } from "../graphql/queries";
 import { UPDATE_CUSTOMER, DELETE_CUSTOMER, DELETE_CUSTOMERS } from "../graphql/mutations";
 import Layout from "../components/Layout";
@@ -17,6 +18,7 @@ interface Customer {
 }
 
 export default function Customers() {
+  const navigate = useNavigate();
   const { variables, tableProps } = useServerTable({ initialSortKey: "createdAt", initialSortDir: "desc" });
   const { data, loading, refetch } = useQuery<{ customersPage: { items: Customer[]; total: number } }>(CUSTOMERS_PAGE, { variables });
   const [updateCustomer] = useMutation(UPDATE_CUSTOMER);
@@ -35,18 +37,30 @@ export default function Customers() {
   const customers = data?.customersPage.items ?? [];
   const total = data?.customersPage.total ?? 0;
 
-  const columns = useMemo<Column<Customer>[]>(() => [
-    { key: "name", label: "Name", sortable: true, render: (c) => <Typography fontWeight={700}>{c.name}</Typography> },
-    { key: "contact", label: "Contact", render: (c) => (
-      <>
-        <Typography variant="body2" color="text.secondary">{c.email}</Typography>
-        <Typography variant="caption" color="text.secondary">{c.phone}</Typography>
-      </>
-    ) },
-    { key: "createdAt", label: "Joined", sortable: true, render: (c) => <Typography variant="body2" color="text.secondary">{fmtDate(c.createdAt)}</Typography> },
-    { key: "orderCount", label: "Orders", render: (c) => <Chip size="small" variant="outlined" color="primary" label={c.orderCount} /> },
-    { key: "totalSpent", label: "Lifetime value", align: "right", render: (c) => <Typography fontWeight={700} sx={{ fontVariantNumeric: "tabular-nums" }}>{inr(c.totalSpent)}</Typography> },
-  ], []);
+  const columns = useMemo<Column<Customer>[]>(() => {
+    const viewOrders = (c: Customer) =>
+      navigate(`/orders?userId=${encodeURIComponent(c.id)}&name=${encodeURIComponent(c.name)}`);
+    return [
+      { key: "name", label: "Name", sortable: true, render: (c) => <Typography fontWeight={700}>{c.name}</Typography> },
+      { key: "contact", label: "Contact", render: (c) => (
+        <>
+          <Typography variant="body2" color="text.secondary">{c.email}</Typography>
+          <Typography variant="caption" color="text.secondary">{c.phone}</Typography>
+        </>
+      ) },
+      { key: "createdAt", label: "Joined", sortable: true, render: (c) => <Typography variant="body2" color="text.secondary">{fmtDate(c.createdAt)}</Typography> },
+      { key: "orderCount", label: "Orders", render: (c) => (
+        <Tooltip title="View this customer's orders">
+          <Chip size="small" variant="outlined" color="primary" label={c.orderCount} clickable onClick={() => viewOrders(c)} />
+        </Tooltip>
+      ) },
+      { key: "totalSpent", label: "Lifetime value", align: "right", render: (c) => (
+        <Link component="button" type="button" underline="hover" onClick={() => viewOrders(c)} sx={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+          {inr(c.totalSpent)}
+        </Link>
+      ) },
+    ];
+  }, [navigate]);
 
   function openEdit(c: Customer) {
     setEditing(c);
@@ -90,7 +104,7 @@ export default function Customers() {
   }
 
   return (
-    <Layout title="Customers">
+    <Layout title="Signup Customers">
       <DataTable
         columns={columns}
         rows={customers}

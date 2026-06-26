@@ -409,6 +409,7 @@ export const typeDefs = /* GraphQL */ `
     todayRevenue: Float!
     pendingOrders: Int!
     totalCustomers: Int!
+    totalLeads: Int!
     repeatCustomers: Int!
     avgOrderValue: Float!
     avgFoodRating: Float!
@@ -647,6 +648,8 @@ export const typeDefs = /* GraphQL */ `
     gstNumber: String!
     surveyUrl: String!
     surveyMessageTemplate: String!
+    trackingMessageTemplate: String!
+    receiptMessageTemplate: String!
     codEnabled: Boolean!
     onlineEnabled: Boolean!
     supportSubjects: [String!]!
@@ -693,6 +696,8 @@ export const typeDefs = /* GraphQL */ `
     gstNumber: String
     surveyUrl: String
     surveyMessageTemplate: String
+    trackingMessageTemplate: String
+    receiptMessageTemplate: String
     codEnabled: Boolean
     onlineEnabled: Boolean
     supportSubjects: [String!]
@@ -937,7 +942,7 @@ export const typeDefs = /* GraphQL */ `
     integrationSettings: IntegrationSettings! # admin: SMTP / ImageKit config (secrets masked)
 
     # ── Paginated + searchable + sortable admin list queries ──
-    ordersPage(status: OrderStatus, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): OrdersPage! # admin/staff
+    ordersPage(status: OrderStatus, userId: ID, phone: String, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): OrdersPage! # admin/staff — optional userId/phone scope to one customer/contact
     paymentsPage(status: PaymentRecordStatus, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): PaymentsPage! # admin
     customersPage(search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): CustomersPage! # admin
     leadsPage(search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): LeadsPage! # admin
@@ -965,6 +970,8 @@ export const typeDefs = /* GraphQL */ `
     lat: Float
     lng: Float
     createdAt: DateTime!
+    orderCount: Int
+    totalSpent: Float
   }
 
   # ─────────────── Mutations ───────────────

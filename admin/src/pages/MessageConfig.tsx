@@ -6,15 +6,22 @@ import { Spinner } from "../components/ui";
 import { useAlert } from "../components/dialog";
 import { SETTINGS } from "../graphql/queries";
 import { UPDATE_SETTINGS } from "../graphql/mutations";
-import { DEFAULT_SURVEY_TEMPLATE, SURVEY_PLACEHOLDERS, fillSurveyTemplate } from "../constants/surveyTemplate";
+import {
+  messageConfig,
+  placeholdersFor,
+  fillMessageTemplate,
+  type MessageKind,
+  type MessageSettingsKey,
+} from "../constants/messageTemplates";
 
-interface SettingsData {
-  surveyMessageTemplate?: string;
-  brandName?: string;
-  website?: string;
-}
+type SettingsData = { brandName?: string; website?: string } & Partial<Record<MessageSettingsKey, string>>;
 
-export default function SurveyTemplate() {
+const SAMPLE_LINK = "https://didibhaiyakibiryani.com/DDB-1234";
+
+/** Configure one customer-message template (tracking / survey / receipt). Saved
+ *  to the matching Settings field so the order "Generate …" action stays dynamic. */
+export default function MessageConfig({ kind }: Readonly<{ kind: MessageKind }>) {
+  const cfg = messageConfig(kind);
   const { data, loading } = useQuery<{ settings: SettingsData }>(SETTINGS);
   const [save, { loading: saving }] = useMutation(UPDATE_SETTINGS);
   const notify = useAlert();
@@ -23,16 +30,16 @@ export default function SurveyTemplate() {
 
   useEffect(() => {
     if (data?.settings && !loaded) {
-      setText(data.settings.surveyMessageTemplate || DEFAULT_SURVEY_TEMPLATE);
+      setText(data.settings[cfg.settingsKey] || cfg.defaultTemplate);
       setLoaded(true);
     }
-  }, [data, loaded]);
+  }, [data, loaded, cfg]);
 
   const brandName = data?.settings?.brandName || "Didi Bhaiya ki Biryani";
   const website = data?.settings?.website || "didibhaiyakibiryani.com";
-  const preview = fillSurveyTemplate(text, {
+  const preview = fillMessageTemplate(text, cfg, {
     name: "Asha",
-    surveyLink: "https://survey.didibhaiyakibiryani.com/DDB-1234",
+    link: SAMPLE_LINK,
     orderNumber: "DDB-1234",
     brandName,
     website,
@@ -40,8 +47,8 @@ export default function SurveyTemplate() {
 
   async function onSave() {
     try {
-      await save({ variables: { input: { surveyMessageTemplate: text } } });
-      await notify({ title: "Saved", message: "Survey message template updated." });
+      await save({ variables: { input: { [cfg.settingsKey]: text } } });
+      await notify({ title: "Saved", message: `${cfg.label} template updated.` });
     } catch (e: unknown) {
       await notify({ title: "Could not save", message: e instanceof Error ? e.message : "Please try again." });
     }
@@ -49,22 +56,22 @@ export default function SurveyTemplate() {
 
   if (loading && !data) {
     return (
-      <Layout title="Survey Message">
+      <Layout title={cfg.label}>
         <Spinner />
       </Layout>
     );
   }
 
   return (
-    <Layout title="Survey Message">
+    <Layout title={cfg.label}>
       <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
         <Paper sx={{ p: 2.5 }}>
           <Typography variant="h6" gutterBottom>Message template</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            This is used by the order “Generate survey message” action. Tap a token to insert it.
+            Used by the order “Generate {cfg.label.toLowerCase()}” action. Tap a token to insert it.
           </Typography>
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1, mb: 2 }}>
-            {SURVEY_PLACEHOLDERS.map((p) => (
+            {placeholdersFor(cfg).map((p) => (
               <Tooltip key={p.token} title={p.desc}>
                 <Chip label={p.token} size="small" variant="outlined" onClick={() => setText((t) => `${t}${p.token}`)} />
               </Tooltip>
@@ -73,7 +80,7 @@ export default function SurveyTemplate() {
           <TextField value={text} onChange={(e) => setText(e.target.value)} multiline minRows={14} fullWidth size="small" />
           <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
             <Button variant="contained" onClick={onSave} disabled={saving}>{saving ? "Saving…" : "Save template"}</Button>
-            <Button color="inherit" onClick={() => setText(DEFAULT_SURVEY_TEMPLATE)}>Reset to default</Button>
+            <Button color="inherit" onClick={() => setText(cfg.defaultTemplate)}>Reset to default</Button>
           </Stack>
         </Paper>
 
