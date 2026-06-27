@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { PARTY_ORDERS_PAGE } from "../../graphql/queries";
 import { UPDATE_PARTY_ORDER_STATUS, DELETE_PARTY_ORDER, DELETE_PARTY_ORDERS } from "../../graphql/mutations";
-import { Button, Chip, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Button, Chip, Stack, TextField, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
 import { fmtDate } from "../../components/ui";
 import { IPlus } from "../../components/icons";
@@ -99,9 +99,16 @@ export default function PartyOrders() {
     { key: "guests", label: "Guests", render: (o) => <Typography variant="body2" color="text.secondary">{o.guests ?? "—"}</Typography> },
     { key: "message", label: "Details", render: (o) => <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 280, whiteSpace: "pre-wrap" }}>{o.message || "—"}</Typography> },
     { key: "status", label: "Status", render: (o) => (
-      <TextField select size="small" value={o.status} onChange={(e) => changeStatus(o.id, e.target.value)} sx={{ minWidth: 130 }}>
-        {STATUSES.map((s) => (<MenuItem key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</MenuItem>))}
-      </TextField>
+      <Autocomplete
+        options={[...STATUSES] as string[]}
+        getOptionLabel={(s) => s.charAt(0) + s.slice(1).toLowerCase()}
+        value={o.status}
+        onChange={(_, v) => { if (v) changeStatus(o.id, v); }}
+        disableClearable
+        size="small"
+        sx={{ minWidth: 150 }}
+        renderInput={(params) => <TextField {...params} />}
+      />
     ) },
   ], []);
 

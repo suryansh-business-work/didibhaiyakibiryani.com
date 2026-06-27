@@ -57,9 +57,31 @@ export const expenseResolvers = {
 
     expenses: async () => Expense.find().sort({ createdAt: -1 }).populate(EXPENSE_POPULATE).exec(),
 
-    expensesPage: async (_: unknown, page: PageArgs, ctx: Context) => {
+    expensesPage: async (
+      _: unknown,
+      { sourceId, productId, from, to, ...page }: PageArgs & { sourceId?: string; productId?: string; from?: Date; to?: Date },
+      ctx: Context
+    ) => {
       requireRole(ctx, "ADMIN");
+      const filter: Record<string, unknown> = {};
+      if (sourceId) {
+        filter.source = sourceId;
+      }
+      if (productId) {
+        filter.product = productId;
+      }
+      if (from || to) {
+        const range: Record<string, Date> = {};
+        if (from) {
+          range.$gte = from;
+        }
+        if (to) {
+          range.$lte = to;
+        }
+        filter.date = range;
+      }
       return paginate(Expense, {
+        filter,
         searchFields: ["title"],
         sortAllow: ["amount", "createdAt", "title", "date"],
         defaultSort: "date",

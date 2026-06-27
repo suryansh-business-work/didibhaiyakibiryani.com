@@ -4,7 +4,7 @@ import { useTestDb, ctxFor } from "../helpers/db";
 import { makeUser, makeOrder } from "../helpers/fixtures";
 import { deliveryResolvers } from "../../src/graphql/resolvers/delivery";
 import { dashboardResolvers } from "../../src/graphql/resolvers/dashboard";
-import { Review, MenuItem, User, Lead, Expense, ExpenseProduct } from "../../src/models/index.js";
+import { Review, MenuItem, User, Lead, Expense, ExpenseProduct, ExpenseSource } from "../../src/models/index.js";
 
 useTestDb();
 const adminCtx = ctxFor("admin1", "ADMIN");
@@ -76,9 +76,10 @@ describe("dashboard resolver", () => {
     await Review.create({ authorName: "Asha", text: "Great", rating: 5, isPublished: true });
     // A manual contact is counted separately from signed-up customers.
     await Lead.create({ name: "Walk-in Ravi", phone: "98200" });
-    // A grid expense product with spend → one expense "category".
+    // A raw item bought from a coloured source → feeds the dashboard charts.
     const prod = await ExpenseProduct.create({ name: "Rice", marketPrice: 50 });
-    await Expense.create({ product: prod._id, title: "Rice", amount: 200, date: new Date() });
+    const src = await ExpenseSource.create({ type: "PERSON", name: "Veg Vendor", color: "#ffd966" });
+    await Expense.create({ source: src._id, product: prod._id, title: "Rice", amount: 200, date: new Date() });
 
     expect((await dashboardResolvers.Query.reviews(null, {})).length).toBe(1);
     expect((await dashboardResolvers.Query.customers(null, {}, adminCtx)).length).toBe(1);
@@ -89,6 +90,10 @@ describe("dashboard resolver", () => {
     expect(stats.totalCustomers).toBe(1);
     expect(stats.totalLeads).toBe(1);
     expect(stats.expenseCategoryCount).toBe(1);
+    expect(stats.expenseBySource).toEqual([{ name: "Veg Vendor", color: "#ffd966", total: 200 }]);
+    expect(stats.expenseByItem).toEqual([{ name: "Rice", total: 200 }]);
+    expect(stats.ordersByStatus.map((o) => o.status).toSorted()).toEqual(["DELIVERED", "PLACED"]);
+    expect(stats.ordersByStatus.every((o) => o.count === 1)).toBe(true);
     expect(stats.avgFoodRating).toBe(5);
     expect(stats.avgDeliveryRating).toBe(4);
     expect(stats.ratingCount).toBe(1);
@@ -108,5 +113,20 @@ describe("dashboard resolver", () => {
     expect(await dashboardResolvers.TopItem.menuItem({ menuItemId: undefined })).toBeNull();
     expect((await dashboardResolvers.OrderItem.menuItem({ menuItem: item.id }))?.id).toBe(item.id);
     expect(await dashboardResolvers.OrderItem.menuItem({ menuItem: undefined })).toBeNull();
+  });
+
+  it("ordersStats returns headline counts (zeros when empty)", async () => {
+    const empty = await dashboardResolvers.Query.ordersStats(null, null, adminCtx);
+    expect(empty).toEqual({ totalOrders: 0, todayOrders: 0, pendingOrders: 0, totalRevenue: 0, todayRevenue: 0 });
+
+    const cust = await makeUser("CUSTOMER");
+    await makeOrder(cust.id, { status: "DELIVERED", total: 500 });
+    await makeOrder(cust.id, { status: "PLACED", total: 100 });
+    const stats = await dashboardResolvers.Query.ordersStats(null, null, adminCtx);
+    expect(stats.totalOrders).toBe(2);
+    expect(stats.todayOrders).toBe(2);
+    expect(stats.pendingOrders).toBe(1);
+    expect(stats.totalRevenue).toBe(500);
+    expect(stats.todayRevenue).toBe(500);
   });
 });

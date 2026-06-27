@@ -3,7 +3,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  MenuItem,
+  Autocomplete,
   Stack,
   TextField,
   Typography,
@@ -29,13 +29,18 @@ function SelectField({ control, name, label, options, enabledValues }: Readonly<
       control={control}
       name={name}
       render={({ field }) => (
-        <TextField {...field} value={field.value ?? ""} select label={label} size="small" fullWidth>
-          {options.map((o) => (
-            <MenuItem key={o.value} value={o.value} disabled={enabledValues ? !enabledValues.has(o.value) : false}>
-              {o.label}
-            </MenuItem>
-          ))}
-        </TextField>
+        <Autocomplete
+          options={options}
+          getOptionLabel={(o) => o.label}
+          isOptionEqualToValue={(o, v) => o.value === v.value}
+          getOptionDisabled={(o) => (enabledValues ? !enabledValues.has(o.value) : false)}
+          value={options.find((o) => o.value === field.value) ?? options[0]}
+          onChange={(_, opt) => field.onChange(opt.value)}
+          disableClearable
+          fullWidth
+          size="small"
+          renderInput={(params) => <TextField {...params} label={label} onBlur={field.onBlur} />}
+        />
       )}
     />
   );
@@ -76,17 +81,23 @@ export function OrderOptions({ control, baseStatus, coupons, appliedDiscount }: 
           <Controller
             control={control}
             name="couponCode"
-            render={({ field }) => (
-              <Stack spacing={0.5}>
-                <TextField {...field} value={field.value ?? ""} select label="Coupon" size="small">
-                  <MenuItem value="">No coupon</MenuItem>
-                  {coupons.map((c) => (
-                    <MenuItem key={c.id} value={c.code}>{c.code} — {c.title}</MenuItem>
-                  ))}
-                </TextField>
-                <CouponNote coupon={coupons.find((c) => c.code === field.value)} appliedDiscount={appliedDiscount} />
-              </Stack>
-            )}
+            render={({ field }) => {
+              const couponOpts = coupons.map((c) => ({ value: c.code, label: `${c.code} — ${c.title}` }));
+              return (
+                <Stack spacing={0.5}>
+                  <Autocomplete
+                    options={couponOpts}
+                    getOptionLabel={(o) => o.label}
+                    isOptionEqualToValue={(o, v) => o.value === v.value}
+                    value={couponOpts.find((o) => o.value === field.value) ?? null}
+                    onChange={(_, opt) => field.onChange(opt ? opt.value : "")}
+                    size="small"
+                    renderInput={(params) => <TextField {...params} label="Coupon" placeholder="No coupon" onBlur={field.onBlur} />}
+                  />
+                  <CouponNote coupon={coupons.find((c) => c.code === field.value)} appliedDiscount={appliedDiscount} />
+                </Stack>
+              );
+            }}
           />
 
           <Stack direction="row" spacing={1}>

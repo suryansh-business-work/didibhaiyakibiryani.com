@@ -31,6 +31,19 @@ export const DASHBOARD = gql`
       periodRevenue
       periodExpenses
       expenseCategoryCount
+      expenseBySource {
+        name
+        color
+        total
+      }
+      expenseByItem {
+        name
+        total
+      }
+      ordersByStatus {
+        status
+        count
+      }
       periodProfit
       periodComplimentary
       dishRatings {
@@ -262,9 +275,21 @@ export const EXPENSE_PRODUCTS = gql`
   }
 `;
 
+export const ORDERS_STATS = gql`
+  query OrdersStats {
+    ordersStats {
+      totalOrders
+      todayOrders
+      todayRevenue
+      pendingOrders
+      totalRevenue
+    }
+  }
+`;
+
 export const EXPENSES_PAGE = gql`
-  query ExpensesPage($search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
-    expensesPage(search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
+  query ExpensesPage($sourceId: ID, $productId: ID, $from: DateTime, $to: DateTime, $search: String, $sortBy: String, $sortDir: SortDir, $limit: Int, $offset: Int) {
+    expensesPage(sourceId: $sourceId, productId: $productId, from: $from, to: $to, search: $search, sortBy: $sortBy, sortDir: $sortDir, limit: $limit, offset: $offset) {
       total
       items {
         id

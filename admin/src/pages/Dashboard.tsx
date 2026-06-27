@@ -9,6 +9,8 @@ import { Spinner, StatusBadge, inr, fmtDate } from "../components/ui";
 import { IOrders, IRupee, IClock, IUsers } from "../components/icons";
 import DashboardFilter, { rangeForPreset, type Preset, type DateRange } from "./DashboardFilter";
 import { Stat, PeriodSummary } from "./DashboardStat";
+import { DashboardExpenses, type ExpenseStat } from "./DashboardExpenses";
+import { DashboardInsights, type StatusStat } from "./DashboardInsights";
 import ProfitDialog from "./ProfitDialog";
 
 interface TopItem { name: string; qty: number; revenue: number; }
@@ -23,6 +25,7 @@ interface Stats {
   pendingOrders: number; totalCustomers: number; totalLeads: number; repeatCustomers: number; avgOrderValue: number;
   avgFoodRating: number; avgDeliveryRating: number; ratingCount: number;
   periodOrders: number; periodRevenue: number; periodExpenses: number; expenseCategoryCount: number; periodProfit: number; periodComplimentary: number;
+  expenseBySource: ExpenseStat[]; expenseByItem: ExpenseStat[]; ordersByStatus: StatusStat[];
   dishRatings: DishRating[];
   topItems: TopItem[]; revenueByDay: RevPoint[]; recentOrders: RecentOrder[];
 }
@@ -103,7 +106,6 @@ function Body({
   onProfitClick,
   onComplimentaryClick,
 }: Readonly<{ s: Stats; onProfitClick: () => void; onComplimentaryClick: () => void }>) {
-  const maxRev = Math.max(1, ...s.revenueByDay.map((d) => d.revenue));
   return (
     <>
       <PeriodSummary s={s} onProfitClick={onProfitClick} onComplimentaryClick={onComplimentaryClick} />
@@ -123,26 +125,11 @@ function Body({
         <Stat label="Delivery rating" value={s.ratingCount ? `${s.avgDeliveryRating} ★` : "—"} sub={`${s.ratingCount} rating(s)`} icon={<span>★</span>} />
       </div>
 
-      <div className="grid-2 section-gap">
-        <div className="card" style={{ padding: 20 }}>
-          <div className="panel-title">Revenue · last 7 days</div>
-          {s.revenueByDay.length === 0 ? (
-            <p className="muted">No revenue yet.</p>
-          ) : (
-            <div className="chart">
-              {s.revenueByDay.map((d) => (
-                <div className="chart__col" key={d.date}>
-                  <span className="chart__val">{inr(d.revenue)}</span>
-                  <div className="chart__bar" style={{ height: `${(d.revenue / maxRev) * 100}%` }} />
-                  <span className="chart__label">
-                    {new Date(d.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      <DashboardExpenses bySource={s.expenseBySource} byItem={s.expenseByItem} />
 
+      <DashboardInsights revenueByDay={s.revenueByDay} ordersByStatus={s.ordersByStatus} />
+
+      <div className="grid-2 section-gap">
         <div className="card" style={{ padding: 20 }}>
           <div className="panel-title">Top sellers</div>
           {s.topItems.length === 0 ? (
@@ -162,10 +149,9 @@ function Body({
             </Table>
           )}
         </div>
-      </div>
 
-      <div className="card section-gap" style={{ padding: 20 }}>
-        <div className="panel-title">Dish ratings</div>
+        <div className="card" style={{ padding: 20 }}>
+          <div className="panel-title">Dish ratings</div>
         {s.dishRatings.length === 0 ? (
           <p className="muted">No dish ratings yet.</p>
         ) : (
@@ -181,6 +167,7 @@ function Body({
             </TableBody>
           </Table>
         )}
+        </div>
       </div>
 
       <div className="card section-gap" style={{ padding: 20 }}>

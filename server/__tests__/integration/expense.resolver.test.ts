@@ -82,6 +82,26 @@ describe("expense resolver (simple table)", () => {
     expect(await Expense.countDocuments()).toBe(1);
   });
 
+  it("expensesPage filters by source, raw item and date range", async () => {
+    const src = await M.createExpenseSource(null, { input: { type: "PERSON", name: "Vendor A" } }, admin);
+    const other = await M.createExpenseSource(null, { input: { type: "PERSON", name: "Vendor B" } }, admin);
+    const rice = await M.createExpenseProduct(null, { name: "Rice" }, admin);
+    const oil = await M.createExpenseProduct(null, { name: "Oil" }, admin);
+    await M.createExpense(null, { input: { sourceId: src.id, productId: rice.id, title: "Rice", amount: 100, date: "2026-06-05T00:00:00.000Z" } }, admin);
+    await M.createExpense(null, { input: { sourceId: other.id, productId: oil.id, title: "Oil", amount: 200, date: "2026-06-20T00:00:00.000Z" } }, admin);
+    await M.createExpense(null, { input: { sourceId: src.id, productId: oil.id, title: "Oil", amount: 50, date: "2026-07-10T00:00:00.000Z" } }, admin);
+
+    expect((await Q.expensesPage(null, {}, admin)).total).toBe(3);
+    expect((await Q.expensesPage(null, { sourceId: src.id }, admin)).total).toBe(2);
+    expect((await Q.expensesPage(null, { productId: oil.id }, admin)).total).toBe(2);
+    expect((await Q.expensesPage(null, { sourceId: src.id, productId: oil.id }, admin)).total).toBe(1);
+    // June only (from + to).
+    expect((await Q.expensesPage(null, { from: new Date("2026-06-01T00:00:00.000Z"), to: new Date("2026-06-30T23:59:59.999Z") }, admin)).total).toBe(2);
+    // From-only and to-only.
+    expect((await Q.expensesPage(null, { from: new Date("2026-07-01T00:00:00.000Z") }, admin)).total).toBe(1);
+    expect((await Q.expensesPage(null, { to: new Date("2026-06-10T00:00:00.000Z") }, admin)).total).toBe(1);
+  });
+
   it("bulk-deletes expenses (and ignores an empty list)", async () => {
     const a = await M.createExpense(null, { input: { title: "A", amount: 1 } }, admin);
     const b = await M.createExpense(null, { input: { title: "B", amount: 2 } }, admin);

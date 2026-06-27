@@ -1,7 +1,7 @@
-import { Controller, type Control, type FieldErrors } from "react-hook-form";
-import { Box, MenuItem as MuiMenuItem, TextField, Typography } from "@mui/material";
+import { type Control, type FieldErrors } from "react-hook-form";
+import { Box, Typography } from "@mui/material";
 import { Modal, FormActions } from "../../components/ui";
-import { RHFField, RHFCheckbox, type CouponForm } from "../../form";
+import { RHFField, RHFSelect, RHFCheckbox, type CouponForm } from "../../form";
 import { TYPE_OPTIONS, type FreeItemOption } from "./types";
 
 interface CouponModalProps {
@@ -36,15 +36,7 @@ export default function CouponModal({
     >
       <Box sx={{ display: "flex", gap: 1.5 }}>
         <RHFField control={control} name="code" label="Code" placeholder="BIRYANI50" error={errors.code?.message} />
-        <Controller
-          control={control}
-          name="type"
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ""} select label="Type" size="small" margin="dense" fullWidth>
-              {TYPE_OPTIONS.map((t) => <MuiMenuItem key={t.value} value={t.value}>{t.label}</MuiMenuItem>)}
-            </TextField>
-          )}
-        />
+        <RHFSelect control={control} name="type" label="Type" options={TYPE_OPTIONS} emptyLabel="Select type" />
       </Box>
       <RHFField control={control} name="title" label="Title" error={errors.title?.message} />
       <RHFField control={control} name="description" label="Description" error={errors.description?.message} />
@@ -59,25 +51,13 @@ export default function CouponModal({
       ) : null}
 
       {type === "FREE_ITEM" ? (
-        <Controller
+        <RHFSelect
           control={control}
           name="freeItemId"
-          render={({ field }) => (
-            <TextField
-              {...field}
-              value={field.value ?? ""}
-              select
-              label="Free item"
-              size="small"
-              margin="dense"
-              fullWidth
-              error={Boolean(errors.freeItemId)}
-              helperText={errors.freeItemId?.message}
-            >
-              <MuiMenuItem value="">Select…</MuiMenuItem>
-              {items.map((i) => <MuiMenuItem key={i.id} value={i.id}>{i.name}</MuiMenuItem>)}
-            </TextField>
-          )}
+          label="Free item"
+          options={items.map((i) => ({ value: i.id, label: i.name }))}
+          error={errors.freeItemId?.message}
+          emptyLabel="Select…"
         />
       ) : null}
 

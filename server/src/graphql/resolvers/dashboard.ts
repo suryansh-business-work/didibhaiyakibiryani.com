@@ -41,6 +41,32 @@ export const dashboardResolvers = {
         .exec();
     },
 
+    // Lightweight headline counts for the Orders screen cards.
+    ordersStats: async (_: unknown, __: unknown, ctx: Context) => {
+      requireRole(ctx, "ADMIN", "STAFF");
+      const today = startOfToday();
+      const [totalOrders, todayOrders, pendingOrders, totalRevenueAgg, todayRevenueAgg] = await Promise.all([
+        Order.countDocuments({ status: { $ne: "CANCELLED" } }),
+        Order.countDocuments({ placedAt: { $gte: today } }),
+        Order.countDocuments({ status: { $in: ["PLACED", "CONFIRMED", "PREPARING"] } }),
+        Order.aggregate([
+          { $match: { status: { $in: REVENUE_STATUSES } } },
+          { $group: { _id: null, total: { $sum: "$total" } } },
+        ]),
+        Order.aggregate([
+          { $match: { placedAt: { $gte: today }, status: { $in: REVENUE_STATUSES } } },
+          { $group: { _id: null, total: { $sum: "$total" } } },
+        ]),
+      ]);
+      return {
+        totalOrders,
+        todayOrders,
+        pendingOrders,
+        totalRevenue: totalRevenueAgg[0]?.total ?? 0,
+        todayRevenue: todayRevenueAgg[0]?.total ?? 0,
+      };
+    },
+
     customers: async (_: unknown, { search }: { search?: string }, ctx: Context) => {
       requireRole(ctx, "ADMIN");
       const filter: Record<string, unknown> = { role: "CUSTOMER" };
@@ -94,7 +120,10 @@ export const dashboardResolvers = {
         periodRevenueAgg,
         periodExpensesAgg,
         expenseCategoryAgg,
+        expenseBySourceAgg,
+        expenseByItemAgg,
         periodMarginAgg,
+        ordersByStatusAgg,
       ] = await Promise.all([
         Order.countDocuments({ status: { $ne: "CANCELLED" } }),
         Order.aggregate([
@@ -194,6 +223,26 @@ export const dashboardResolvers = {
           { $group: { _id: "$product" } },
           { $count: "n" },
         ]),
+        // Spend grouped by expense source (bar chart) — with the source's colour.
+        Expense.aggregate([
+          { $addFields: { effDate: { $ifNull: ["$date", "$createdAt"] } } },
+          { $match: { source: { $ne: null }, ...expensesRange } },
+          { $group: { _id: "$source", total: { $sum: "$amount" } } },
+          { $lookup: { from: "expensesources", localField: "_id", foreignField: "_id", as: "src" } },
+          { $set: { src: { $arrayElemAt: ["$src", 0] } } },
+          { $project: { _id: 0, name: { $ifNull: ["$src.name", "Unknown"] }, color: "$src.color", total: 1 } },
+          { $sort: { total: -1 } },
+        ]),
+        // Spend grouped by raw item (pie chart).
+        Expense.aggregate([
+          { $addFields: { effDate: { $ifNull: ["$date", "$createdAt"] } } },
+          { $match: { product: { $ne: null }, ...expensesRange } },
+          { $group: { _id: "$product", total: { $sum: "$amount" } } },
+          { $lookup: { from: "expenseproducts", localField: "_id", foreignField: "_id", as: "item" } },
+          { $set: { item: { $arrayElemAt: ["$item", 0] } } },
+          { $project: { _id: 0, name: { $ifNull: ["$item.name", "Unknown"] }, total: 1 } },
+          { $sort: { total: -1 } },
+        ]),
         // Cost-of-goods (from each item's snapshot makingCost) and the retail
         // value given away as complimentary, over revenue orders in the range.
         Order.aggregate([
@@ -210,6 +259,11 @@ export const dashboardResolvers = {
               },
             },
           },
+        ]),
+        // Order counts grouped by status (dashboard doughnut, all-time).
+        Order.aggregate([
+          { $group: { _id: "$status", count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
         ]),
       ]);
 
@@ -245,6 +299,9 @@ export const dashboardResolvers = {
         periodRevenue,
         periodExpenses,
         expenseCategoryCount: expenseCategoryAgg[0]?.n ?? 0,
+        expenseBySource: expenseBySourceAgg.map((e) => ({ name: e.name, color: e.color, total: e.total })),
+        expenseByItem: expenseByItemAgg.map((e) => ({ name: e.name, total: e.total })),
+        ordersByStatus: ordersByStatusAgg.map((o) => ({ status: o._id, count: o.count })),
         periodProfit,
         periodComplimentary,
         dishRatings: dishRatingsAgg.map((d) => ({

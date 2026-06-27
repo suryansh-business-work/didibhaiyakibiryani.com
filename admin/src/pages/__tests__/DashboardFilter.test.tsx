@@ -48,6 +48,10 @@ describe("rangeForPreset", () => {
     });
   });
 
+  it("'all' maps to an empty (all-time) range", () => {
+    expect(rangeForPreset("all", FIXED)).toEqual({});
+  });
+
   it("'custom' falls through to the today range", () => {
     expect(rangeForPreset("custom", FIXED)).toEqual({
       from: startOfDay(FIXED).toISOString(),
@@ -94,7 +98,7 @@ function renderFilter(props: Partial<React.ComponentProps<typeof DashboardFilter
 describe("DashboardFilter component", () => {
   it("renders all preset chips", () => {
     renderFilter();
-    for (const label of ["Today", "Tomorrow", "This Week", "This Month", "Custom"]) {
+    for (const label of ["All time", "Today", "Tomorrow", "This Week", "This Month", "Custom"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
   });

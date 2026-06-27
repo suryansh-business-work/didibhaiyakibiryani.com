@@ -393,6 +393,28 @@ export const typeDefs = /* GraphQL */ `
     total: Int!
   }
 
+  # A spend total grouped by expense source or raw item (dashboard charts).
+  type ExpenseStat {
+    name: String!
+    color: String
+    total: Float!
+  }
+
+  # Order count grouped by status (dashboard doughnut).
+  type StatusStat {
+    status: String!
+    count: Int!
+  }
+
+  # Lightweight headline counts for the Orders screen cards.
+  type OrdersStats {
+    totalOrders: Int!
+    todayOrders: Int!
+    todayRevenue: Float!
+    pendingOrders: Int!
+    totalRevenue: Float!
+  }
+
   # Per-dish menu-finance inputs for the dashboard Profit drill-down.
   # Total profit is derived as (price - makingCost) * qty — i.e. Profit/Unit × Qty.
   type ProfitItem {
@@ -431,6 +453,9 @@ export const typeDefs = /* GraphQL */ `
     periodRevenue: Float!
     periodExpenses: Float!
     expenseCategoryCount: Int!
+    expenseBySource: [ExpenseStat!]!
+    expenseByItem: [ExpenseStat!]!
+    ordersByStatus: [StatusStat!]!
     periodProfit: Float!
     periodComplimentary: Float!
     dishRatings: [DishRating!]!
@@ -924,6 +949,7 @@ export const typeDefs = /* GraphQL */ `
     expenseSources(activeOnly: Boolean): [ExpenseSource!]! # admin
     expenses: [Expense!]! # admin
     expenseProducts: [ExpenseProduct!]! # admin — raw items / materials
+    ordersStats: OrdersStats! # admin/staff — headline counts for the Orders screen
 
     categories(activeOnly: Boolean): [Category!]!
     menuItems(categoryId: ID, search: String, availableOnly: Boolean): [MenuItem!]!
@@ -966,7 +992,7 @@ export const typeDefs = /* GraphQL */ `
     leadsPage(search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): LeadsPage! # admin
     partyOrdersPage(status: PartyOrderStatus, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): PartyOrdersPage! # admin/staff
     supportTicketsPage(status: TicketStatus, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): SupportTicketsPage! # admin/staff
-    expensesPage(search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): ExpensesPage! # admin
+    expensesPage(sourceId: ID, productId: ID, from: DateTime, to: DateTime, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): ExpensesPage! # admin
     menuItemsPage(categoryId: ID, search: String, availableOnly: Boolean, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): MenuItemsPage! # admin
     couponsPage(activeOnly: Boolean, search: String, sortBy: String, sortDir: SortDir, limit: Int, offset: Int): CouponsPage! # admin
   }

@@ -98,77 +98,64 @@ describe("RHFField", () => {
   });
 });
 
-describe("RHFSelect", () => {
-  it("renders the empty option (default label) plus all options", () => {
-    render(
-      <Harness
-        render={(control) => <RHFSelect control={control} name="choice" label="Pick" options={SELECT_OPTIONS} />}
-      />,
-    );
-    // Open the select to see the menu items.
-    fireEvent.mouseDown(screen.getByLabelText("Pick"));
-    expect(screen.getByText("—")).toBeInTheDocument();
-    expect(screen.getByText("Alpha")).toBeInTheDocument();
-    expect(screen.getByText("Beta")).toBeInTheDocument();
+describe("RHFSelect (searchable)", () => {
+  const pick = () => screen.getByLabelText("Pick") as HTMLInputElement;
+
+  it("lists options in a searchable combobox", () => {
+    render(<Harness render={(control) => <RHFSelect control={control} name="choice" label="Pick" options={SELECT_OPTIONS} />} />);
+    expect(pick()).toHaveAttribute("role", "combobox");
+    fireEvent.change(pick(), { target: { value: "a" } });
+    expect(screen.getByRole("option", { name: "Alpha" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Beta" })).toBeInTheDocument();
   });
 
-  it("selects an option and reflects the value", () => {
-    render(
-      <Harness
-        render={(control) => <RHFSelect control={control} name="choice" label="Pick" options={SELECT_OPTIONS} />}
-      />,
-    );
-    fireEvent.mouseDown(screen.getByLabelText("Pick"));
-    fireEvent.click(screen.getByText("Beta"));
-    // The hidden input MUI keeps for the select carries the value.
-    const hidden = document.querySelector('input[name="choice"]') as HTMLInputElement;
-    expect(hidden.value).toBe("b");
+  it("selects an option and shows its label", () => {
+    render(<Harness render={(control) => <RHFSelect control={control} name="choice" label="Pick" options={SELECT_OPTIONS} />} />);
+    fireEvent.change(pick(), { target: { value: "Bet" } });
+    fireEvent.click(screen.getByRole("option", { name: "Beta" }));
+    expect(pick().value).toBe("Beta");
   });
 
-  it("shows the error and disables the field; a disabled select does not open", () => {
+  it("pre-selects the current value and matches it when opened", () => {
+    render(<Harness values={{ choice: "b" }} render={(control) => <RHFSelect control={control} name="choice" label="Pick" options={SELECT_OPTIONS} />} />);
+    expect(pick().value).toBe("Beta");
+    // Open the listbox so the selected option is matched (isOptionEqualToValue).
+    fireEvent.change(pick(), { target: { value: "Bet" } });
+    expect(screen.getByRole("option", { name: "Beta" })).toBeInTheDocument();
+  });
+
+  it("clears the value back to empty", () => {
+    render(<Harness values={{ choice: "b" }} render={(control) => <RHFSelect control={control} name="choice" label="Pick" options={SELECT_OPTIONS} />} />);
+    expect(pick().value).toBe("Beta");
+    fireEvent.click(screen.getByTitle("Clear"));
+    expect(pick().value).toBe("");
+  });
+
+  it("shows the error and disables the field", () => {
     render(
       <Harness
         render={(control) => (
-          <RHFSelect
-            control={control}
-            name="choice"
-            label="Pick"
-            options={SELECT_OPTIONS}
-            error="Choose one"
-            disabled
-            margin="none"
-          />
+          <RHFSelect control={control} name="choice" label="Pick" options={SELECT_OPTIONS} error="Choose one" disabled margin="none" />
         )}
       />,
     );
     expect(screen.getByText("Choose one")).toBeInTheDocument();
-    expect(screen.getByLabelText("Pick")).toHaveAttribute("aria-disabled", "true");
-    // A disabled select cannot open, so its menu items stay out of the DOM.
-    fireEvent.mouseDown(screen.getByLabelText("Pick"));
-    expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
+    expect(pick()).toBeDisabled();
   });
 
-  it("renders a custom empty label", () => {
-    render(
-      <Harness
-        render={(control) => (
-          <RHFSelect control={control} name="choice" label="Pick" options={SELECT_OPTIONS} emptyLabel="None" />
-        )}
-      />,
-    );
-    fireEvent.mouseDown(screen.getByLabelText("Pick"));
-    expect(screen.getByText("None")).toBeInTheDocument();
+  it("uses the empty label as the placeholder", () => {
+    render(<Harness render={(control) => <RHFSelect control={control} name="choice" label="Pick" options={SELECT_OPTIONS} emptyLabel="None" />} />);
+    expect(pick()).toHaveAttribute("placeholder", "None");
   });
 
-  it("coerces a nullish field value to an empty string", () => {
+  it("renders empty for a nullish field value", () => {
     render(
       <Harness
         values={{ choice: undefined as unknown as string }}
         render={(control) => <RHFSelect control={control} name="choice" label="Pick" options={SELECT_OPTIONS} />}
       />,
     );
-    const hidden = document.querySelector('input[name="choice"]') as HTMLInputElement;
-    expect(hidden.value).toBe("");
+    expect(pick().value).toBe("");
   });
 });
 

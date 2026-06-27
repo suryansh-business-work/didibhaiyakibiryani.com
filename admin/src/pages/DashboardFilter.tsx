@@ -10,7 +10,7 @@ import {
   addDays,
 } from "date-fns";
 
-export type Preset = "today" | "tomorrow" | "week" | "month" | "custom";
+export type Preset = "today" | "tomorrow" | "week" | "month" | "custom" | "all";
 
 export interface DateRange {
   from?: string;
@@ -18,6 +18,7 @@ export interface DateRange {
 }
 
 const PRESETS: ReadonlyArray<{ value: Preset; label: string }> = [
+  { value: "all", label: "All time" },
   { value: "today", label: "Today" },
   { value: "tomorrow", label: "Tomorrow" },
   { value: "week", label: "This Week" },
@@ -27,6 +28,9 @@ const PRESETS: ReadonlyArray<{ value: Preset; label: string }> = [
 
 /** Maps a non-custom preset to an ISO `{ from, to }` range using date-fns. */
 export function rangeForPreset(preset: Preset, now: Date = new Date()): DateRange {
+  if (preset === "all") {
+    return {};
+  }
   if (preset === "tomorrow") {
     const day = addDays(now, 1);
     return { from: startOfDay(day).toISOString(), to: endOfDay(day).toISOString() };

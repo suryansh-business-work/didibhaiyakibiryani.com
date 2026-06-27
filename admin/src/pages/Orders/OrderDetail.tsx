@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useLazyQuery } from "@apollo/client";
-import { Chip, Rating, Stack, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
+import { Autocomplete, Chip, Rating, Stack, Table, TableBody, TableCell, TableRow, TextField, Typography } from "@mui/material";
 import { RECEIPT_PDF } from "../../graphql/queries";
 import { Modal, StatusBadge, inr, fmtDate } from "../../components/ui";
 import { LABEL, NEXT, type Order, type Rider } from "./types";
@@ -146,20 +146,19 @@ export default function OrderDetail({
 
       <Section label="Delivery partner">
         {canAssign ? (
-          <select
-            value={active.deliveryPartner?.id ?? ""}
+          <Autocomplete
+            options={riders}
+            getOptionLabel={(r) => (r.phone ? `${r.name} · ${r.phone}` : r.name)}
+            isOptionEqualToValue={(a, b) => a.id === b.id}
+            value={riders.find((r) => r.id === active.deliveryPartner?.id) ?? null}
+            onChange={(_, r) => { if (r) onAssignRider(active, r.id); }}
             disabled={saving || riders.length === 0}
-            onChange={(e) => e.target.value && onAssignRider(active, e.target.value)}
-            style={{ width: "100%" }}
-          >
-            <option value="">{riders.length ? "Assign a rider…" : "No riders yet — add one in Riders"}</option>
-            {riders.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-                {r.phone ? ` · ${r.phone}` : ""}
-              </option>
-            ))}
-          </select>
+            size="small"
+            fullWidth
+            renderInput={(params) => (
+              <TextField {...params} placeholder={riders.length ? "Assign a rider…" : "No riders yet — add one in Riders"} />
+            )}
+          />
         ) : (
           <div className="muted">{active.deliveryPartner?.name ?? "—"}</div>
         )}

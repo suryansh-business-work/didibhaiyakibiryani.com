@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@apollo/client";
 import {
+  Autocomplete,
   Box,
   Button,
   Dialog,
@@ -8,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -61,9 +61,17 @@ export default function LockedOrderEdit({ order, onClose, onSaved }: Readonly<Pr
           <Typography fontWeight={800}>Total</Typography>
           <Typography fontWeight={800} color="primary">{inr(order.total)}</Typography>
         </Box>
-        <TextField select label="Order status" size="small" fullWidth value={status} onChange={(e) => setStatus(e.target.value)}>
-          {STATUS_SEQUENCE.map((s) => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
-        </TextField>
+        <Autocomplete
+          options={STATUS_SEQUENCE}
+          getOptionLabel={(o) => o.label}
+          isOptionEqualToValue={(o, v) => o.value === v.value}
+          value={STATUS_SEQUENCE.find((s) => s.value === status) ?? STATUS_SEQUENCE[0]}
+          onChange={(_, opt) => setStatus(opt.value)}
+          disableClearable
+          fullWidth
+          size="small"
+          renderInput={(params) => <TextField {...params} label="Order status" />}
+        />
         {error ? <Typography color="error" variant="body2" sx={{ mt: 1 }}>{error.message}</Typography> : null}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>

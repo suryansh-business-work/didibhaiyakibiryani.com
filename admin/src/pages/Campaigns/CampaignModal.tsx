@@ -1,6 +1,11 @@
-import { Box, MenuItem, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, TextField, Typography } from "@mui/material";
 import { Modal, FormActions } from "../../components/ui";
 import type { CampaignForm } from "./types";
+
+const CHANNELS: ReadonlyArray<{ value: CampaignForm["channel"]; label: string }> = [
+  { value: "EMAIL", label: "Email" },
+  { value: "WHATSAPP", label: "WhatsApp" },
+];
 
 interface CampaignModalProps {
   form: CampaignForm;
@@ -30,18 +35,17 @@ export default function CampaignModal({ form, busy, error, onChange, onClose, on
           onChange={(e) => set({ name: e.target.value })}
           placeholder="Weekend feast offer"
         />
-        <TextField
-          select
-          label="Channel"
-          size="small"
-          margin="dense"
+        <Autocomplete
+          options={CHANNELS}
+          getOptionLabel={(o) => o.label}
+          isOptionEqualToValue={(o, v) => o.value === v.value}
+          value={CHANNELS.find((o) => o.value === form.channel) ?? CHANNELS[0]}
+          onChange={(_, opt) => set({ channel: (opt ?? CHANNELS[0]).value })}
+          disableClearable
           fullWidth
-          value={form.channel}
-          onChange={(e) => set({ channel: e.target.value as CampaignForm["channel"] })}
-        >
-          <MenuItem value="EMAIL">Email</MenuItem>
-          <MenuItem value="WHATSAPP">WhatsApp</MenuItem>
-        </TextField>
+          size="small"
+          renderInput={(params) => <TextField {...params} label="Channel" margin="dense" />}
+        />
       </Box>
       <TextField
         label="Subject / headline"

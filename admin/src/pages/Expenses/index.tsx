@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
-import { Box, Button, Typography } from "@mui/material";
+import { Autocomplete, Box, Button, TextField, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { startOfDay, endOfDay } from "date-fns";
 import { EXPENSES_PAGE, EXPENSE_SOURCES, EXPENSE_PRODUCTS } from "../../graphql/queries";
 import { CREATE_EXPENSE, UPDATE_EXPENSE, DELETE_EXPENSE, DELETE_EXPENSES } from "../../graphql/mutations";
 import Layout from "../../components/Layout";
@@ -23,8 +24,19 @@ interface Expense {
 const BLANK: ExpenseForm = { sourceId: "", productId: "", amount: 0, unit: "", note: "", date: new Date().toISOString() };
 
 export default function Expenses() {
-  const { variables, tableProps } = useServerTable({ initialSortKey: "date", initialSortDir: "desc" });
-  const { data, loading, refetch } = useQuery<{ expensesPage: { items: Expense[]; total: number } }>(EXPENSES_PAGE, { variables });
+  const { variables, tableProps, setPage } = useServerTable({ initialSortKey: "date", initialSortDir: "desc" });
+  const [sourceId, setSourceId] = useState("");
+  const [productId, setProductId] = useState("");
+  const [fromDate, setFromDate] = useState<Date | null>(null);
+  const [toDate, setToDate] = useState<Date | null>(null);
+  const filterVars = {
+    sourceId: sourceId || null,
+    productId: productId || null,
+    from: fromDate ? startOfDay(fromDate).toISOString() : null,
+    to: toDate ? endOfDay(toDate).toISOString() : null,
+  };
+  const filtered = Boolean(sourceId || productId || fromDate || toDate);
+  const { data, loading, refetch } = useQuery<{ expensesPage: { items: Expense[]; total: number } }>(EXPENSES_PAGE, { variables: { ...variables, ...filterVars } });
   const { data: srcData } = useQuery<{ expenseSources: SourceRef[] }>(EXPENSE_SOURCES);
   const { data: prodData } = useQuery<{ expenseProducts: ProductRef[] }>(EXPENSE_PRODUCTS);
   const [create] = useMutation(CREATE_EXPENSE);
@@ -99,8 +111,42 @@ export default function Expenses() {
     catch (err: unknown) { await notify({ title: "Could not delete", message: err instanceof Error ? err.message : "Could not delete." }); }
   }
 
+  function clearFilters() {
+    setSourceId("");
+    setProductId("");
+    setFromDate(null);
+    setToDate(null);
+    setPage(1);
+  }
+
   return (
     <Layout title="Manage Expenses">
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
+        <Autocomplete
+          size="small"
+          sx={{ minWidth: 190 }}
+          options={sourceOptions}
+          getOptionLabel={(o) => o.label}
+          isOptionEqualToValue={(o, v) => o.value === v.value}
+          value={sourceOptions.find((o) => o.value === sourceId) ?? null}
+          onChange={(_, opt) => { setSourceId(opt ? opt.value : ""); setPage(1); }}
+          renderInput={(params) => <TextField {...params} label="Expense from" placeholder="All sources" />}
+        />
+        <Autocomplete
+          size="small"
+          sx={{ minWidth: 190 }}
+          options={productOptions}
+          getOptionLabel={(o) => o.label}
+          isOptionEqualToValue={(o, v) => o.value === v.value}
+          value={productOptions.find((o) => o.value === productId) ?? null}
+          onChange={(_, opt) => { setProductId(opt ? opt.value : ""); setPage(1); }}
+          renderInput={(params) => <TextField {...params} label="Raw item" placeholder="All raw items" />}
+        />
+        <DatePicker label="From" value={fromDate} onChange={(d) => { setFromDate(d); setPage(1); }} slotProps={{ textField: { size: "small" } }} />
+        <DatePicker label="To" value={toDate} onChange={(d) => { setToDate(d); setPage(1); }} slotProps={{ textField: { size: "small" } }} />
+        {filtered ? <Button color="inherit" onClick={clearFilters}>Clear filters</Button> : null}
+      </Box>
+
       <DataTable
         columns={columns}
         rows={expenses}

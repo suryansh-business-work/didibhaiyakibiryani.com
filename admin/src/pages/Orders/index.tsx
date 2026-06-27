@@ -16,6 +16,7 @@ import ManualOrderModal from "./ManualOrderModal";
 import LockedOrderEdit from "./LockedOrderEdit";
 import GenerateMessageDialog from "./GenerateMessageDialog";
 import OrderTimelineDialog from "./OrderTimelineDialog";
+import OrdersStatsCards from "./OrdersStatsCards";
 import type { MessageKind } from "../../constants/messageTemplates";
 import { FILTERS, type Order, type Rider } from "./types";
 
@@ -167,6 +168,7 @@ export default function Orders() {
 
   return (
     <Layout title="Orders">
+      <OrdersStatsCards />
       {scopedToCustomer && (
         <Alert
           severity="info"

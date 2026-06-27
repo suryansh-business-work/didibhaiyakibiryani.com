@@ -3,10 +3,10 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Autocomplete,
   Box,
   Checkbox,
   FormControlLabel,
-  MenuItem as MuiMenuItem,
   Stack,
   TextField,
   Typography,
@@ -14,7 +14,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Modal, FormActions, inr } from "../../components/ui";
 import ImageUpload from "../../components/ImageUpload";
-import { RHFField, RHFCheckbox, type MenuForm } from "../../form";
+import { RHFField, RHFSelect, RHFCheckbox, type MenuForm } from "../../form";
 import { BADGE_OPTIONS, SERVES_OPTIONS, SPICE_OPTIONS, type Cat } from "./types";
 
 interface MenuItemModalProps {
@@ -107,25 +107,13 @@ export default function MenuItemModal({
       <ImageUpload label="Item photo" folder="/menu" currentUrl={imageUrl} onUploaded={onImageUploaded} />
       <Box sx={{ display: "flex", gap: 1.5 }}>
         <RHFField control={control} name="price" label="Price (₹)" type="number" error={errors.price?.message} />
-        <Controller
+        <RHFSelect
           control={control}
           name="categoryId"
-          render={({ field }) => (
-            <TextField
-              {...field}
-              value={field.value ?? ""}
-              select
-              label="Category"
-              size="small"
-              margin="dense"
-              fullWidth
-              error={Boolean(errors.categoryId)}
-              helperText={errors.categoryId?.message}
-            >
-              <MuiMenuItem value="">Select…</MuiMenuItem>
-              {cats.map((c) => <MuiMenuItem key={c.id} value={c.id}>{c.name}</MuiMenuItem>)}
-            </TextField>
-          )}
+          label="Category"
+          options={cats.map((c) => ({ value: c.id, label: c.name }))}
+          error={errors.categoryId?.message}
+          emptyLabel="Select…"
         />
       </Box>
       <FinanceAccordion control={control} watch={watch} setValue={setValue} error={errors.makingCost?.message} />
@@ -135,39 +123,22 @@ export default function MenuItemModal({
           control={control}
           name="spiceLevel"
           render={({ field }) => (
-            <TextField
-              select
-              label="Default spice level"
-              size="small"
-              margin="dense"
+            <Autocomplete
+              options={SPICE_OPTIONS}
+              getOptionLabel={(o) => o.label}
+              isOptionEqualToValue={(o, v) => o.value === v.value}
+              value={SPICE_OPTIONS.find((o) => o.value === field.value) ?? null}
+              onChange={(_, opt) => field.onChange(opt ? opt.value : 0)}
               fullWidth
-              value={String(field.value ?? 0)}
-              onChange={(e) => field.onChange(Number(e.target.value))}
-            >
-              {SPICE_OPTIONS.map((s) => <MuiMenuItem key={s.value} value={s.value}>{s.label}</MuiMenuItem>)}
-            </TextField>
+              size="small"
+              renderInput={(params) => <TextField {...params} label="Default spice level" margin="dense" onBlur={field.onBlur} />}
+            />
           )}
         />
-        <Controller
-          control={control}
-          name="serves"
-          render={({ field }) => (
-            <TextField select label="Serves" size="small" margin="dense" fullWidth value={field.value ?? "1"} onChange={field.onChange}>
-              {SERVES_OPTIONS.map((s) => <MuiMenuItem key={s.value} value={s.value}>{s.label}</MuiMenuItem>)}
-            </TextField>
-          )}
-        />
+        <RHFSelect control={control} name="serves" label="Serves" options={SERVES_OPTIONS} emptyLabel="—" />
       </Box>
       <Box sx={{ display: "flex", gap: 1.5 }}>
-        <Controller
-          control={control}
-          name="badge"
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ""} select label="Badge" size="small" margin="dense" fullWidth>
-              {BADGE_OPTIONS.map((b) => <MuiMenuItem key={b.value} value={b.value}>{b.label}</MuiMenuItem>)}
-            </TextField>
-          )}
-        />
+        <RHFSelect control={control} name="badge" label="Badge" options={BADGE_OPTIONS} emptyLabel="None" />
         <RHFField control={control} name="tags" label="Tags (comma-separated)" placeholder="bestseller, paneer" error={errors.tags?.message} />
       </Box>
       <Controller
