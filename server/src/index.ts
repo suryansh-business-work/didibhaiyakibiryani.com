@@ -12,6 +12,7 @@ import { logger } from "./utils/logger.js";
 import { connectDBWithRetry } from "./config/db.js";
 import { razorpayWebhook } from "./webhooks/razorpay.js";
 import { receiptRouter } from "./routes/receipt.js";
+import { exportRouter } from "./routes/export.js";
 import { healthRouter } from "./routes/health.js";
 import { typeDefs } from "./graphql/typeDefs.js";
 import { resolvers } from "./graphql/resolvers/index.js";
@@ -63,6 +64,14 @@ async function start() {
   // tracking pages are now standalone React apps (survey./track. subdomains)
   // that read the public surveyOrder/trackOrder GraphQL queries by order number.
   app.use(receiptRouter);
+
+  // Admin-only Excel/PDF exports. CORS + Authorization header (the admin fetches
+  // these as a blob), so they need the same cross-origin handling as /graphql.
+  app.use(
+    "/export",
+    cors<cors.CorsRequest>({ origin: corsOrigin, credentials: true }),
+    exportRouter
+  );
 
   app.use(
     "/graphql",

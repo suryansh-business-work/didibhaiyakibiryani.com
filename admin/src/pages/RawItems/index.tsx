@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
-import { Button, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { EXPENSE_PRODUCTS } from "../../graphql/queries";
 import { CREATE_EXPENSE_PRODUCT, UPDATE_EXPENSE_PRODUCT, DELETE_EXPENSE_PRODUCT } from "../../graphql/mutations";
 import Layout from "../../components/Layout";
@@ -10,6 +10,7 @@ import { FormActions, Modal, inr } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import { DataTable, useClientTable, type Column } from "../../components/DataTable";
 import { useAlert, useConfirm } from "../../components/dialog";
+import ExportButtons from "../../components/ExportButtons";
 import { RHFField, RHFSelect, rawItemSchema, type RawItemForm } from "../../form";
 
 const PRICE_UNITS = ["KG", "Gram", "Litre", "Piece", "Dozen", "Packet", "Quantity"];
@@ -80,7 +81,12 @@ export default function RawItems() {
             <Button size="small" color="error" onClick={() => remove(i)}>Delete</Button>
           </>
         )}
-        toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New raw item</Button>}
+        toolbarEnd={
+          <Stack direction="row" spacing={1} alignItems="center">
+            <ExportButtons report="raw-items" />
+            <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New raw item</Button>
+          </Stack>
+        }
         {...tableProps}
       />
 

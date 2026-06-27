@@ -7,6 +7,7 @@ import { Alert, Button } from "@mui/material";
 import Layout from "../../components/Layout";
 import { AsyncList } from "../../components/ui";
 import { IPlus } from "../../components/icons";
+import ExportButtons from "../../components/ExportButtons";
 import { useServerTable } from "../../components/DataTable";
 import { useAlert, useConfirm } from "../../components/dialog";
 import OrderDetail from "./OrderDetail";
@@ -194,6 +195,7 @@ export default function Orders() {
           onChange={(e) => tableProps.onSearchChange(e.target.value)}
           style={{ minWidth: 220 }}
         />
+        <ExportButtons report="orders" params={{ status: filter === "ALL" ? undefined : filter, search: tableProps.search, userId: customerId ?? undefined, phone: customerPhone ?? undefined }} />
         <Button variant="contained" startIcon={<IPlus size={16} />} onClick={() => setPosOpen(true)}>New order (POS)</Button>
       </div>
 

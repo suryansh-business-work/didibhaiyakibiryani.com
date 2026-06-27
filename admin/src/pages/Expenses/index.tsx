@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@apollo/client";
-import { Autocomplete, Box, Button, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { startOfDay, endOfDay } from "date-fns";
 import { EXPENSES_PAGE, EXPENSE_SOURCES, EXPENSE_PRODUCTS } from "../../graphql/queries";
@@ -12,6 +12,7 @@ import { FormActions, Modal, inr, fmtDate } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import { DataTable, useServerTable, type Column } from "../../components/DataTable";
 import { useAlert, useConfirm } from "../../components/dialog";
+import ExportButtons from "../../components/ExportButtons";
 import { RHFField, RHFSelect, expenseSchema, type ExpenseForm } from "../../form";
 
 interface SourceRef { id: string; name: string; color?: string | null }
@@ -163,7 +164,12 @@ export default function Expenses() {
             <Button size="small" color="error" onClick={() => remove(e)}>Delete</Button>
           </>
         )}
-        toolbarEnd={<Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New expense</Button>}
+        toolbarEnd={
+          <Stack direction="row" spacing={1} alignItems="center">
+            <ExportButtons report="expenses" params={{ sourceId, productId, from: filterVars.from, to: filterVars.to, search: tableProps.search }} />
+            <Button variant="contained" startIcon={<IPlus size={16} />} onClick={openNew}>New expense</Button>
+          </Stack>
+        }
         {...tableProps}
       />
 

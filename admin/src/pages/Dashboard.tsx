@@ -11,6 +11,7 @@ import DashboardFilter, { rangeForPreset, type Preset, type DateRange } from "./
 import { Stat, PeriodSummary } from "./DashboardStat";
 import { DashboardExpenses, type ExpenseStat } from "./DashboardExpenses";
 import { DashboardInsights, type StatusStat } from "./DashboardInsights";
+import ExportButtons from "../components/ExportButtons";
 import ProfitDialog from "./ProfitDialog";
 
 interface TopItem { name: string; qty: number; revenue: number; }
@@ -55,14 +56,17 @@ export default function Dashboard() {
 
   return (
     <Layout title="Dashboard">
-      <DashboardFilter
-        preset={preset}
-        customFrom={customFrom}
-        customTo={customTo}
-        onPreset={setPreset}
-        onCustomFrom={setCustomFrom}
-        onCustomTo={setCustomTo}
-      />
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <DashboardFilter
+          preset={preset}
+          customFrom={customFrom}
+          customTo={customTo}
+          onPreset={setPreset}
+          onCustomFrom={setCustomFrom}
+          onCustomTo={setCustomTo}
+        />
+        <ExportButtons report="dashboard" params={{ from: range.from, to: range.to }} />
+      </div>
       <DashboardContent
         loading={loading && !data}
         error={error?.message}
