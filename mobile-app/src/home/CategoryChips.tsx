@@ -1,6 +1,6 @@
 import { ScrollView } from "react-native";
 import { XStack, Text } from "tamagui";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 import type { Cat } from "./types";
 
 interface CategoryChipsProps {
@@ -31,6 +31,7 @@ function Chip({
   active,
   onPress,
 }: Readonly<{ label: string; active: boolean; onPress: () => void }>) {
+  const brand = useColors();
   return (
     <XStack
       height={34}

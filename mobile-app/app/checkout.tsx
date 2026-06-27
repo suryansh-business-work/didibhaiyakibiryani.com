@@ -15,9 +15,11 @@ import { Section, PayOption, Row, Notice } from "../src/checkout/fields";
 import { SocietyPicker, type Society } from "../src/checkout/SocietyPicker";
 import { RHFTextField, BlockPicker, checkoutAddressSchema, type CheckoutAddressForm } from "../src/form";
 import { BackButton, MIcon } from "../src/components";
-import { brand, inr } from "../src/theme";
+import { useColors, inr } from "../src/theme";
+import { errorMessage } from "../src/error";
 
 export default function Checkout() {
+  const brand = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -87,18 +89,22 @@ export default function Checkout() {
   async function apply() {
     if (!code.trim()) return;
     setCouponMsg("");
-    const { data } = await validate({ variables: { code: code.trim().toUpperCase(), subtotal } });
-    const res = data?.validateCoupon;
-    if (res?.valid) {
-      setDiscount(res.discount ?? 0);
-      setFreeDelivery(res.coupon?.type === "FREE_DELIVERY");
-      setAppliedCode(code.trim().toUpperCase());
-      setCouponMsg(res.message);
-    } else {
-      setDiscount(0);
-      setFreeDelivery(false);
-      setAppliedCode(null);
-      setCouponMsg(res?.message ?? "Invalid coupon.");
+    try {
+      const { data } = await validate({ variables: { code: code.trim().toUpperCase(), subtotal } });
+      const res = data?.validateCoupon;
+      if (res?.valid) {
+        setDiscount(res.discount ?? 0);
+        setFreeDelivery(res.coupon?.type === "FREE_DELIVERY");
+        setAppliedCode(code.trim().toUpperCase());
+        setCouponMsg(res.message);
+      } else {
+        setDiscount(0);
+        setFreeDelivery(false);
+        setAppliedCode(null);
+        setCouponMsg(res?.message ?? "Invalid coupon.");
+      }
+    } catch (e: unknown) {
+      setCouponMsg(errorMessage(e, "Couldn't check that coupon. Try again."));
     }
   }
 
@@ -135,7 +141,7 @@ export default function Checkout() {
       clear();
       router.replace(`/order/${data.placeOrder.id}`);
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : "Couldn't place the order — please try again.");
+      setFormError(errorMessage(e, "Couldn't place the order — please try again."));
     }
   }
 
@@ -237,7 +243,7 @@ export default function Checkout() {
         {formError ? <Notice kind="error">{formError}</Notice> : null}
       </ScrollView>
 
-      <XStack paddingHorizontal={16} paddingBottom={insets.bottom + 12} paddingTop={12} backgroundColor="#0c0805" borderTopColor={brand.border} borderTopWidth={1}>
+      <XStack paddingHorizontal={16} paddingBottom={insets.bottom + 12} paddingTop={12} backgroundColor={brand.bg} borderTopColor={brand.border} borderTopWidth={1}>
         <Button flex={1} height={52} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" fontSize={16}
           disabled={placing || lines.length === 0 || blocked} opacity={blocked ? 0.6 : 1} onPress={submit}>
           {placing ? <Spinner color="#2a1a06" /> : `Place order · ${inr(total)}`}

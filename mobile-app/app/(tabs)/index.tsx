@@ -6,7 +6,8 @@ import { YStack } from "tamagui";
 import { HOME_DATA, OFFERS, MY_ORDERS } from "../../src/graphql";
 import { useCart } from "../../src/cart";
 import { useAuth } from "../../src/auth";
-import { brand } from "../../src/theme";
+import { useColors } from "../../src/theme";
+import { errorMessage } from "../../src/error";
 import {
   HomeHeader,
   FulfilmentToggle,
@@ -14,6 +15,7 @@ import {
   CategoryGrid,
   OffersStrip,
   RecentOrderStrip,
+  RewardsStrip,
   HomeList,
   CartBar,
   StoreClosedBanner,
@@ -27,11 +29,12 @@ import {
 interface AddArgs { id: string; name: string; price: number; spiceLevel: number; spiceSelectable: boolean }
 
 export default function Home() {
+  const brand = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
   const { add, count, subtotal } = useCart();
-  const { data, loading, error } = useQuery<{ banners: Banner[]; categories: Cat[]; menuItems: Item[] }>(HOME_DATA);
+  const { data, loading, error, refetch } = useQuery<{ banners: Banner[]; categories: Cat[]; menuItems: Item[] }>(HOME_DATA);
   const { data: offerData } = useQuery<{ coupons: Coupon[] }>(OFFERS);
   const { data: orderData } = useQuery<{ myOrders: RecentOrder[] }>(MY_ORDERS, { skip: !user });
   const [activeCat, setActiveCat] = useState<string>("ALL");
@@ -61,13 +64,14 @@ export default function Home() {
         initial={initial}
         paddingTop={insets.top + 8}
         onLocation={() => router.push("/addresses")}
-        onRedeem={() => router.push("/offers")}
+        onRedeem={() => router.push("/rewards")}
         onAccount={() => router.push(user ? "/profile" : "/login")}
       />
       <StoreClosedBanner />
       <HomeList
         loading={loading && !data}
-        error={error?.message}
+        error={error && !data ? errorMessage(error) : undefined}
+        onRetry={() => { refetch().catch(() => {}); }}
         items={filtered}
         count={count}
         onAdd={addToCart}
@@ -76,6 +80,7 @@ export default function Home() {
             <FulfilmentToggle />
             <HomeSlider banners={banners} />
             <OffersStrip coupons={coupons} onPress={() => router.push("/offers")} />
+            <RewardsStrip />
             <RecentOrderStrip orders={orders} onAdd={addToCart} />
             <CategoryGrid cats={cats} activeCat={activeCat} onSelect={setActiveCat} />
           </>

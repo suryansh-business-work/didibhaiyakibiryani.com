@@ -14,35 +14,38 @@ import { FulfilmentProvider } from "../src/fulfilment";
 import { SettingsProvider } from "../src/settings";
 import { MaintenanceGate } from "../src/MaintenanceGate";
 import { ActiveOrderBar } from "../src/order/ActiveOrderBar";
-import { brand } from "../src/theme";
+import { ThemeProvider, useThemeMode } from "../src/theme";
 
 /** Phone-frame width: on wide screens (web/tablet) the app is capped to a
  * mobile width and centred; on phones (< 767px) it fills the screen as usual. */
 const FRAME_MAX_WIDTH = 767;
 
-export default function RootLayout() {
+/** Everything below the ThemeProvider — reads the active scheme so Tamagui,
+ *  the status bar and the page background all flip together for light/dark. */
+function ThemedShell() {
+  const { scheme, colors } = useThemeMode();
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: brand.bg }}>
-      <View style={{ flex: 1, width: "100%", maxWidth: FRAME_MAX_WIDTH, alignSelf: "center", backgroundColor: brand.bg }}>
-        <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ flex: 1, width: "100%", maxWidth: FRAME_MAX_WIDTH, alignSelf: "center", backgroundColor: colors.bg }}>
+        <TamaguiProvider config={tamaguiConfig} defaultTheme={scheme}>
           <ApolloProvider client={client}>
             <SettingsProvider>
               <AuthProvider>
                 <CartProvider>
                   <FulfilmentProvider>
-                  <SafeAreaProvider>
-                    <StatusBar style="light" />
-                    <MaintenanceGate>
-                      <Stack
-                        screenOptions={{
-                          headerShown: false,
-                          contentStyle: { backgroundColor: brand.bg },
-                          animation: "slide_from_right",
-                        }}
-                      />
-                      <ActiveOrderBar />
-                    </MaintenanceGate>
-                  </SafeAreaProvider>
+                    <SafeAreaProvider>
+                      <StatusBar style={scheme === "dark" ? "light" : "dark"} />
+                      <MaintenanceGate>
+                        <Stack
+                          screenOptions={{
+                            headerShown: false,
+                            contentStyle: { backgroundColor: colors.bg },
+                            animation: "slide_from_right",
+                          }}
+                        />
+                        <ActiveOrderBar />
+                      </MaintenanceGate>
+                    </SafeAreaProvider>
                   </FulfilmentProvider>
                 </CartProvider>
               </AuthProvider>
@@ -51,5 +54,13 @@ export default function RootLayout() {
         </TamaguiProvider>
       </View>
     </GestureHandlerRootView>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <ThemedShell />
+    </ThemeProvider>
   );
 }

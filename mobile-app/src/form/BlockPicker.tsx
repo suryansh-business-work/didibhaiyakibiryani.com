@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ScrollView } from "react-native";
 import { YStack, XStack, Text } from "tamagui";
 import { MIcon } from "../components";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 
 const LETTERS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 
@@ -15,6 +15,7 @@ interface BlockPickerProps {
 
 /** Dropdown to pick a building block A–Z. */
 export function BlockPicker({ label, value, onChange, error }: Readonly<BlockPickerProps>) {
+  const brand = useColors();
   const [open, setOpen] = useState(false);
 
   return (

@@ -8,13 +8,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { CAPTCHA, SUBMIT_PARTY_ORDER } from "../src/graphql";
 import { useAuth } from "../src/auth";
-import { brand } from "../src/theme";
+import { useColors } from "../src/theme";
 import { Section, Notice } from "../src/checkout/fields";
 import { RHFTextField, partySchema, type PartyForm } from "../src/form";
 import { PartyFormBody } from "../src/party/PartyFormBody";
 import { BackButton, MIcon } from "../src/components";
 
 export default function PartyOrder() {
+  const brand = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();

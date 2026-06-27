@@ -1,5 +1,5 @@
 import { XStack, YStack, Text } from "tamagui";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 import { MIcon, type IconName } from "../components";
 import { useFulfilment, type OrderType } from "../fulfilment";
 import { useSettings } from "../settings";
@@ -12,6 +12,7 @@ const OPTIONS: ReadonlyArray<{ type: OrderType; label: string; sub: string; icon
 /** Delivery / Takeaway segmented control. Persists the choice app-wide so the
  *  checkout drops the delivery fee for pickup. */
 export function FulfilmentToggle() {
+  const brand = useColors();
   const { orderType, setOrderType } = useFulfilment();
   const { storeOpenNow } = useSettings();
 

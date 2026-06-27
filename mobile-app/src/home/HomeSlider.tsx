@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Image, Linking, ScrollView, useWindowDimensions } from "react-native";
 import { YStack, XStack, Text } from "tamagui";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 import type { Banner } from "./types";
 
 interface HomeSliderProps {
@@ -11,6 +11,7 @@ interface HomeSliderProps {
 const H = 150;
 
 export function HomeSlider({ banners }: Readonly<HomeSliderProps>) {
+  const brand = useColors();
   const { width } = useWindowDimensions();
   const [index, setIndex] = useState(0);
 

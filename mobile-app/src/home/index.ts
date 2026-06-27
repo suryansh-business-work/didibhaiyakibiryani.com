@@ -5,6 +5,7 @@ export { CategoryChips } from "./CategoryChips";
 export { CategoryGrid } from "./CategoryGrid";
 export { OffersStrip } from "./OffersStrip";
 export { RecentOrderStrip } from "./RecentOrderStrip";
+export { RewardsStrip } from "./RewardsStrip";
 export { HomeList } from "./HomeList";
 export { MenuItemCard } from "./MenuItemCard";
 export { CartBar } from "./CartBar";

@@ -5,11 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { useAuth } from "../src/auth";
-import { brand } from "../src/theme";
+import { useColors } from "../src/theme";
+import { errorMessage } from "../src/error";
 import { RHFTextField, loginSchema, type LoginForm } from "../src/form";
 import { BackButton, BrandLogo } from "../src/components";
 
 export default function Login() {
+  const brand = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login } = useAuth();
@@ -27,7 +29,7 @@ export default function Login() {
       await login(data.emailOrPhone.trim(), data.password);
       router.replace("/");
     } catch (e: unknown) {
-      Alert.alert("Login failed", e instanceof Error ? e.message : "Check your details and try again.");
+      Alert.alert("Login failed", errorMessage(e, "Check your details and try again."));
     }
   }
 

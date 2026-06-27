@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { OFFERS } from "../../src/graphql";
-import { brand, inr } from "../../src/theme";
+import { useColors, inr } from "../../src/theme";
 import { Badge } from "../../src/components";
 
 interface Coupon {
@@ -13,6 +13,7 @@ interface Coupon {
 }
 
 export default function Offers() {
+  const brand = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { data, loading, error } = useQuery<{ coupons: Coupon[] }>(OFFERS);

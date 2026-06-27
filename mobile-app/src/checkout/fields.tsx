@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { YStack, XStack, Text, Input, Button } from "tamagui";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 
 export function Section({ title, children }: Readonly<{ title: string; children: ReactNode }>) {
+  const brand = useColors();
   return (
     <YStack gap={10}>
       <Text fontWeight="800" color={brand.text} fontSize={16}>
@@ -21,6 +22,7 @@ interface FieldProps {
 }
 
 export function Field({ label, value, onChange, keyboard }: Readonly<FieldProps>) {
+  const brand = useColors();
   return (
     <YStack gap={5}>
       <Text fontSize={12} color={brand.muted} fontWeight="700">
@@ -45,6 +47,7 @@ interface PayOptionProps {
 }
 
 export function PayOption({ label, active, onPress }: Readonly<PayOptionProps>) {
+  const brand = useColors();
   return (
     <Button
       flex={1}
@@ -62,6 +65,7 @@ export function PayOption({ label, active, onPress }: Readonly<PayOptionProps>) 
 }
 
 export function Row({ k, v, strong }: Readonly<{ k: string; v: string; strong?: boolean }>) {
+  const brand = useColors();
   return (
     <XStack justifyContent="space-between">
       <Text color={strong ? brand.text : brand.dim} fontWeight={strong ? "800" : "400"} fontSize={strong ? 17 : 14}>
@@ -76,6 +80,7 @@ export function Row({ k, v, strong }: Readonly<{ k: string; v: string; strong?: 
 
 /** Inline notice (replaces Alert boxes so the message also shows on web). */
 export function Notice({ kind, children }: Readonly<{ kind: "error" | "warn"; children: ReactNode }>) {
+  const brand = useColors();
   const color = kind === "error" ? brand.red : brand.gold;
   const bg = kind === "error" ? "rgba(224,88,75,0.12)" : "rgba(228,182,92,0.12)";
   return (

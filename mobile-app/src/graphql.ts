@@ -179,6 +179,29 @@ export const HOME_DATA = gql`
   }
 `;
 
+export const MY_REWARDS = gql`
+  query MyRewards {
+    myRewards {
+      enabled
+      points
+      pointsPerOrder
+      pointsMinOrder
+      pointsPerReward
+      rewardsAvailable
+      rewardItem { id name image }
+    }
+  }
+`;
+
+export const REDEEM_REWARD = gql`
+  mutation RedeemReward {
+    redeemReward {
+      code
+      points
+    }
+  }
+`;
+
 export const MENU_ITEM = gql`
   query MenuItem($id: ID!) {
     menuItem(id: $id) {
@@ -272,11 +295,12 @@ export const MY_ORDERS = gql`
       orderNumber
       total
       status
+      orderType
       placedAt
       items {
         name
         qty
-        menuItem { id name price image spiceSelectable spiceLevel isAvailable }
+        menuItem { id name price image spiceSelectable spiceLevel isAvailable isVeg }
       }
     }
   }
@@ -288,17 +312,31 @@ export const ORDER = gql`
       id
       orderNumber
       status
+      orderType
       subtotal
       discount
       deliveryFee
       total
       couponCode
       paymentMethod
+      paymentStatus
       placedAt
-      items { name price qty spiceLevel }
-      address { line1 line2 city pincode phone }
+      items { name price qty spiceLevel menuItem { id name price spiceLevel spiceSelectable isAvailable } }
+      address { line1 line2 city pincode phone lat lng }
+      deliveryPartner { id name phone }
       statusHistory { status at }
       rating { food delivery comment }
+    }
+  }
+`;
+
+export const TRACK_ORDER = gql`
+  query TrackOrder($orderNumber: String!) {
+    trackOrder(orderNumber: $orderNumber) {
+      status
+      etaMinutes
+      rider { lat lng at }
+      destination { lat lng }
     }
   }
 `;

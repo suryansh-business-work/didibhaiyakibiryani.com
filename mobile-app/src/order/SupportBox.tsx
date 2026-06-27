@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@apollo/client";
 import { YStack, XStack, Text, Button } from "tamagui";
 import { ORDER_TICKETS } from "../graphql";
-import { brand } from "../theme";
+import { useColors } from "../theme";
+import { accent } from "../tokens";
 import { DropIn } from "../animations";
 import { SupportForm } from "./SupportForm";
 
@@ -23,12 +24,13 @@ interface Ticket {
 }
 
 const STATUS_COLOR: Record<Ticket["status"], string> = {
-  OPEN: brand.gold,
+  OPEN: accent.gold,
   IN_PROGRESS: "#6aa3e0",
-  RESOLVED: brand.green,
+  RESOLVED: accent.green,
 };
 
 function TicketCard({ ticket }: Readonly<{ ticket: Ticket }>) {
+  const brand = useColors();
   return (
     <YStack gap={6} backgroundColor={brand.bgSoft} borderRadius={12} padding={12}>
       <XStack justifyContent="space-between" alignItems="center">
@@ -55,6 +57,7 @@ function TicketCard({ ticket }: Readonly<{ ticket: Ticket }>) {
 /** "Support" button + box on the order details page. */
 export function SupportBox({ orderId }: Readonly<{ orderId: string }>) {
   const [open, setOpen] = useState(false);
+  const brand = useColors();
   const { data, refetch } = useQuery<{ orderTickets: Ticket[] }>(ORDER_TICKETS, {
     variables: { orderId },
   });

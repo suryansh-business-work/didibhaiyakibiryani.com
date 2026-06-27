@@ -2,7 +2,7 @@ import { useState } from "react";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { YStack, XStack, Text } from "tamagui";
 import { MIcon, type IconName } from "../components";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -58,6 +58,7 @@ function PickerField({
   display,
   serialize,
 }: Readonly<PickerFieldProps>) {
+  const brand = useColors();
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<Date>(new Date());
 

@@ -83,6 +83,8 @@ export interface IOrder extends Document {
   deliveryPartner?: Types.ObjectId;
   statusHistory: IStatusEvent[];
   rating?: IOrderRating;
+  /** Loyalty points credited for this order (0 = none/ineligible; non-zero is idempotent). */
+  pointsEarned: number;
   /** Secret used by the public (no-login) rating survey link. */
   ratingToken: string;
   /** External feedback-survey link printed on this order's invoice. */
@@ -180,6 +182,7 @@ const orderSchema = new Schema<IOrder>(
     deliveryPartner: { type: Schema.Types.ObjectId, ref: "User", index: true },
     statusHistory: { type: [statusEventSchema], default: [] },
     rating: { type: orderRatingSchema, default: undefined },
+    pointsEarned: { type: Number, default: 0 },
     ratingToken: {
       type: String,
       default: () => randomBytes(16).toString("hex"),

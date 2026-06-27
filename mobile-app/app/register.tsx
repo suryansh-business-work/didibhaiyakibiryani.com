@@ -6,11 +6,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { useAuth } from "../src/auth";
-import { brand } from "../src/theme";
+import { useColors } from "../src/theme";
+import { errorMessage } from "../src/error";
 import { RHFTextField, registerSchema, type RegisterForm } from "../src/form";
 import { BackButton, BrandLogo } from "../src/components";
 
 export default function Register() {
+  const brand = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { requestSignupOtp, register } = useAuth();
@@ -36,7 +38,7 @@ export default function Register() {
       await requestSignupOtp(name.trim(), email.trim());
       setStep("verify");
     } catch (e: unknown) {
-      Alert.alert("Couldn't send code", e instanceof Error ? e.message : "Try again.");
+      Alert.alert("Couldn't send code", errorMessage(e, "Try again."));
     } finally {
       setBusy(false);
     }
@@ -48,7 +50,7 @@ export default function Register() {
       await register(data.name.trim(), data.email.trim(), data.password, data.otp.trim());
       router.replace("/");
     } catch (e: unknown) {
-      Alert.alert("Couldn't sign up", e instanceof Error ? e.message : "Try again.");
+      Alert.alert("Couldn't sign up", errorMessage(e, "Try again."));
     } finally {
       setBusy(false);
     }

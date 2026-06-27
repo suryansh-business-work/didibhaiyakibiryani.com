@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/client";
 import { YStack, Text, Button, Spinner } from "tamagui";
 import { SOCIETIES } from "../graphql";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 
 export interface Society {
   id: string;
@@ -17,6 +17,7 @@ interface SocietyPickerProps {
 
 /** Admin-managed delivery societies, shown as a single-select list. */
 export function SocietyPicker({ selectedId, onSelect }: Readonly<SocietyPickerProps>) {
+  const brand = useColors();
   const { data, loading } = useQuery<{ societies: Society[] }>(SOCIETIES);
   const societies = data?.societies ?? [];
 

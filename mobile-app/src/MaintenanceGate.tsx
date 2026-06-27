@@ -2,10 +2,11 @@ import type { ReactNode } from "react";
 import { YStack, Text } from "tamagui";
 import { useSettings } from "./settings";
 import { FadeInView } from "./animations";
-import { brand } from "./theme";
+import { useColors } from "./theme";
 
 /** Full-screen takeover while the admin has the customer app in maintenance. */
 export function MaintenanceGate({ children }: Readonly<{ children: ReactNode }>) {
+  const brand = useColors();
   const settings = useSettings();
 
   if (!settings.maintenance.native) {

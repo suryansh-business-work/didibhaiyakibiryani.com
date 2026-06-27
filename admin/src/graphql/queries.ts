@@ -574,6 +574,11 @@ export const SETTINGS_CORE_FIELDS = `
   receiptMessageTemplate
   codEnabled
   onlineEnabled
+  loyaltyEnabled
+  pointsPerOrder
+  pointsMinOrder
+  pointsPerReward
+  rewardItem { id name }
   supportSubjects
   updatedAt
 `;

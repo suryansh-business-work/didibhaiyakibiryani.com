@@ -1,6 +1,6 @@
 import { ScrollView } from "react-native";
 import { XStack, YStack, Text } from "tamagui";
-import { brand, inr } from "../theme";
+import { useColors, inr } from "../theme";
 import { FoodThumb, MIcon } from "../components";
 import type { RecentOrder } from "./types";
 
@@ -29,6 +29,7 @@ function recentDishes(orders: RecentOrder[]): Dish[] {
 
 /** "Order again" — previously ordered items with a one-tap add (real orders). */
 export function RecentOrderStrip({ orders, onAdd }: Readonly<Props>) {
+  const brand = useColors();
   const dishes = recentDishes(orders);
   if (dishes.length === 0) return null;
 

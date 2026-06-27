@@ -1,6 +1,6 @@
 import { XStack, Text } from "tamagui";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { brand, inr } from "../theme";
+import { useColors, inr } from "../theme";
 import { SpringUp } from "../animations";
 import { MIcon } from "../components";
 
@@ -11,6 +11,7 @@ interface CartBarProps {
 }
 
 export function CartBar({ count, subtotal, onPress }: Readonly<CartBarProps>) {
+  const brand = useColors();
   const itemLabel = count > 1 ? "items" : "item";
   const tabBarHeight = useBottomTabBarHeight();
 

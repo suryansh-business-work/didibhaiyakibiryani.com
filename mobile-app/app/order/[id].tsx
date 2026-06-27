@@ -3,44 +3,81 @@ import { useQuery } from "@apollo/client";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button, Spinner } from "tamagui";
-import { ORDER } from "../../src/graphql";
+import { ORDER, TRACK_ORDER } from "../../src/graphql";
 import { RatingCard, type OrderRating } from "../../src/order/RatingCard";
 import { CancelOrder } from "../../src/order/CancelOrder";
 import { SupportBox } from "../../src/order/SupportBox";
+import { TrackingHero } from "../../src/order/TrackingHero";
+import { OrderTimeline } from "../../src/order/OrderTimeline";
+import { OrderBill } from "../../src/order/OrderBill";
+import { useReorder } from "../../src/order/reorder";
 import { FadeInView } from "../../src/animations";
-import { BackButton, MIcon, SPICE_LABELS } from "../../src/components";
-import { brand, inr, STATUS_FLOW, STATUS_META } from "../../src/theme";
+import { BackButton, ErrorState, MIcon } from "../../src/components";
+import { useColors } from "../../src/theme";
+import { errorMessage } from "../../src/error";
+import { haversineKm } from "../../src/geo";
 
+interface OrderItem {
+  name: string; price: number; qty: number; spiceLevel?: number;
+  menuItem?: { id: string; name: string; price: number; spiceLevel: number; spiceSelectable: boolean; isAvailable: boolean } | null;
+}
 interface Order {
-  id: string; orderNumber: string; status: string; subtotal: number; discount: number;
-  deliveryFee: number; total: number; couponCode?: string; paymentMethod: string; placedAt: string;
-  items: { name: string; price: number; qty: number; spiceLevel?: number }[];
+  id: string; orderNumber: string; status: string; orderType?: string;
+  subtotal: number; discount: number; deliveryFee: number; total: number;
+  couponCode?: string; paymentMethod: string; placedAt: string;
+  items: OrderItem[];
   address?: { line1: string; line2?: string; city: string; pincode: string; phone?: string } | null;
+  deliveryPartner?: { id: string; name: string; phone?: string } | null;
   statusHistory: { status: string; at: string }[];
   rating?: OrderRating | null;
 }
+interface Track {
+  etaMinutes?: number | null;
+  rider?: { lat: number; lng: number } | null;
+  destination?: { lat: number; lng: number } | null;
+}
+
+const ACTIVE = ["PLACED", "CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY"];
 
 export default function OrderTracking() {
+  const brand = useColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { data, loading, refetch } = useQuery<{ order: Order }>(ORDER, {
-    variables: { id },
-    pollInterval: 15000, // live-ish status refresh
+  const reorder = useReorder();
+  const { data, loading, error, refetch } = useQuery<{ order: Order }>(ORDER, { variables: { id }, pollInterval: 15000 });
+  const o = data?.order;
+  const isActive = o ? ACTIVE.includes(o.status) : false;
+  const { data: trackData } = useQuery<{ trackOrder: Track }>(TRACK_ORDER, {
+    variables: { orderNumber: o?.orderNumber ?? "" },
+    skip: !o || !isActive,
+    pollInterval: 15000,
   });
 
   if (loading && !data) {
     return <YStack flex={1} backgroundColor={brand.bg} alignItems="center" justifyContent="center"><Spinner color={brand.gold} /></YStack>;
   }
-  if (!data?.order) {
-    return <YStack flex={1} backgroundColor={brand.bg} alignItems="center" justifyContent="center"><Text color={brand.muted}>Order not found.</Text></YStack>;
+  if (!o) {
+    const isError = Boolean(error);
+    return (
+      <YStack flex={1} backgroundColor={brand.bg}>
+        <XStack paddingTop={insets.top + 8} paddingHorizontal={16} paddingBottom={10}>
+          <BackButton onPress={() => router.replace("/orders")} />
+        </XStack>
+        {isError ? (
+          <ErrorState message={errorMessage(error)} onRetry={() => { refetch().catch(() => {}); }} />
+        ) : (
+          <ErrorState message="We couldn't find this order." onRetry={() => router.replace("/orders")} retryLabel="Back to orders" />
+        )}
+      </YStack>
+    );
   }
 
-  const o = data.order;
-  const cancelled = o.status === "CANCELLED";
-  const currentIdx = STATUS_FLOW.indexOf(o.status);
-  const canCancel = ["PLACED", "CONFIRMED"].includes(o.status);
+  const track = trackData?.trackOrder;
+  const riderKm = track?.rider && track?.destination ? haversineKm(track.rider, track.destination) : null;
   const delivered = o.status === "DELIVERED";
+  const canCancel = ["PLACED", "CONFIRMED"].includes(o.status);
+  const finished = delivered || o.status === "CANCELLED";
 
   return (
     <YStack flex={1} backgroundColor={brand.bg}>
@@ -53,65 +90,24 @@ export default function OrderTracking() {
       </XStack>
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 18, paddingBottom: 30 }}>
-        {/* Status timeline */}
         <FadeInView>
-        <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} padding={18} gap={2}>
-          {cancelled ? (
-            <XStack gap={12} alignItems="center" paddingVertical={6}>
-              <YStack width={26} height={26} borderRadius={999} backgroundColor={brand.red} alignItems="center" justifyContent="center"><MIcon name="close" size={16} color="#fff" /></YStack>
-              <Text color={brand.red} fontWeight="800">Order cancelled</Text>
-            </XStack>
-          ) : (
-            STATUS_FLOW.map((st, i) => {
-              const done = i <= currentIdx;
-              const active = i === currentIdx;
-              const meta = STATUS_META[st];
-              return (
-                <XStack key={st} gap={12} alignItems="center" minHeight={42}>
-                  <YStack alignItems="center">
-                    <YStack
-                      width={22} height={22} borderRadius={999}
-                      backgroundColor={done ? brand.gold : brand.cardSoft}
-                      borderColor={done ? brand.gold : brand.border} borderWidth={1}
-                      alignItems="center" justifyContent="center"
-                    >
-                      {done && <Text color="#2a1a06" fontSize={12} fontWeight="800">✓</Text>}
-                    </YStack>
-                    {i < STATUS_FLOW.length - 1 && <YStack width={2} height={20} backgroundColor={i < currentIdx ? brand.gold : brand.border} />}
-                  </YStack>
-                  <Text color={stepColor(active, done)} fontWeight={active ? "800" : "600"}>
-                    {meta.label}
-                  </Text>
-                </XStack>
-              );
-            })
-          )}
-        </YStack>
+          <TrackingHero status={o.status} etaMinutes={track?.etaMinutes} partner={o.deliveryPartner} riderKm={riderKm} />
         </FadeInView>
 
-        {/* Post-delivery rating survey */}
         {delivered && <RatingCard orderId={o.id} rating={o.rating} onRated={() => refetch()} />}
 
-        {/* Items */}
-        <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} padding={16} gap={10}>
-          <Text fontWeight="800" color={brand.text}>Items</Text>
-          {o.items.map((it) => (
-            <XStack key={`${it.name}-${it.spiceLevel ?? 0}`} justifyContent="space-between">
-              <Text color={brand.dim}>
-                {it.qty}× {it.name}{it.spiceLevel ? ` · ${SPICE_LABELS[it.spiceLevel]}` : ""}
-              </Text>
-              <Text color={brand.dim}>{inr(it.price * it.qty)}</Text>
-            </XStack>
-          ))}
-          <YStack height={1} backgroundColor={brand.border} marginVertical={4} />
-          <Row k="Subtotal" v={inr(o.subtotal)} />
-          {o.discount > 0 && <Row k={`Discount ${o.couponCode ? `(${o.couponCode})` : ""}`} v={`– ${inr(o.discount)}`} />}
-          <Row k="Delivery" v={o.deliveryFee === 0 ? "Free" : inr(o.deliveryFee)} />
-          <Row k="Total" v={inr(o.total)} strong />
-          <Text fontSize={12} color={brand.muted} marginTop={4}>Payment · {o.paymentMethod === "COD" ? "Cash on delivery" : "Paid online"}</Text>
-        </YStack>
+        <OrderTimeline status={o.status} />
 
-        {/* Address */}
+        <OrderBill
+          items={o.items}
+          subtotal={o.subtotal}
+          discount={o.discount}
+          deliveryFee={o.deliveryFee}
+          total={o.total}
+          couponCode={o.couponCode}
+          paymentMethod={o.paymentMethod}
+        />
+
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} padding={16} gap={4}>
           <Text fontWeight="800" color={brand.text}>{o.address ? "Delivering to" : "Fulfilment"}</Text>
           {o.address ? (
@@ -125,26 +121,25 @@ export default function OrderTracking() {
           )}
         </YStack>
 
-        {/* Order support box */}
+        {finished && (
+          <Button
+            height={48}
+            backgroundColor={brand.gold}
+            color="#2a1a06"
+            fontWeight="800"
+            borderRadius={12}
+            pressStyle={{ opacity: 0.9 }}
+            icon={<MIcon name="refresh" size={18} color="#2a1a06" />}
+            onPress={() => reorder(o.items)}
+          >
+            Reorder
+          </Button>
+        )}
+
         <SupportBox orderId={o.id} />
 
         {canCancel && <CancelOrder orderId={o.id} onCancelled={() => refetch()} />}
       </ScrollView>
     </YStack>
-  );
-}
-
-function stepColor(active: boolean, done: boolean): string {
-  if (active) return brand.gold;
-  if (done) return brand.text;
-  return brand.muted;
-}
-
-function Row({ k, v, strong }: Readonly<{ k: string; v: string; strong?: boolean }>) {
-  return (
-    <XStack justifyContent="space-between">
-      <Text color={strong ? brand.text : brand.dim} fontWeight={strong ? "800" : "400"} fontSize={strong ? 16 : 14}>{k}</Text>
-      <Text color={strong ? brand.gold : brand.dim} fontWeight={strong ? "800" : "600"} fontSize={strong ? 16 : 14}>{v}</Text>
-    </XStack>
   );
 }

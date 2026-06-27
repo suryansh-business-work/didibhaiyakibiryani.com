@@ -22,6 +22,8 @@ export interface IUser extends Document {
   role: Role;
   addresses: IAddress[];
   isActive: boolean;
+  /** Loyalty points balance (earned on eligible delivered orders, spent on rewards). */
+  loyaltyPoints: number;
   /** Rider live position (DELIVERY role) — last reported GPS for order tracking. */
   lastLat?: number;
   lastLng?: number;
@@ -58,6 +60,7 @@ const userSchema = new Schema<IUser>(
     },
     addresses: [addressSchema],
     isActive: { type: Boolean, default: true },
+    loyaltyPoints: { type: Number, default: 0, min: 0 },
     lastLat: Number,
     lastLng: Number,
     lastLocationAt: Date,

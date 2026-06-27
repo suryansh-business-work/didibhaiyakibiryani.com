@@ -1,6 +1,6 @@
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 import { YStack, Text, Input } from "tamagui";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 
 interface RHFTextFieldProps<T extends FieldValues> {
   control: Control<T>;
@@ -24,6 +24,7 @@ export function RHFTextField<T extends FieldValues>({
   placeholder,
   keyboard,
 }: Readonly<RHFTextFieldProps<T>>) {
+  const brand = useColors();
   return (
     <YStack gap={5}>
       <Text fontSize={12} color={brand.muted} fontWeight="700">

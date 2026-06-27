@@ -2,14 +2,16 @@ import type { ReactNode } from "react";
 import { ScrollView } from "react-native";
 import { YStack, Text, Spinner } from "tamagui";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 import { RiseIn } from "../animations";
+import { ErrorState } from "../components";
 import { MenuItemCard } from "./MenuItemCard";
 import type { Item } from "./types";
 
 interface HomeListProps {
   loading: boolean;
   error?: string;
+  onRetry?: () => void;
   items: Item[];
   count: number;
   onAdd: (item: Item) => void;
@@ -20,7 +22,8 @@ function hueFor(index: number): number {
   return (index * 9 + 12) % 40;
 }
 
-export function HomeList({ loading, error, items, count, onAdd, header }: Readonly<HomeListProps>) {
+export function HomeList({ loading, error, onRetry, items, count, onAdd, header }: Readonly<HomeListProps>) {
+  const brand = useColors();
   const tabBarHeight = useBottomTabBarHeight();
   if (loading) {
     return (
@@ -31,16 +34,7 @@ export function HomeList({ loading, error, items, count, onAdd, header }: Readon
   }
 
   if (error) {
-    return (
-      <YStack flex={1} alignItems="center" justifyContent="center" padding={24}>
-        <Text color={brand.red} textAlign="center">
-          {error}
-        </Text>
-        <Text color={brand.muted} marginTop={8} textAlign="center" fontSize={13}>
-          Is the server running? Check EXPO_PUBLIC_API_URL.
-        </Text>
-      </YStack>
-    );
+    return <ErrorState message={error} onRetry={onRetry} />;
   }
 
   return (

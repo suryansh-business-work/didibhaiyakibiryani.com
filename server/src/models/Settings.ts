@@ -1,4 +1,4 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 
 /** Per-app maintenance switches, toggled from the admin panel. */
 export interface IMaintenanceFlags {
@@ -69,6 +69,12 @@ export interface ISettings extends Document {
   // Finance — payment options
   codEnabled: boolean;
   onlineEnabled: boolean;
+  // Loyalty / rewards ("Cheesy Rewards"-style)
+  loyaltyEnabled: boolean;
+  pointsPerOrder: number; // points earned per eligible delivered order
+  pointsMinOrder: number; // min order total (₹) to earn points
+  pointsPerReward: number; // points needed to redeem one reward
+  rewardItem?: Types.ObjectId; // free menu item granted on redeem
   // Support — admin-managed subject lines for the order support box
   supportSubjects: string[];
   // Integrations — secret credentials entered from admin → Integrations.
@@ -145,6 +151,11 @@ const settingsSchema = new Schema<ISettings>(
     receiptMessageTemplate: { type: String, default: "" },
     codEnabled: { type: Boolean, default: true },
     onlineEnabled: { type: Boolean, default: true },
+    loyaltyEnabled: { type: Boolean, default: false },
+    pointsPerOrder: { type: Number, default: 100, min: 0 },
+    pointsMinOrder: { type: Number, default: 350, min: 0 },
+    pointsPerReward: { type: Number, default: 600, min: 1 },
+    rewardItem: { type: Schema.Types.ObjectId, ref: "MenuItem" },
     supportSubjects: {
       type: [String],
       default: () => [

@@ -1,7 +1,7 @@
 import type { GestureResponderEvent } from "react-native";
 import { Link } from "expo-router";
 import { YStack, XStack, Text, Button } from "tamagui";
-import { brand, inr } from "../theme";
+import { useColors, inr } from "../theme";
 import { FoodThumb, Badge, Spice, Stars } from "../components";
 import type { Item } from "./types";
 
@@ -12,6 +12,7 @@ interface MenuItemCardProps {
 }
 
 function TopBadge({ item }: Readonly<{ item: Item }>) {
+  const brand = useColors();
   if (!item.isAvailable) {
     return <Badge label="Out of stock" color={brand.red} bg="rgba(224,88,75,0.15)" />;
   }
@@ -27,6 +28,7 @@ function TopBadge({ item }: Readonly<{ item: Item }>) {
 }
 
 export function MenuItemCard({ item, hue, onAdd }: Readonly<MenuItemCardProps>) {
+  const brand = useColors();
   const soldOut = !item.isAvailable;
 
   return (

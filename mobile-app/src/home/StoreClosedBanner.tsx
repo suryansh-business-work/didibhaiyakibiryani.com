@@ -1,10 +1,11 @@
 import { XStack, Text } from "tamagui";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 import { useSettings } from "../settings";
 import { DropIn } from "../animations";
 
 /** Shown when the store is outside its admin-configured opening hours. */
 export function StoreClosedBanner() {
+  const brand = useColors();
   const settings = useSettings();
   if (settings.storeOpenNow) return null;
 

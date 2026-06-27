@@ -212,6 +212,22 @@ function distanceKmFor(settings: ISettings, address: AddressInput): number {
   return haversineKm(settings.storeLat, settings.storeLng, address.lat ?? 0, address.lng ?? 0);
 }
 
+/**
+ * Credit loyalty points once an order is delivered. Idempotent (guards on
+ * `pointsEarned`), only for signed-in customers, and only when loyalty is on and
+ * the order clears the configured minimum spend.
+ */
+async function creditLoyaltyPoints(order: IOrder): Promise<void> {
+  if (order.pointsEarned > 0) return;
+  if (!order.user) return;
+  const settings = await getOrCreateSettings();
+  if (!settings.loyaltyEnabled) return;
+  if (order.total < settings.pointsMinOrder) return;
+  order.pointsEarned = settings.pointsPerOrder;
+  await order.save();
+  await User.findByIdAndUpdate(order.user, { $inc: { loyaltyPoints: settings.pointsPerOrder } }).exec();
+}
+
 function assertRiderCanUpdate(order: IOrder, user: TokenPayload, status: OrderStatus): void {
   if (user.role !== "DELIVERY") return;
   if (String(order.deliveryPartner ?? "") !== user.id) {
@@ -518,6 +534,7 @@ export const orderResolvers = {
       }
       await order.save();
       if (status === "DELIVERED") {
+        await creditLoyaltyPoints(order);
         notifyOrderEmail(order, "DELIVERED");
       }
       return order;

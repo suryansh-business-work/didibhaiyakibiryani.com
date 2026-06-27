@@ -33,7 +33,11 @@ function toDoc(input: CouponInput) {
 export const couponResolvers = {
   Query: {
     coupons: async (_: unknown, { activeOnly }: { activeOnly?: boolean }) => {
-      const filter = activeOnly ? { isActive: true } : {};
+      // Reward coupons are personal (redeemed via loyalty) — never list them publicly.
+      const filter: Record<string, unknown> = { isReward: { $ne: true } };
+      if (activeOnly) {
+        filter.isActive = true;
+      }
       return Coupon.find(filter).sort({ createdAt: -1 }).exec();
     },
 

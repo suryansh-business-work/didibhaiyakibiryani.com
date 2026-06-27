@@ -14,6 +14,8 @@ export interface ICoupon extends Document {
   appOnly: boolean;
   firstOrderOnly: boolean;
   isActive: boolean;
+  /** A loyalty-redeemed reward coupon (hidden from the public offers list). */
+  isReward: boolean;
   usageLimit?: number;
   usedCount: number;
   validFrom?: Date;
@@ -39,6 +41,7 @@ const couponSchema = new Schema<ICoupon>(
     appOnly: { type: Boolean, default: false },
     firstOrderOnly: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true, index: true },
+    isReward: { type: Boolean, default: false },
     usageLimit: { type: Number },
     usedCount: { type: Number, default: 0 },
     validFrom: { type: Date },

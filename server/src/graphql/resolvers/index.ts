@@ -18,6 +18,7 @@ import { societyResolvers } from "./society.js";
 import { partyResolvers } from "./party.js";
 import { leadResolvers } from "./lead.js";
 import { expenseResolvers } from "./expense.js";
+import { loyaltyResolvers } from "./loyalty.js";
 
 export const resolvers = {
   DateTime,
@@ -27,6 +28,7 @@ export const resolvers = {
     ...menuResolvers.Query,
     ...couponResolvers.Query,
     ...orderResolvers.Query,
+    ...loyaltyResolvers.Query,
     ...dashboardResolvers.Query,
     ...settingsResolvers.Query,
     ...integrationResolvers.Query,
@@ -62,6 +64,7 @@ export const resolvers = {
     ...partyResolvers.Mutation,
     ...leadResolvers.Mutation,
     ...expenseResolvers.Mutation,
+    ...loyaltyResolvers.Mutation,
   },
 
   // Field resolvers
@@ -75,5 +78,6 @@ export const resolvers = {
   User: dashboardResolvers.User,
   Payment: paymentResolvers.Payment,
   Settings: settingsResolvers.Settings,
+  Rewards: loyaltyResolvers.Rewards,
   SupportTicket: supportResolvers.SupportTicket,
 };

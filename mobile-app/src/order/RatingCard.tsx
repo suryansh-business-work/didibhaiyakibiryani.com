@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { YStack, XStack, Text, Button } from "tamagui";
 import { RATE_ORDER } from "../graphql";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 import { DropIn } from "../animations";
 import { MIcon } from "../components";
 import { RHFTextField, ratingSchema, type RatingForm } from "../form";
@@ -21,6 +21,7 @@ interface RatingCardProps {
 }
 
 function StarRow({ value, onChange, label, error }: Readonly<{ value: number; onChange: (n: number) => void; label: string; error?: string }>) {
+  const brand = useColors();
   return (
     <YStack gap={4}>
       <Text fontSize={12} color={brand.muted} fontWeight="700">{label}</Text>
@@ -38,6 +39,7 @@ function StarRow({ value, onChange, label, error }: Readonly<{ value: number; on
 
 /** Post-delivery survey: rate the food and the delivery, right in the app. */
 export function RatingCard({ orderId, rating, onRated }: Readonly<RatingCardProps>) {
+  const brand = useColors();
   const {
     control,
     handleSubmit,

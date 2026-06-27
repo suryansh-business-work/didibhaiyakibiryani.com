@@ -226,6 +226,7 @@ export const typeDefs = /* GraphQL */ `
     appOnly: Boolean!
     firstOrderOnly: Boolean!
     isActive: Boolean!
+    isReward: Boolean!
     usageLimit: Int
     usedCount: Int!
     validFrom: DateTime
@@ -237,6 +238,23 @@ export const typeDefs = /* GraphQL */ `
     message: String!
     discount: Float
     coupon: Coupon
+  }
+
+  # The signed-in customer's loyalty snapshot ("Cheesy Rewards").
+  type Rewards {
+    enabled: Boolean!
+    points: Int!
+    pointsPerOrder: Int!
+    pointsMinOrder: Float!
+    pointsPerReward: Int!
+    rewardsAvailable: Int!
+    rewardItem: MenuItem
+  }
+
+  # Result of redeeming points for a reward: a single-use coupon code.
+  type RedeemResult {
+    code: String!
+    points: Int!
   }
 
   type OrderItem {
@@ -694,6 +712,11 @@ export const typeDefs = /* GraphQL */ `
     receiptMessageTemplate: String!
     codEnabled: Boolean!
     onlineEnabled: Boolean!
+    loyaltyEnabled: Boolean!
+    pointsPerOrder: Int!
+    pointsMinOrder: Float!
+    pointsPerReward: Int!
+    rewardItem: MenuItem
     supportSubjects: [String!]!
     updatedAt: DateTime!
   }
@@ -742,6 +765,11 @@ export const typeDefs = /* GraphQL */ `
     receiptMessageTemplate: String
     codEnabled: Boolean
     onlineEnabled: Boolean
+    loyaltyEnabled: Boolean
+    pointsPerOrder: Int
+    pointsMinOrder: Float
+    pointsPerReward: Int
+    rewardItem: ID
     supportSubjects: [String!]
   }
 
@@ -958,6 +986,8 @@ export const typeDefs = /* GraphQL */ `
     coupons(activeOnly: Boolean): [Coupon!]!
     validateCoupon(code: String!, subtotal: Float!): CouponResult!
 
+    myRewards: Rewards! # signed-in customer's loyalty snapshot
+
     myOrders: [Order!]!
     order(id: ID!): Order
     orders(status: OrderStatus): [Order!]! # admin/staff
@@ -1079,6 +1109,7 @@ export const typeDefs = /* GraphQL */ `
     cancelOrder(id: ID!): Order!
     updateOrderStatus(id: ID!, status: OrderStatus!, note: String): Order! # admin/staff
     rateOrder(orderId: ID!, food: Int!, delivery: Int!, comment: String): Order!
+    redeemReward: RedeemResult! # spend points → single-use reward coupon
     submitOrderSurvey(orderNumber: String!, itemRatings: [ItemRatingInput!]!, delivery: Int!, comment: String): Boolean! # public — keyed by order number, per-item
     deleteOrder(id: ID!): Boolean! # admin
     deleteOrders(ids: [ID!]!): Int! # admin — bulk delete, returns count removed

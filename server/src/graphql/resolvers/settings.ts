@@ -1,5 +1,6 @@
 import { Settings, SETTINGS_KEY, getOrCreateSettings } from "../../models/Settings.js";
 import type { ISettings } from "../../models/Settings.js";
+import { MenuItem } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
 import { isStoreOpen } from "../../utils/storeHours.js";
 import { logger } from "../../utils/logger.js";
@@ -23,8 +24,9 @@ const STRING_FIELDS = new Set([
 ]);
 const NUMBER_FIELDS = new Set([
   "minDeliveryCost", "perKmCharge", "freeDeliveryAbove", "storeLat", "storeLng",
+  "pointsPerOrder", "pointsMinOrder", "pointsPerReward",
 ]);
-const BOOLEAN_FIELDS = new Set(["codEnabled", "onlineEnabled"]);
+const BOOLEAN_FIELDS = new Set(["codEnabled", "onlineEnabled", "loyaltyEnabled"]);
 const MAINTENANCE_APPS = new Set(["website", "server", "admin", "native", "delivery"]);
 
 /**
@@ -50,6 +52,9 @@ export function cleanSettingsInput(input: SettingsInput): Record<string, unknown
       }
     }
   }
+  if ("rewardItem" in input) {
+    update.rewardItem = typeof input.rewardItem === "string" && input.rewardItem ? input.rewardItem : null;
+  }
   if (Array.isArray(input.supportSubjects)) {
     update.supportSubjects = input.supportSubjects
       .filter((s): s is string => typeof s === "string")
@@ -68,6 +73,8 @@ export const settingsResolvers = {
   Settings: {
     storeOpenNow: (parent: ISettings) =>
       isStoreOpen(parent.storeOpenTime, parent.storeCloseTime, parent.storeTimezone),
+    rewardItem: (parent: ISettings) =>
+      parent.rewardItem ? MenuItem.findById(parent.rewardItem).exec() : null,
   },
 
   Mutation: {

@@ -1,5 +1,5 @@
 import { XStack, YStack, Text } from "tamagui";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 import { FoodThumb } from "../components";
 import type { Cat } from "./types";
 
@@ -11,6 +11,7 @@ interface Props {
 
 /** "What are you craving for?" — a tappable category grid (real categories). */
 export function CategoryGrid({ cats, activeCat, onSelect }: Readonly<Props>) {
+  const brand = useColors();
   const named = cats.filter((c) => c.name?.trim());
   if (named.length === 0) return null;
 

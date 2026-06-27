@@ -5,7 +5,7 @@ import { YStack, XStack, Text } from "tamagui";
 import { MY_ORDERS } from "../graphql";
 import { useAuth } from "../auth";
 import { MIcon } from "../components";
-import { brand, inr, STATUS_META } from "../theme";
+import { useColors, inr, STATUS_META } from "../theme";
 
 interface ActiveOrder {
   id: string;
@@ -33,6 +33,7 @@ function isHiddenRoute(pathname: string): boolean {
  * order in progress, so they can jump back to live tracking from anywhere.
  */
 export function ActiveOrderBar() {
+  const brand = useColors();
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();

@@ -1,6 +1,6 @@
 import { ScrollView } from "react-native";
 import { XStack, YStack, Text } from "tamagui";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 import { MIcon } from "../components";
 import type { Coupon } from "./types";
 
@@ -19,6 +19,7 @@ function offerLabel(c: Coupon): string {
 
 /** "Offers for you" — horizontal coupon cards (real, active coupons). */
 export function OffersStrip({ coupons, onPress }: Readonly<Props>) {
+  const brand = useColors();
   const list = coupons.filter((c) => c.code);
   if (list.length === 0) return null;
 

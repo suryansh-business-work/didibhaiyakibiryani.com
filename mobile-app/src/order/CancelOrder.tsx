@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useMutation } from "@apollo/client";
 import { YStack, XStack, Text, Button } from "tamagui";
 import { CANCEL_ORDER } from "../graphql";
-import { brand } from "../theme";
+import { useColors } from "../theme";
+import { errorMessage } from "../error";
 
 interface CancelOrderProps {
   orderId: string;
@@ -11,6 +12,7 @@ interface CancelOrderProps {
 
 /** Inline cancel flow (no native Alert — works on web too). */
 export function CancelOrder({ orderId, onCancelled }: Readonly<CancelOrderProps>) {
+  const brand = useColors();
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
   const [cancel, { loading }] = useMutation(CANCEL_ORDER);
@@ -21,7 +23,7 @@ export function CancelOrder({ orderId, onCancelled }: Readonly<CancelOrderProps>
       await cancel({ variables: { id: orderId } });
       onCancelled();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Could not cancel — try again.");
+      setError(errorMessage(e, "Could not cancel — try again."));
     }
   }
 

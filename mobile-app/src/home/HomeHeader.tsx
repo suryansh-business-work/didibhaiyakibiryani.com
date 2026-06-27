@@ -1,5 +1,5 @@
 import { XStack, YStack, Text } from "tamagui";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 import { MIcon } from "../components";
 import { FadeInView } from "../animations";
 
@@ -14,8 +14,9 @@ interface HomeHeaderProps {
 
 /** Domino's-style top bar: Location (left) · Redeem Free Items (pill) · Account. */
 export function HomeHeader({ location, initial, paddingTop, onLocation, onRedeem, onAccount }: Readonly<HomeHeaderProps>) {
+  const brand = useColors();
   return (
-    <YStack paddingTop={paddingTop} paddingHorizontal={16} paddingBottom={12} backgroundColor="#0c0805">
+    <YStack paddingTop={paddingTop} paddingHorizontal={16} paddingBottom={12} backgroundColor={brand.bg}>
       <FadeInView>
         <XStack alignItems="center" gap={10}>
           <YStack flex={1} pressStyle={{ opacity: 0.7 }} onPress={onLocation}>

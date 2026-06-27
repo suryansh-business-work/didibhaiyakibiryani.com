@@ -6,7 +6,7 @@ import * as ImagePicker from "expo-image-picker";
 import { YStack, XStack, Text, Button } from "tamagui";
 import { CREATE_SUPPORT_TICKET, UPLOAD_SUPPORT_IMAGE } from "../graphql";
 import { useSettings } from "../settings";
-import { brand } from "../theme";
+import { useColors } from "../theme";
 import { MIcon } from "../components";
 import { RHFTextField, supportSchema, OTHER_SUBJECT, type SupportForm as SupportFormData } from "../form";
 
@@ -17,6 +17,7 @@ interface SupportFormProps {
 
 /** Raise a support request: subject (admin-managed list + custom), photo, details. */
 export function SupportForm({ orderId, onCreated }: Readonly<SupportFormProps>) {
+  const brand = useColors();
   const settings = useSettings();
   const subjects = [...settings.supportSubjects, OTHER_SUBJECT];
 

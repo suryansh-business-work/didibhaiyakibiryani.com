@@ -6,8 +6,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { MENU_ITEM } from "../../src/graphql";
 import { useCart } from "../../src/cart";
-import { brand, inr } from "../../src/theme";
-import { FoodThumb, Badge, Stars, BackButton, SpicePicker } from "../../src/components";
+import { useColors, inr } from "../../src/theme";
+import { errorMessage } from "../../src/error";
+import { FoodThumb, Badge, Stars, BackButton, ErrorState, SpicePicker } from "../../src/components";
 
 interface Item {
   id: string; name: string; description?: string; price: number; image?: string; spiceSelectable: boolean; spiceLevel: number;
@@ -16,17 +17,32 @@ interface Item {
 }
 
 export default function ItemDetail() {
+  const brand = useColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { add } = useCart();
-  const { data, loading } = useQuery<{ menuItem: Item }>(MENU_ITEM, { variables: { id } });
+  const { data, loading, error, refetch } = useQuery<{ menuItem: Item }>(MENU_ITEM, { variables: { id } });
 
   const [qty, setQty] = useState(1);
   const [spice, setSpice] = useState<number | null>(null);
 
-  if (loading || !data?.menuItem) {
+  if (loading && !data) {
     return <YStack flex={1} backgroundColor={brand.bg} alignItems="center" justifyContent="center"><Spinner color={brand.gold} /></YStack>;
+  }
+  if (error || !data?.menuItem) {
+    return (
+      <YStack flex={1} backgroundColor={brand.bg}>
+        <XStack paddingTop={insets.top + 8} paddingHorizontal={16} paddingBottom={8}>
+          <BackButton onPress={() => router.back()} />
+        </XStack>
+        {error ? (
+          <ErrorState message={errorMessage(error)} onRetry={() => { refetch().catch(() => {}); }} />
+        ) : (
+          <ErrorState message="This item isn't available." onRetry={() => router.back()} retryLabel="Go back" />
+        )}
+      </YStack>
+    );
   }
   const it = data.menuItem;
   const chosenSpice = spice ?? it.spiceLevel;
@@ -78,7 +94,7 @@ export default function ItemDetail() {
       </ScrollView>
 
       {/* Add bar */}
-      <XStack paddingHorizontal={16} paddingBottom={insets.bottom + 12} paddingTop={12} backgroundColor="#0c0805" borderTopColor={brand.border} borderTopWidth={1}>
+      <XStack paddingHorizontal={16} paddingBottom={insets.bottom + 12} paddingTop={12} backgroundColor={brand.bg} borderTopColor={brand.border} borderTopWidth={1}>
         <Button
           flex={1}
           height={52}

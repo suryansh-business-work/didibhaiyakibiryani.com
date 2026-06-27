@@ -4,10 +4,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button } from "tamagui";
 import { useCart } from "../src/cart";
 import { useSettings, previewDeliveryFee } from "../src/settings";
-import { brand, inr } from "../src/theme";
+import { useColors, inr } from "../src/theme";
 import { BackButton, MIcon, SpicePicker } from "../src/components";
 
 export default function Cart() {
+  const brand = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lines, subtotal, setQty, setSpice, remove } = useCart();
@@ -67,7 +68,7 @@ export default function Cart() {
             </YStack>
           </ScrollView>
 
-          <XStack paddingHorizontal={16} paddingBottom={insets.bottom + 12} paddingTop={12} backgroundColor="#0c0805" borderTopColor={brand.border} borderTopWidth={1}>
+          <XStack paddingHorizontal={16} paddingBottom={insets.bottom + 12} paddingTop={12} backgroundColor={brand.bg} borderTopColor={brand.border} borderTopWidth={1}>
             <Button flex={1} height={52} backgroundColor={brand.gold} color="#2a1a06" fontWeight="800" fontSize={16} onPress={() => router.push("/checkout")}>
               Proceed to checkout · {inr(total)}
             </Button>
@@ -79,6 +80,7 @@ export default function Cart() {
 }
 
 function Row({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
+  const brand = useColors();
   return (
     <XStack justifyContent="space-between">
       <Text color={strong ? brand.text : brand.dim} fontWeight={strong ? "800" : "400"} fontSize={strong ? 17 : 14}>{k}</Text>
