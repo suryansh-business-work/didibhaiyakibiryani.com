@@ -53,6 +53,7 @@ export const expenseSourceSchema = z
     accountNumber: z.string().optional(),
     ifsc: z.string().optional(),
     note: z.string().optional(),
+    color: z.string().optional(),
     isActive: z.boolean(),
   })
   .superRefine((d, ctx) => {
@@ -68,12 +69,18 @@ export const expenseSourceSchema = z
     }
   });
 
+export const rawItemSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  marketPrice: z.coerce.number().min(0, "Must be 0 or more"),
+  priceUnit: z.string().optional(),
+});
+
 export const expenseSchema = z.object({
-  sourceId: z.string().min(1, "Select an expense source"),
-  title: z.string().trim().min(1, "Title is required"),
+  sourceId: z.string().optional(),
+  productId: z.string().min(1, "Select a raw item"),
   amount: z.coerce.number().positive("Enter an amount above 0"),
+  unit: z.string().optional(),
   note: z.string().optional(),
-  invoiceUrl: z.string().optional(),
   date: z.string().optional(),
 });
 
@@ -260,6 +267,7 @@ export type RecoverForm = z.infer<typeof recoverSchema>;
 export type CategoryForm = z.infer<typeof categorySchema>;
 export type SocietyForm = z.infer<typeof societySchema>;
 export type ExpenseSourceForm = z.infer<typeof expenseSourceSchema>;
+export type RawItemForm = z.infer<typeof rawItemSchema>;
 export type ExpenseForm = z.infer<typeof expenseSchema>;
 export type SliderForm = z.infer<typeof sliderSchema>;
 export type CustomerForm = z.infer<typeof customerSchema>;

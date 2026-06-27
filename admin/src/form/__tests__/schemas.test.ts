@@ -13,6 +13,7 @@ import {
   menuItemSchema,
   manualOrderSchema,
   expenseSourceSchema,
+  rawItemSchema,
   expenseSchema,
 } from "../schemas";
 
@@ -158,14 +159,25 @@ describe("expenseSourceSchema", () => {
   });
 });
 
+describe("rawItemSchema", () => {
+  it("requires a name and coerces a non-negative market price", () => {
+    const r = rawItemSchema.safeParse({ name: "Rice", marketPrice: "60", priceUnit: "KG" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.marketPrice).toBe(60);
+    expect(errs(rawItemSchema, { name: "", marketPrice: -1 })).toEqual({
+      name: "Name is required",
+      marketPrice: "Must be 0 or more",
+    });
+  });
+});
+
 describe("expenseSchema", () => {
-  it("requires a source, title and a positive (coerced) amount", () => {
-    const r = expenseSchema.safeParse({ sourceId: "s1", title: "Vegetables", amount: "250", note: "" });
+  it("requires a raw item and a positive (coerced) amount; source/unit optional", () => {
+    const r = expenseSchema.safeParse({ productId: "p1", amount: "250" });
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.amount).toBe(250);
-    expect(errs(expenseSchema, { sourceId: "", title: "", amount: 0 })).toEqual({
-      sourceId: "Select an expense source",
-      title: "Title is required",
+    expect(errs(expenseSchema, { productId: "", amount: 0 })).toEqual({
+      productId: "Select a raw item",
       amount: "Enter an amount above 0",
     });
   });

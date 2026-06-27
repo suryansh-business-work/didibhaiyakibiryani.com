@@ -9,6 +9,7 @@ import { YStack, XStack, Text, Button, Input, Spinner } from "tamagui";
 import { VALIDATE_COUPON, PLACE_ORDER } from "../src/graphql";
 import { useCart } from "../src/cart";
 import { useAuth } from "../src/auth";
+import { useFulfilment } from "../src/fulfilment";
 import { useSettings, previewDeliveryFee } from "../src/settings";
 import { Section, PayOption, Row, Notice } from "../src/checkout/fields";
 import { SocietyPicker, type Society } from "../src/checkout/SocietyPicker";
@@ -21,6 +22,8 @@ export default function Checkout() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { lines, subtotal, clear } = useCart();
+  const { orderType } = useFulfilment();
+  const isTakeaway = orderType === "TAKEAWAY";
   const settings = useSettings();
 
   const def = user?.addresses?.find((a) => a.isDefault) ?? user?.addresses?.[0];
@@ -62,7 +65,7 @@ export default function Checkout() {
     );
   }
 
-  const baseDelivery = previewDeliveryFee(subtotal, settings);
+  const baseDelivery = isTakeaway ? 0 : previewDeliveryFee(subtotal, settings);
   const effDelivery = freeDelivery ? 0 : baseDelivery;
   const total = Math.max(0, subtotal - discount) + effDelivery;
   const noPaymentMethod = !settings.codEnabled && !settings.onlineEnabled;
@@ -124,6 +127,7 @@ export default function Checkout() {
             address,
             couponCode: appliedCode || null,
             paymentMethod: payment,
+            orderType,
             notes,
           },
         },
@@ -225,7 +229,7 @@ export default function Checkout() {
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={14} padding={16} gap={8}>
           <Row k="Subtotal" v={inr(subtotal)} />
           {discount > 0 && <Row k={`Discount (${appliedCode})`} v={`– ${inr(discount)}`} />}
-          <Row k="Delivery" v={effDelivery === 0 ? "Free" : inr(effDelivery)} />
+          <Row k={isTakeaway ? "Pickup" : "Delivery"} v={isTakeaway || effDelivery === 0 ? "Free" : inr(effDelivery)} />
           <YStack height={1} backgroundColor={brand.border} marginVertical={4} />
           <Row k="To pay" v={inr(total)} strong />
         </YStack>

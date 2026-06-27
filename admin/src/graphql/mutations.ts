@@ -133,18 +133,40 @@ export const DELETE_EXPENSE_SOURCE = gql`
   }
 `;
 
+const EXPENSE_PRODUCT_FIELDS = `
+  id
+  name
+  marketPrice
+  priceUnit
+`;
+export const CREATE_EXPENSE_PRODUCT = gql`
+  mutation CreateExpenseProduct($name: String!, $marketPrice: Float, $priceUnit: String) {
+    createExpenseProduct(name: $name, marketPrice: $marketPrice, priceUnit: $priceUnit) {
+      ${EXPENSE_PRODUCT_FIELDS}
+    }
+  }
+`;
+export const UPDATE_EXPENSE_PRODUCT = gql`
+  mutation UpdateExpenseProduct($id: ID!, $name: String, $marketPrice: Float, $priceUnit: String) {
+    updateExpenseProduct(id: $id, name: $name, marketPrice: $marketPrice, priceUnit: $priceUnit) {
+      ${EXPENSE_PRODUCT_FIELDS}
+    }
+  }
+`;
+export const DELETE_EXPENSE_PRODUCT = gql`
+  mutation DeleteExpenseProduct($id: ID!) {
+    deleteExpenseProduct(id: $id)
+  }
+`;
+
 export const CREATE_EXPENSE = gql`
   mutation CreateExpense($input: ExpenseInput!) {
-    createExpense(input: $input) {
-      id
-    }
+    createExpense(input: $input) { id }
   }
 `;
 export const UPDATE_EXPENSE = gql`
   mutation UpdateExpense($id: ID!, $input: ExpenseInput!) {
-    updateExpense(id: $id, input: $input) {
-      id
-    }
+    updateExpense(id: $id, input: $input) { id }
   }
 `;
 export const DELETE_EXPENSE = gql`
@@ -152,6 +174,7 @@ export const DELETE_EXPENSE = gql`
     deleteExpense(id: $id)
   }
 `;
+export const DELETE_EXPENSES = gql`mutation DeleteExpenses($ids: [ID!]!) { deleteExpenses(ids: $ids) }`;
 
 export const DELETE_ORDER = gql`
   mutation DeleteOrder($id: ID!) {
@@ -501,7 +524,6 @@ export const DELETE_COUPONS = gql`mutation DeleteCoupons($ids: [ID!]!) { deleteC
 export const DELETE_SOCIETIES = gql`mutation DeleteSocieties($ids: [ID!]!) { deleteSocieties(ids: $ids) }`;
 export const DELETE_SLIDERS = gql`mutation DeleteBanners($ids: [ID!]!) { deleteBanners(ids: $ids) }`;
 export const DELETE_EXPENSE_SOURCES = gql`mutation DeleteExpenseSources($ids: [ID!]!) { deleteExpenseSources(ids: $ids) }`;
-export const DELETE_EXPENSES = gql`mutation DeleteExpenses($ids: [ID!]!) { deleteExpenses(ids: $ids) }`;
 export const DELETE_LEADS = gql`mutation DeleteLeads($ids: [ID!]!) { deleteLeads(ids: $ids) }`;
 export const DELETE_CUSTOMERS = gql`mutation DeleteCustomers($ids: [ID!]!) { deleteCustomers(ids: $ids) }`;
 export const DELETE_PARTY_ORDERS = gql`mutation DeletePartyOrders($ids: [ID!]!) { deletePartyOrders(ids: $ids) }`;

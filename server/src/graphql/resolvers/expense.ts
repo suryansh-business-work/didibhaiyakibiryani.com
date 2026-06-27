@@ -1,7 +1,11 @@
 import { GraphQLError } from "graphql";
-import { Expense, ExpenseSource, type ExpenseSourceType } from "../../models/index.js";
+import { Expense, ExpenseSource, ExpenseProduct, type ExpenseSourceType } from "../../models/index.js";
 import { requireRole, type Context } from "../../utils/auth.js";
 import { paginate, type PageArgs } from "../../utils/pagination.js";
+
+function badInput(message: string): GraphQLError {
+  return new GraphQLError(message, { extensions: { code: "BAD_USER_INPUT" } });
+}
 
 interface ExpenseSourceInput {
   type: ExpenseSourceType;
@@ -12,13 +16,16 @@ interface ExpenseSourceInput {
   accountNumber?: string;
   ifsc?: string;
   note?: string;
+  color?: string;
   isActive?: boolean;
 }
 
 interface ExpenseInput {
-  sourceId: string;
+  sourceId?: string;
+  productId?: string;
   title: string;
   amount: number;
+  unit?: string;
   note?: string;
   invoiceUrl?: string;
   date?: string;
@@ -26,9 +33,11 @@ interface ExpenseInput {
 
 function expenseFields(input: ExpenseInput) {
   return {
-    source: input.sourceId,
+    source: input.sourceId || undefined,
+    product: input.productId || undefined,
     title: input.title,
     amount: input.amount,
+    unit: input.unit?.trim() || undefined,
     note: input.note,
     invoiceUrl: input.invoiceUrl?.trim() || undefined,
     // undefined → mongoose `default: now` on create; ignored by
@@ -37,6 +46,8 @@ function expenseFields(input: ExpenseInput) {
   };
 }
 
+const EXPENSE_POPULATE = ["source", "product"];
+
 export const expenseResolvers = {
   Query: {
     expenseSources: async (_: unknown, { activeOnly }: { activeOnly?: boolean }) => {
@@ -44,7 +55,7 @@ export const expenseResolvers = {
       return ExpenseSource.find(filter).sort({ createdAt: -1 }).exec();
     },
 
-    expenses: async () => Expense.find().sort({ createdAt: -1 }).populate("source").exec(),
+    expenses: async () => Expense.find().sort({ createdAt: -1 }).populate(EXPENSE_POPULATE).exec(),
 
     expensesPage: async (_: unknown, page: PageArgs, ctx: Context) => {
       requireRole(ctx, "ADMIN");
@@ -52,9 +63,15 @@ export const expenseResolvers = {
         searchFields: ["title"],
         sortAllow: ["amount", "createdAt", "title", "date"],
         defaultSort: "date",
-        populate: "source",
+        populate: EXPENSE_POPULATE,
         ...page,
       });
+    },
+
+    // Raw items / materials, oldest first.
+    expenseProducts: async (_: unknown, __: unknown, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      return ExpenseProduct.find().sort({ createdAt: 1 }).exec();
     },
   },
 
@@ -92,12 +109,12 @@ export const expenseResolvers = {
     createExpense: async (_: unknown, { input }: { input: ExpenseInput }, ctx: Context) => {
       requireRole(ctx, "ADMIN");
       const expense = await Expense.create(expenseFields(input));
-      return expense.populate("source");
+      return expense.populate(EXPENSE_POPULATE);
     },
 
     updateExpense: async (_: unknown, { id, input }: { id: string; input: ExpenseInput }, ctx: Context) => {
       requireRole(ctx, "ADMIN");
-      const expense = await Expense.findByIdAndUpdate(id, expenseFields(input), { new: true }).populate("source");
+      const expense = await Expense.findByIdAndUpdate(id, expenseFields(input), { new: true }).populate(EXPENSE_POPULATE);
       if (!expense) throw new GraphQLError("Expense not found.");
       return expense;
     },
@@ -114,6 +131,48 @@ export const expenseResolvers = {
       const res = await Expense.deleteMany({ _id: { $in: ids } }).exec();
       /* v8 ignore next -- deletedCount is always present on the driver result */
       return res.deletedCount ?? 0;
+    },
+
+    createExpenseProduct: async (
+      _: unknown,
+      { name, marketPrice, priceUnit }: { name: string; marketPrice?: number; priceUnit?: string },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN");
+      const trimmed = name.trim();
+      if (!trimmed) throw badInput("Raw item name is required.");
+      const exists = await ExpenseProduct.findOne({ name: trimmed });
+      if (exists) throw badInput("A raw item with this name already exists.");
+      return ExpenseProduct.create({ name: trimmed, marketPrice, priceUnit });
+    },
+
+    updateExpenseProduct: async (
+      _: unknown,
+      { id, name, marketPrice, priceUnit }: { id: string; name?: string; marketPrice?: number; priceUnit?: string },
+      ctx: Context
+    ) => {
+      requireRole(ctx, "ADMIN");
+      const product = await ExpenseProduct.findById(id);
+      if (!product) throw badInput("Raw item not found.");
+      if (name !== undefined) {
+        const trimmed = name.trim();
+        if (!trimmed) throw badInput("Raw item name is required.");
+        const clash = await ExpenseProduct.findOne({ name: trimmed, _id: { $ne: id } });
+        if (clash) throw badInput("A raw item with this name already exists.");
+        product.name = trimmed;
+      }
+      if (marketPrice !== undefined) product.marketPrice = marketPrice;
+      if (priceUnit !== undefined) product.priceUnit = priceUnit.trim() || undefined;
+      await product.save();
+      return product;
+    },
+
+    deleteExpenseProduct: async (_: unknown, { id }: { id: string }, ctx: Context) => {
+      requireRole(ctx, "ADMIN");
+      // Removing a raw item also clears the recorded expenses that referenced it.
+      await Expense.deleteMany({ product: id });
+      await ExpenseProduct.findByIdAndDelete(id);
+      return true;
     },
   },
 };

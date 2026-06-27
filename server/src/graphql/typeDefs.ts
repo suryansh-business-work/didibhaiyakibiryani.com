@@ -162,6 +162,7 @@ export const typeDefs = /* GraphQL */ `
     accountNumber: String
     ifsc: String
     note: String
+    color: String
     isActive: Boolean!
     createdAt: DateTime!
   }
@@ -169,11 +170,22 @@ export const typeDefs = /* GraphQL */ `
   type Expense {
     id: ID!
     source: ExpenseSource
+    product: ExpenseProduct
     title: String!
     amount: Float!
+    unit: String
     note: String
     invoiceUrl: String
     date: DateTime
+    createdAt: DateTime!
+  }
+
+  # A raw item / material (managed under admin → Raw Items).
+  type ExpenseProduct {
+    id: ID!
+    name: String!
+    marketPrice: Float!
+    priceUnit: String
     createdAt: DateTime!
   }
 
@@ -418,6 +430,7 @@ export const typeDefs = /* GraphQL */ `
     periodOrders: Int!
     periodRevenue: Float!
     periodExpenses: Float!
+    expenseCategoryCount: Int!
     periodProfit: Float!
     periodComplimentary: Float!
     dishRatings: [DishRating!]!
@@ -501,13 +514,16 @@ export const typeDefs = /* GraphQL */ `
     accountNumber: String
     ifsc: String
     note: String
+    color: String
     isActive: Boolean
   }
 
   input ExpenseInput {
-    sourceId: ID!
+    sourceId: ID
+    productId: ID
     title: String!
     amount: Float!
+    unit: String
     note: String
     invoiceUrl: String
     date: DateTime
@@ -556,6 +572,7 @@ export const typeDefs = /* GraphQL */ `
     address: AddressInput!
     couponCode: String
     paymentMethod: PaymentMethod
+    orderType: OrderType
     notes: String
   }
 
@@ -906,6 +923,7 @@ export const typeDefs = /* GraphQL */ `
 
     expenseSources(activeOnly: Boolean): [ExpenseSource!]! # admin
     expenses: [Expense!]! # admin
+    expenseProducts: [ExpenseProduct!]! # admin — raw items / materials
 
     categories(activeOnly: Boolean): [Category!]!
     menuItems(categoryId: ID, search: String, availableOnly: Boolean): [MenuItem!]!
@@ -1005,6 +1023,11 @@ export const typeDefs = /* GraphQL */ `
     createExpense(input: ExpenseInput!): Expense!
     updateExpense(id: ID!, input: ExpenseInput!): Expense!
     deleteExpense(id: ID!): Boolean!
+
+    # Manage Expenses calendar grid (admin)
+    createExpenseProduct(name: String!, marketPrice: Float, priceUnit: String): ExpenseProduct!
+    updateExpenseProduct(id: ID!, name: String, marketPrice: Float, priceUnit: String): ExpenseProduct!
+    deleteExpenseProduct(id: ID!): Boolean!
 
     # Party order enquiries
     submitPartyOrder(input: PartyOrderInput!, captchaId: String!, captchaAnswer: String!): Boolean! # public, captcha-gated

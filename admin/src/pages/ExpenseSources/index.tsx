@@ -9,13 +9,14 @@ import {
   DELETE_EXPENSE_SOURCE,
   DELETE_EXPENSE_SOURCES,
 } from "../../graphql/mutations";
-import { Button, Chip, Typography } from "@mui/material";
+import { Box, Button, Chip, Typography } from "@mui/material";
 import Layout from "../../components/Layout";
 import { FormActions, Modal, OnOffChip } from "../../components/ui";
 import { IPlus } from "../../components/icons";
 import { useAlert, useConfirm } from "../../components/dialog";
 import { DataTable, useClientTable, type Column } from "../../components/DataTable";
 import { RHFField, RHFSelect, RHFCheckbox, expenseSourceSchema, type ExpenseSourceForm } from "../../form";
+import SourceColorField from "./SourceColorField";
 
 interface ExpenseSource {
   id: string;
@@ -27,6 +28,7 @@ interface ExpenseSource {
   accountNumber?: string;
   ifsc?: string;
   note?: string;
+  color?: string;
   isActive: boolean;
 }
 
@@ -36,7 +38,7 @@ const TYPE_OPTIONS = [
 ];
 
 const BLANK: ExpenseSourceForm = {
-  type: "PERSON", name: "", phone: "", email: "", bankName: "", accountNumber: "", ifsc: "", note: "", isActive: true,
+  type: "PERSON", name: "", phone: "", email: "", bankName: "", accountNumber: "", ifsc: "", note: "", color: "", isActive: true,
 };
 
 function detailOf(s: ExpenseSource): string {
@@ -69,20 +71,9 @@ export default function ExpenseSources() {
   const type = watch("type");
 
   const columns = useMemo<Column<ExpenseSource>[]>(() => [
-    {
-      key: "name", label: "Name", sortable: true,
-      searchValue: (s) => `${s.name} ${detailOf(s)}`, sortValue: (s) => s.name,
-      render: (s) => <Typography fontWeight={700}>{s.name}</Typography>,
-    },
-    {
-      key: "type", label: "Type", sortable: true, sortValue: (s) => s.type,
-      render: (s) => <Chip size="small" variant="outlined" label={s.type === "PERSON" ? "Person" : "Account"} />,
-    },
-    {
-      key: "details", label: "Details",
-      searchValue: (s) => detailOf(s),
-      render: (s) => <Typography variant="body2" color="text.secondary">{detailOf(s)}</Typography>,
-    },
+    { key: "name", label: "Name", sortable: true, searchValue: (s) => `${s.name} ${detailOf(s)}`, sortValue: (s) => s.name, render: (s) => <Typography fontWeight={700}>{s.color ? <Box component="span" sx={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", bgcolor: s.color, mr: 1 }} /> : null}{s.name}</Typography> },
+    { key: "type", label: "Type", sortable: true, sortValue: (s) => s.type, render: (s) => <Chip size="small" variant="outlined" label={s.type === "PERSON" ? "Person" : "Account"} /> },
+    { key: "details", label: "Details", searchValue: (s) => detailOf(s), render: (s) => <Typography variant="body2" color="text.secondary">{detailOf(s)}</Typography> },
     { key: "isActive", label: "Status", render: (s) => <OnOffChip on={s.isActive} offLabel="Hidden" /> },
   ], []);
 
@@ -98,7 +89,7 @@ export default function ExpenseSources() {
     reset({
       type: s.type, name: s.name, phone: s.phone ?? "", email: s.email ?? "",
       bankName: s.bankName ?? "", accountNumber: s.accountNumber ?? "", ifsc: s.ifsc ?? "",
-      note: s.note ?? "", isActive: s.isActive,
+      note: s.note ?? "", color: s.color ?? "", isActive: s.isActive,
     });
     setOpen(true);
   }
@@ -113,6 +104,7 @@ export default function ExpenseSources() {
       accountNumber: form.accountNumber?.trim() || undefined,
       ifsc: form.ifsc?.trim() || undefined,
       note: form.note?.trim() || undefined,
+      color: form.color?.trim() || undefined,
       isActive: form.isActive,
     };
     try {
@@ -189,6 +181,7 @@ export default function ExpenseSources() {
             </>
           )}
           <RHFField control={control} name="note" label="Note (optional)" multiline error={errors.note?.message} />
+          <SourceColorField control={control} />
           <RHFCheckbox control={control} name="isActive" label="Active" />
           {errors.root ? <Typography color="error" variant="body2" sx={{ mt: 1 }}>{errors.root.message}</Typography> : null}
         </Modal>

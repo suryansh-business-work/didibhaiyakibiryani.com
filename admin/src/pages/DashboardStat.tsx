@@ -6,6 +6,7 @@ export interface PeriodStats {
   periodOrders: number;
   periodRevenue: number;
   periodExpenses: number;
+  expenseCategoryCount: number;
   periodProfit: number;
   periodComplimentary: number;
 }
@@ -43,6 +44,7 @@ export function PeriodSummary({
   onComplimentaryClick,
 }: Readonly<{ s: PeriodStats; onProfitClick?: () => void; onComplimentaryClick?: () => void }>) {
   const profitColor = s.periodProfit >= 0 ? "#16a34a" : "#dc2626";
+  const categoryLabel = s.expenseCategoryCount === 1 ? "1 category" : `${s.expenseCategoryCount} categories`;
   return (
     <div className="card section-gap" style={{ padding: 20 }}>
       <div className="panel-title">Period summary</div>
@@ -57,7 +59,7 @@ export function PeriodSummary({
           valueColor={profitColor}
           onClick={onProfitClick}
         />
-        <Stat label="Expenses" value={inr(s.periodExpenses)} sub="Tracked separately" icon={<IRupee />} />
+        <Stat label="Expenses" value={inr(s.periodExpenses)} sub={`${categoryLabel} with spend`} icon={<IRupee />} />
         <Stat label="Complimentary" value={inr(s.periodComplimentary)} sub="Free items given · tap to view" icon={<IRupee />} onClick={onComplimentaryClick} />
       </div>
     </div>

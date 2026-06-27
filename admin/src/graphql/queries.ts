@@ -30,6 +30,7 @@ export const DASHBOARD = gql`
       periodOrders
       periodRevenue
       periodExpenses
+      expenseCategoryCount
       periodProfit
       periodComplimentary
       dishRatings {
@@ -244,26 +245,19 @@ export const EXPENSE_SOURCES = gql`
       accountNumber
       ifsc
       note
+      color
       isActive
     }
   }
 `;
 
-export const EXPENSES = gql`
-  query Expenses {
-    expenses {
+export const EXPENSE_PRODUCTS = gql`
+  query ExpenseProducts {
+    expenseProducts {
       id
-      title
-      amount
-      note
-      invoiceUrl
-      date
-      createdAt
-      source {
-        id
-        type
-        name
-      }
+      name
+      marketPrice
+      priceUnit
     }
   }
 `;
@@ -276,14 +270,19 @@ export const EXPENSES_PAGE = gql`
         id
         title
         amount
+        unit
         note
-        invoiceUrl
         date
         createdAt
         source {
           id
-          type
           name
+          color
+        }
+        product {
+          id
+          name
+          priceUnit
         }
       }
     }

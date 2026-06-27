@@ -39,6 +39,20 @@ describe("order resolver — placeOrder", () => {
     expect(order.status).toBe("PLACED");
   });
 
+  it("places a takeaway order with no delivery fee", async () => {
+    const user = await makeUser();
+    const item = await makeItem();
+    const ctx = ctxFor(user.id, "CUSTOMER");
+    const order = await M.placeOrder(
+      null,
+      { input: { items: [{ menuItemId: item.id, qty: 2 }], address: { line1: "1 St", city: "BLR", pincode: "560001" }, orderType: "TAKEAWAY" } },
+      ctx
+    );
+    expect(order.orderType).toBe("TAKEAWAY");
+    expect(order.deliveryFee).toBe(0);
+    expect(order.total).toBe(order.subtotal - order.discount);
+  });
+
   it("rejects empty cart, unavailable items, out-of-stock", async () => {
     const user = await makeUser();
     const ctx = ctxFor(user.id, "CUSTOMER");

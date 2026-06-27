@@ -17,6 +17,8 @@ export interface IExpenseSource extends Document {
   accountNumber?: string;
   ifsc?: string;
   note?: string;
+  /** Optional highlight colour (hex) used to tint this source's rows in the grid. */
+  color?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -32,6 +34,7 @@ const expenseSourceSchema = new Schema<IExpenseSource>(
     accountNumber: { type: String, trim: true },
     ifsc: { type: String, trim: true },
     note: { type: String, trim: true },
+    color: { type: String, trim: true },
     isActive: { type: Boolean, default: true, index: true },
   },
   { timestamps: true }

@@ -93,6 +93,7 @@ export const dashboardResolvers = {
         periodOrders,
         periodRevenueAgg,
         periodExpensesAgg,
+        expenseCategoryAgg,
         periodMarginAgg,
       ] = await Promise.all([
         Order.countDocuments({ status: { $ne: "CANCELLED" } }),
@@ -186,6 +187,13 @@ export const dashboardResolvers = {
           { $match: { ...expensesRange } },
           { $group: { _id: null, total: { $sum: "$amount" } } },
         ]),
+        // Distinct expense products ("categories") that have any spend in range.
+        Expense.aggregate([
+          { $addFields: { effDate: { $ifNull: ["$date", "$createdAt"] } } },
+          { $match: { product: { $ne: null }, ...expensesRange } },
+          { $group: { _id: "$product" } },
+          { $count: "n" },
+        ]),
         // Cost-of-goods (from each item's snapshot makingCost) and the retail
         // value given away as complimentary, over revenue orders in the range.
         Order.aggregate([
@@ -236,6 +244,7 @@ export const dashboardResolvers = {
         periodOrders,
         periodRevenue,
         periodExpenses,
+        expenseCategoryCount: expenseCategoryAgg[0]?.n ?? 0,
         periodProfit,
         periodComplimentary,
         dishRatings: dishRatingsAgg.map((d) => ({

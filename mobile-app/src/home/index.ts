@@ -1,8 +1,12 @@
 export { HomeHeader } from "./HomeHeader";
+export { FulfilmentToggle } from "./FulfilmentToggle";
 export { HomeSlider } from "./HomeSlider";
 export { CategoryChips } from "./CategoryChips";
+export { CategoryGrid } from "./CategoryGrid";
+export { OffersStrip } from "./OffersStrip";
+export { RecentOrderStrip } from "./RecentOrderStrip";
 export { HomeList } from "./HomeList";
 export { MenuItemCard } from "./MenuItemCard";
 export { CartBar } from "./CartBar";
 export { StoreClosedBanner } from "./StoreClosedBanner";
-export type { Cat, Item, Banner } from "./types";
+export type { Cat, Item, Banner, Coupon, RecentOrder } from "./types";

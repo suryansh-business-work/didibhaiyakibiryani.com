@@ -46,6 +46,7 @@ describe("PeriodSummary", () => {
     periodOrders: 12,
     periodRevenue: 5000,
     periodExpenses: 2000,
+    expenseCategoryCount: 4,
     periodProfit: 3000,
     periodComplimentary: 500,
   };
@@ -61,6 +62,16 @@ describe("PeriodSummary", () => {
     expect(screen.getByText(inr(3000))).toBeInTheDocument();
     expect(screen.getByText("Complimentary")).toBeInTheDocument();
     expect(screen.getByText(inr(500))).toBeInTheDocument();
+  });
+
+  it("shows the expense category count (plural) under Expenses", () => {
+    render(<PeriodSummary s={base} />);
+    expect(screen.getByText("4 categories with spend")).toBeInTheDocument();
+  });
+
+  it("uses the singular label for exactly one expense category", () => {
+    render(<PeriodSummary s={{ ...base, expenseCategoryCount: 1 }} />);
+    expect(screen.getByText("1 category with spend")).toBeInTheDocument();
   });
 
   it("colors a non-negative profit green", () => {

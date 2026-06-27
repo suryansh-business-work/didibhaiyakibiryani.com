@@ -158,6 +158,7 @@ export const HOME_DATA = gql`
     categories(activeOnly: true) {
       id
       name
+      image
     }
     menuItems {
       id
@@ -272,7 +273,11 @@ export const MY_ORDERS = gql`
       total
       status
       placedAt
-      items { name qty }
+      items {
+        name
+        qty
+        menuItem { id name price image spiceSelectable spiceLevel isAvailable }
+      }
     }
   }
 `;

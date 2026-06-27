@@ -53,6 +53,7 @@ export const NAV_GROUPS: ReadonlyArray<NavGroup> = [
       { to: "/finance", label: "Finance Settings", icon: IBank },
       { to: "/payments", label: "Payments", icon: IRupee },
       { to: "/expense-sources", label: "Expense Sources", icon: IWallet },
+      { to: "/raw-items", label: "Raw Items", icon: ILayers },
       { to: "/expenses", label: "Manage Expenses", icon: IReceipt },
     ],
   },

@@ -1,88 +1,72 @@
 import { XStack, YStack, Text } from "tamagui";
 import { brand } from "../theme";
 import { MIcon } from "../components";
-import { useSettings } from "../settings";
 import { FadeInView } from "../animations";
-import { HERO_STATS } from "../config";
 
 interface HomeHeaderProps {
-  count: number;
+  location: string;
+  initial: string;
   paddingTop: number;
-  onOpenCart: () => void;
+  onLocation: () => void;
+  onRedeem: () => void;
+  onAccount: () => void;
 }
 
-export function HomeHeader({ count, paddingTop, onOpenCart }: Readonly<HomeHeaderProps>) {
-  const settings = useSettings();
-
+/** Domino's-style top bar: Location (left) · Redeem Free Items (pill) · Account. */
+export function HomeHeader({ location, initial, paddingTop, onLocation, onRedeem, onAccount }: Readonly<HomeHeaderProps>) {
   return (
-    <YStack
-      paddingTop={paddingTop}
-      paddingHorizontal={18}
-      paddingBottom={12}
-      backgroundColor="#0c0805"
-    >
+    <YStack paddingTop={paddingTop} paddingHorizontal={16} paddingBottom={12} backgroundColor="#0c0805">
       <FadeInView>
-        <XStack alignItems="center" justifyContent="space-between">
-          <YStack>
-            <Text fontSize={13} color={brand.gold} fontFamily="$body">
-              {settings.tagline}
+        <XStack alignItems="center" gap={10}>
+          <YStack flex={1} pressStyle={{ opacity: 0.7 }} onPress={onLocation}>
+            <Text fontSize={11} color={brand.muted} textTransform="uppercase" letterSpacing={0.6}>
+              Deliver to
             </Text>
-            <Text fontSize={22} fontWeight="800" color={brand.text}>
-              {settings.brandName}
-            </Text>
+            <XStack alignItems="center" gap={4}>
+              <MIcon name="map-marker" size={16} color={brand.gold} />
+              <Text fontSize={15} fontWeight="800" color={brand.text} numberOfLines={1} maxWidth={170}>
+                {location}
+              </Text>
+              <MIcon name="chevron-down" size={18} color={brand.dim} />
+            </XStack>
           </YStack>
-          <CartButton count={count} onPress={onOpenCart} />
-        </XStack>
-        <XStack marginTop={10} gap={14}>
-          {HERO_STATS.map((stat) => (
-            <YStack key={stat.id}>
-              <Text fontSize={15} fontWeight="800" color={brand.text}>
-                {stat.big}
-              </Text>
-              <Text fontSize={10} color={brand.muted}>
-                {stat.small}
-              </Text>
-            </YStack>
-          ))}
+
+          <XStack
+            alignItems="center"
+            gap={6}
+            height={38}
+            paddingHorizontal={12}
+            borderRadius={999}
+            backgroundColor="rgba(228,182,92,0.14)"
+            borderColor={brand.goldDeep}
+            borderWidth={1}
+            pressStyle={{ opacity: 0.8, scale: 0.96 }}
+            onPress={onRedeem}
+          >
+            <MIcon name="gift-outline" size={16} color={brand.gold} />
+            <Text fontSize={12} fontWeight="800" color={brand.gold}>Redeem</Text>
+          </XStack>
+
+          <YStack
+            width={40}
+            height={40}
+            borderRadius={999}
+            backgroundColor={brand.maroonSoft}
+            borderColor={brand.gold}
+            borderWidth={1}
+            alignItems="center"
+            justifyContent="center"
+            pressStyle={{ opacity: 0.8, scale: 0.95 }}
+            onPress={onAccount}
+          >
+            {initial ? (
+              <Text fontSize={16} fontWeight="800" color={brand.gold}>{initial}</Text>
+            ) : (
+              <MIcon name="account-outline" size={20} color={brand.gold} />
+            )}
+          </YStack>
         </XStack>
       </FadeInView>
-    </YStack>
-  );
-}
-
-function CartButton({ count, onPress }: Readonly<{ count: number; onPress: () => void }>) {
-  return (
-    <YStack
-      width={44}
-      height={44}
-      borderRadius={12}
-      backgroundColor={brand.card}
-      borderColor={brand.border}
-      borderWidth={1}
-      alignItems="center"
-      justifyContent="center"
-      pressStyle={{ opacity: 0.8, scale: 0.94 }}
-      onPress={onPress}
-    >
-      <MIcon name="cart-outline" size={20} color={brand.text} />
-      {count > 0 && (
-        <YStack
-          position="absolute"
-          top={-6}
-          right={-6}
-          backgroundColor={brand.red}
-          borderRadius={999}
-          minWidth={18}
-          height={18}
-          alignItems="center"
-          justifyContent="center"
-          paddingHorizontal={4}
-        >
-          <Text color="#fff" fontSize={10} fontWeight="800">
-            {count}
-          </Text>
-        </YStack>
-      )}
     </YStack>
   );
 }

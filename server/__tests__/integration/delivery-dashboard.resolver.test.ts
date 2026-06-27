@@ -4,7 +4,7 @@ import { useTestDb, ctxFor } from "../helpers/db";
 import { makeUser, makeOrder } from "../helpers/fixtures";
 import { deliveryResolvers } from "../../src/graphql/resolvers/delivery";
 import { dashboardResolvers } from "../../src/graphql/resolvers/dashboard";
-import { Review, MenuItem, User, Lead } from "../../src/models/index.js";
+import { Review, MenuItem, User, Lead, Expense, ExpenseProduct } from "../../src/models/index.js";
 
 useTestDb();
 const adminCtx = ctxFor("admin1", "ADMIN");
@@ -76,6 +76,9 @@ describe("dashboard resolver", () => {
     await Review.create({ authorName: "Asha", text: "Great", rating: 5, isPublished: true });
     // A manual contact is counted separately from signed-up customers.
     await Lead.create({ name: "Walk-in Ravi", phone: "98200" });
+    // A grid expense product with spend → one expense "category".
+    const prod = await ExpenseProduct.create({ name: "Rice", marketPrice: 50 });
+    await Expense.create({ product: prod._id, title: "Rice", amount: 200, date: new Date() });
 
     expect((await dashboardResolvers.Query.reviews(null, {})).length).toBe(1);
     expect((await dashboardResolvers.Query.customers(null, {}, adminCtx)).length).toBe(1);
@@ -85,6 +88,7 @@ describe("dashboard resolver", () => {
     expect(stats.totalOrders).toBe(2);
     expect(stats.totalCustomers).toBe(1);
     expect(stats.totalLeads).toBe(1);
+    expect(stats.expenseCategoryCount).toBe(1);
     expect(stats.avgFoodRating).toBe(5);
     expect(stats.avgDeliveryRating).toBe(4);
     expect(stats.ratingCount).toBe(1);

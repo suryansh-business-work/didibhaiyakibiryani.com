@@ -22,6 +22,7 @@ import Campaigns from "./pages/Campaigns";
 import Finance from "./pages/Finance";
 import ExpenseSources from "./pages/ExpenseSources";
 import Expenses from "./pages/Expenses";
+import RawItems from "./pages/RawItems";
 import Store from "./pages/Store";
 import Riders from "./pages/Riders";
 import Support from "./pages/Support";
@@ -63,6 +64,7 @@ export default function App() {
       <Route path="/finance" element={<Protected><Finance /></Protected>} />
       <Route path="/expense-sources" element={<Protected><ExpenseSources /></Protected>} />
       <Route path="/expenses" element={<Protected><Expenses /></Protected>} />
+      <Route path="/raw-items" element={<Protected><RawItems /></Protected>} />
       <Route path="/store" element={<Protected><Store /></Protected>} />
       <Route path="/riders" element={<Protected><Riders /></Protected>} />
       <Route path="/support" element={<Protected><Support /></Protected>} />

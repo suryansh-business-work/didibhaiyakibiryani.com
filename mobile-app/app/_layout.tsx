@@ -10,6 +10,7 @@ import tamaguiConfig from "../tamagui.config";
 import { client } from "../src/apollo";
 import { AuthProvider } from "../src/auth";
 import { CartProvider } from "../src/cart";
+import { FulfilmentProvider } from "../src/fulfilment";
 import { SettingsProvider } from "../src/settings";
 import { MaintenanceGate } from "../src/MaintenanceGate";
 import { ActiveOrderBar } from "../src/order/ActiveOrderBar";
@@ -28,6 +29,7 @@ export default function RootLayout() {
             <SettingsProvider>
               <AuthProvider>
                 <CartProvider>
+                  <FulfilmentProvider>
                   <SafeAreaProvider>
                     <StatusBar style="light" />
                     <MaintenanceGate>
@@ -41,6 +43,7 @@ export default function RootLayout() {
                       <ActiveOrderBar />
                     </MaintenanceGate>
                   </SafeAreaProvider>
+                  </FulfilmentProvider>
                 </CartProvider>
               </AuthProvider>
             </SettingsProvider>

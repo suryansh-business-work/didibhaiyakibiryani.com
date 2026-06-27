@@ -41,6 +41,7 @@ interface PlaceOrderInput {
   address: AddressInput;
   couponCode?: string;
   paymentMethod?: "COD" | "ONLINE";
+  orderType?: OrderType;
   notes?: string;
 }
 
@@ -364,12 +365,17 @@ export const orderResolvers = {
 
       const subtotal = orderItems.reduce((s, i) => s + i.price * i.qty, 0);
 
+      // Takeaway/pickup orders have no delivery leg, so no delivery fee.
+      const orderType: OrderType = input.orderType === "TAKEAWAY" ? "TAKEAWAY" : "DELIVERY";
       // Delivery fee from admin-configured Finance settings (+ distance when known).
-      const baseDeliveryFee = computeDeliveryFee(subtotal, distanceKmFor(settings, input.address), {
-        minDeliveryCost: settings.minDeliveryCost,
-        perKmCharge: settings.perKmCharge,
-        freeDeliveryAbove: settings.freeDeliveryAbove,
-      });
+      const baseDeliveryFee =
+        orderType === "TAKEAWAY"
+          ? 0
+          : computeDeliveryFee(subtotal, distanceKmFor(settings, input.address), {
+              minDeliveryCost: settings.minDeliveryCost,
+              perKmCharge: settings.perKmCharge,
+              freeDeliveryAbove: settings.freeDeliveryAbove,
+            });
 
       // Coupon
       let discount = 0;
@@ -421,6 +427,7 @@ export const orderResolvers = {
         couponCode,
         paymentMethod,
         paymentStatus: "PENDING",
+        orderType,
         address: input.address,
         status: "PLACED",
         statusHistory: [{ status: "PLACED", at: new Date() }],

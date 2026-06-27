@@ -16,7 +16,7 @@
     "build:website": "npm --prefix website run build",
     "build:server": "npm --prefix server run build",
     "build:admin": "npm --prefix admin run build",
-    "build:delivery": "npm --prefix delivery run build",
+    "build:delivery": "npm --prefix delivery run export:web",
     "build:survey": "npm --prefix survey run build",
     "build:track": "npm --prefix track run build",
     "seed": "npm --prefix server run seed",
