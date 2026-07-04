@@ -538,6 +538,7 @@ export const SETTINGS_CORE_FIELDS = `
   deliveryIconUrl
   primaryColor
   accentColor
+  fontFamily
   companyName
   companyAddress
   companyPhone
@@ -655,6 +656,15 @@ export const SETTINGS = gql`
   query Settings {
     settings {
       ${SETTINGS_CORE_FIELDS}
+    }
+  }
+`;
+
+export const BRAND_THEME = gql`
+  query BrandTheme {
+    settings {
+      fontFamily
+      primaryColor
     }
   }
 `;

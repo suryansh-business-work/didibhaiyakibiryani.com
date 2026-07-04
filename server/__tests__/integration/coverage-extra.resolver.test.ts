@@ -351,6 +351,7 @@ describe("more guard coverage", () => {
     const ghost = ctxFor(MISSING, "CUSTOMER");
     await expect(authResolvers.Mutation.addAddress(null, { input: { line1: "1", city: "B", pincode: "1" } }, ghost)).rejects.toThrow(/user not found/i);
     await expect(authResolvers.Mutation.removeAddress(null, { addressId: MISSING }, ghost)).rejects.toThrow(/user not found/i);
+    await expect(authResolvers.Mutation.setDefaultAddress(null, { addressId: MISSING }, ghost)).rejects.toThrow(/user not found/i);
   });
 
   it("placeOrder rejects qty < 1; owner can cancel a placed order", async () => {

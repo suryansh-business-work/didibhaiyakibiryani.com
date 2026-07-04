@@ -4,7 +4,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { YStack, XStack, Text, Button, Spinner } from "tamagui";
+import { useQuery } from "@apollo/client";
 import { useAuth } from "../src/auth";
+import { SETTINGS_LITE } from "../src/graphql";
 import { brand } from "../src/theme";
 import { RHFTextField, loginSchema, type LoginForm } from "../src/form";
 import { BrandLogo } from "../src/ui";
@@ -13,6 +15,8 @@ export default function Login() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login } = useAuth();
+  const { data: sData } = useQuery<{ settings?: { brandName?: string } }>(SETTINGS_LITE);
+  const brandName = sData?.settings?.brandName;
   const {
     control,
     handleSubmit,
@@ -35,7 +39,7 @@ export default function Login() {
     <YStack flex={1} backgroundColor={brand.bg} paddingTop={insets.top + 24} padding={24} justifyContent="center" gap={18}>
       <YStack alignItems="center" gap={6} marginBottom={6}>
         <BrandLogo />
-        <Text fontSize={14} color={brand.gold} marginTop={6}>Didi Bhaiya · Delivery</Text>
+        <Text fontSize={14} color={brand.gold} marginTop={6}>{brandName ? `${brandName} · Delivery` : "Delivery"}</Text>
         <Text fontSize={26} fontWeight="800" color={brand.text}>Rider sign in</Text>
         <Text color={brand.muted}>Your assigned orders are waiting.</Text>
       </YStack>

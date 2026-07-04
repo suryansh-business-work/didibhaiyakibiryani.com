@@ -37,7 +37,7 @@ export function OffersStrip({ coupons, onPress }: Readonly<Props>) {
             borderColor={brand.border}
             borderWidth={1}
             gap={6}
-            pressStyle={{ opacity: 0.85, scale: 0.98 }}
+            pressStyle={{ opacity: 0.85 }}
             onPress={onPress}
           >
             <XStack alignItems="center" gap={6}>

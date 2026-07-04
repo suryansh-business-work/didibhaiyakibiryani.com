@@ -45,7 +45,7 @@ export function HomeSlider({ banners }: Readonly<HomeSliderProps>) {
             borderRadius={16}
             overflow="hidden"
             backgroundColor={brand.cardSoft}
-            pressStyle={b.linkUrl ? { opacity: 0.9, scale: 0.99 } : undefined}
+            pressStyle={b.linkUrl ? { opacity: 0.9 } : undefined}
             onPress={b.linkUrl ? () => openLink(b.linkUrl) : undefined}
           >
             <Image source={{ uri: b.imageUrl }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />

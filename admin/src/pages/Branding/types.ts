@@ -1,3 +1,5 @@
+import { FONT_OPTIONS } from "../../brandFont";
+
 export interface SettingsData {
   brandName: string;
   tagline: string;
@@ -13,6 +15,7 @@ export interface SettingsData {
   deliveryIconUrl: string;
   primaryColor: string;
   accentColor: string;
+  fontFamily: string;
   companyName: string;
   companyAddress: string;
   companyPhone: string;
@@ -45,6 +48,7 @@ export const BLANK_FORM: SettingsForm = {
   deliveryIconUrl: "",
   primaryColor: "#e4b65c",
   accentColor: "#5e2218",
+  fontFamily: "",
   companyName: "",
   companyAddress: "",
   companyPhone: "",
@@ -79,8 +83,9 @@ export function settingsToForm(s: SettingsData): SettingsForm {
 interface FieldDef {
   key: keyof SettingsForm;
   label: string;
-  type?: "color" | "url" | "email" | "tel";
+  type?: "color" | "url" | "email" | "tel" | "select";
   placeholder?: string;
+  options?: ReadonlyArray<{ label: string; value: string }>;
 }
 
 export interface SectionDef {
@@ -113,6 +118,7 @@ export const SECTIONS: SectionDef[] = [
     fields: [
       { key: "brandName", label: "Brand name" },
       { key: "tagline", label: "Tagline" },
+      { key: "fontFamily", label: "Font family (Google Fonts)", type: "select", options: FONT_OPTIONS },
       { key: "primaryColor", label: "Primary color", type: "color" },
       { key: "accentColor", label: "Accent color", type: "color" },
     ],

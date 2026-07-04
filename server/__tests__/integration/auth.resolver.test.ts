@@ -97,4 +97,20 @@ describe("auth resolver", () => {
     const after = await M.removeAddress(null, { addressId: addrId }, ctx);
     expect(after.addresses).toHaveLength(1);
   });
+
+  it("setDefaultAddress switches the active address and rejects an unknown id", async () => {
+    const u = await makeCustomer("setdef@b.com");
+    const ctx = ctxFor(u.id, "CUSTOMER");
+    await M.addAddress(null, { input: { line1: "A", city: "BLR", pincode: "1" } }, ctx);
+    const two = await M.addAddress(null, { input: { line1: "B", city: "BLR", pincode: "2", isDefault: true } }, ctx);
+    const aId = String(two.addresses.find((a) => a.line1 === "A")?._id);
+
+    const res = await M.setDefaultAddress(null, { addressId: aId }, ctx);
+    expect(res.addresses.find((a) => a.line1 === "A")?.isDefault).toBe(true);
+    expect(res.addresses.find((a) => a.line1 === "B")?.isDefault).toBe(false);
+
+    await expect(
+      M.setDefaultAddress(null, { addressId: "507f1f77bcf86cd799439011" }, ctx)
+    ).rejects.toThrow(/not found/i);
+  });
 });

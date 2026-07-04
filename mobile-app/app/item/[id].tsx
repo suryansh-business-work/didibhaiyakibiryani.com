@@ -103,7 +103,7 @@ export default function ItemDetail() {
           fontWeight="800"
           fontSize={16}
           disabled={!it.isAvailable}
-          pressStyle={{ opacity: 0.9, scale: 0.98 }}
+          pressStyle={{ opacity: 0.9 }}
           onPress={() => {
             add({ id: it.id, name: it.name, price: it.price, spiceLevel: chosenSpice, spiceSelectable: it.spiceSelectable }, qty);
             router.push("/cart");

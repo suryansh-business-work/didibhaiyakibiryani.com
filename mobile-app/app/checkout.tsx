@@ -172,7 +172,7 @@ export default function Checkout() {
                     backgroundColor={selectedSavedId === a.id ? "rgba(228,182,92,0.16)" : brand.card}
                     borderColor={selectedSavedId === a.id ? brand.goldDeep : brand.border}
                     borderWidth={1}
-                    pressStyle={{ scale: 0.98 }}
+                    pressStyle={{ opacity: 0.9 }}
                     onPress={() => selectSaved(a.id)}
                   >
                     <YStack gap={4} width="100%">

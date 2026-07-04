@@ -95,7 +95,7 @@ export default function Profile() {
           Sign out
         </Button>
 
-        <Text fontSize={11} color={brand.faint} textAlign="center">Didi Bhaiya ki Biryani · Har bite, yaad rahe.</Text>
+        <Text fontSize={11} color={brand.faint} textAlign="center">{settings.brandName} · {settings.tagline}</Text>
       </ScrollView>
     </YStack>
   );

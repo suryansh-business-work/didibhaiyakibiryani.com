@@ -34,7 +34,7 @@ export function MenuItemCard({ item, hue, onAdd }: Readonly<MenuItemCardProps>) 
   return (
     <Link href={`/item/${item.id}`} asChild>
       <YStack
-        pressStyle={{ opacity: 0.85, scale: 0.985 }}
+        pressStyle={{ opacity: 0.85 }}
         backgroundColor={brand.card}
         borderColor={brand.border}
         borderWidth={1}
@@ -75,7 +75,7 @@ export function MenuItemCard({ item, hue, onAdd }: Readonly<MenuItemCardProps>) 
           color={soldOut ? brand.muted : brand.gold}
           fontWeight="800"
           disabled={soldOut}
-          pressStyle={soldOut ? undefined : { backgroundColor: brand.gold, scale: 0.97 }}
+          pressStyle={soldOut ? undefined : { backgroundColor: brand.gold }}
           onPress={(e: GestureResponderEvent) => {
             e?.stopPropagation?.();
             if (!soldOut) onAdd(item);

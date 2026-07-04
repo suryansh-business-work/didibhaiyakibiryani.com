@@ -40,7 +40,6 @@ export function BrandLogo({ size = 64 }: Readonly<{ size?: number }>) {
         source={logoUrl}
         style={{ width: size, height: size, borderRadius: 999, backgroundColor: c.maroonSoft }}
         contentFit="cover"
-        transition={150}
       />
     );
   }
@@ -74,7 +73,6 @@ export function FoodThumb({
         source={thumbUrl(uri, size)}
         style={{ width: size, height: size, borderRadius: 14, backgroundColor: c.cardSoft }}
         contentFit="cover"
-        transition={150}
       />
     );
   }

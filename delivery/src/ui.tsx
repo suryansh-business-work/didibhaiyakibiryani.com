@@ -22,6 +22,8 @@ export function BrandLogo({ size = 64 }: Readonly<{ size?: number }>) {
 export function RiderHeader({ title }: Readonly<{ title: string }>) {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const { data } = useQuery<{ settings?: { brandName?: string } }>(SETTINGS_LITE);
+  const brandName = data?.settings?.brandName;
   return (
     <YStack
       paddingTop={insets.top + 10}
@@ -33,7 +35,7 @@ export function RiderHeader({ title }: Readonly<{ title: string }>) {
     >
       <XStack justifyContent="space-between" alignItems="flex-end">
         <YStack>
-          <Text fontSize={12} color={brand.gold} fontWeight="700">Didi Bhaiya · Delivery</Text>
+          <Text fontSize={12} color={brand.gold} fontWeight="700">{brandName ? `${brandName} · Delivery` : "Delivery"}</Text>
           <Text fontSize={24} fontWeight="800" color={brand.text}>{title}</Text>
         </YStack>
         <XStack alignItems="center" gap={10}>

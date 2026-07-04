@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { useMutation, useQuery } from "@apollo/client";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button, Spinner, Input } from "tamagui";
-import { ME, ADD_ADDRESS, REMOVE_ADDRESS } from "../src/graphql";
+import { ME, ADD_ADDRESS, REMOVE_ADDRESS, SET_DEFAULT_ADDRESS } from "../src/graphql";
 import { useAuth } from "../src/auth";
 import { useColors } from "../src/theme";
 import { errorMessage } from "../src/error";
@@ -16,10 +16,11 @@ export default function Addresses() {
   const brand = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refresh } = useAuth();
   const { data, loading, error, refetch } = useQuery<{ me: { addresses: SavedAddress[] } }>(ME, { skip: !user });
   const [addAddr, { loading: adding }] = useMutation(ADD_ADDRESS);
   const [removeAddr, { loading: removing }] = useMutation(REMOVE_ADDRESS);
+  const [setDefault] = useMutation(SET_DEFAULT_ADDRESS);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -54,6 +55,20 @@ export default function Addresses() {
     }
   }
 
+  async function selectAddress(a: SavedAddress) {
+    if (a.isDefault) {
+      router.back();
+      return;
+    }
+    try {
+      await setDefault({ variables: { addressId: a.id } });
+      await Promise.all([refetch(), refresh()]);
+      router.back();
+    } catch (e: unknown) {
+      Alert.alert("Couldn't set delivery location", errorMessage(e));
+    }
+  }
+
   return (
     <YStack flex={1} backgroundColor={brand.bg}>
       <XStack paddingTop={insets.top + 8} paddingHorizontal={16} paddingBottom={10} alignItems="center" gap={12}>
@@ -73,9 +88,14 @@ export default function Addresses() {
           <ErrorState message={errorMessage(error)} onRetry={() => { refetch().catch(() => {}); }} />
         ) : (
           <>
-            {addresses.length > 0 && <Text fontSize={13} fontWeight="800" color={brand.muted} textTransform="uppercase" letterSpacing={0.5}>Saved addresses</Text>}
+            {addresses.length > 0 && (
+              <YStack gap={2}>
+                <Text fontSize={13} fontWeight="800" color={brand.muted} textTransform="uppercase" letterSpacing={0.5}>Saved addresses</Text>
+                <Text fontSize={12} color={brand.faint}>Tap an address to deliver there.</Text>
+              </YStack>
+            )}
             {shown.map((a) => (
-              <AddressRow key={a.id} address={a} removing={removing} onDelete={() => deleteAddress(a.id)} />
+              <AddressRow key={a.id} address={a} removing={removing} onSelect={() => selectAddress(a)} onDelete={() => deleteAddress(a.id)} />
             ))}
             {addresses.length > 0 && shown.length === 0 && <Text color={brand.muted} textAlign="center" paddingVertical={20}>No address matches “{search}”.</Text>}
             {addresses.length === 0 && !showForm && (

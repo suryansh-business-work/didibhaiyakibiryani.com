@@ -7,6 +7,7 @@ export interface AppSettings {
   brandName: string;
   logoUrl: string;
   tagline: string;
+  fontFamily: string;
   storeOpenTime: string;
   storeCloseTime: string;
   storeOpenNow: boolean;
@@ -24,6 +25,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   brandName: "Didi Bhaiya ki Biryani",
   logoUrl: "",
   tagline: "Har bite, yaad rahe!",
+  fontFamily: "",
   storeOpenTime: "11:00",
   storeCloseTime: "23:00",
   storeOpenNow: true,

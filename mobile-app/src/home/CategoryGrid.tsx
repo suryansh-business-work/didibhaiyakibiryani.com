@@ -27,7 +27,7 @@ export function CategoryGrid({ cats, activeCat, onSelect }: Readonly<Props>) {
               width="31%"
               alignItems="center"
               gap={6}
-              pressStyle={{ opacity: 0.8, scale: 0.96 }}
+              pressStyle={{ opacity: 0.8 }}
               onPress={() => onSelect(active ? "ALL" : c.id)}
             >
               <YStack borderRadius={18} borderWidth={2} borderColor={active ? brand.gold : "transparent"} padding={2}>

@@ -10,6 +10,7 @@ import tamaguiConfig from "../tamagui.config";
 import { client } from "../src/apollo";
 import { AuthProvider } from "../src/auth";
 import { MaintenanceGate } from "../src/MaintenanceGate";
+import { BrandFont } from "../src/BrandFont";
 import { brand } from "../src/theme";
 
 /** Phone-frame width: on wide screens (web/tablet) the app is capped to a
@@ -25,12 +26,13 @@ export default function RootLayout() {
             <AuthProvider>
               <SafeAreaProvider>
                 <StatusBar style="light" />
+                <BrandFont />
                 <MaintenanceGate>
                   <Stack
                     screenOptions={{
                       headerShown: false,
                       contentStyle: { backgroundColor: brand.bg },
-                      animation: "slide_from_right",
+                      animation: "none",
                     }}
                   />
                 </MaintenanceGate>

@@ -682,6 +682,7 @@ export const typeDefs = /* GraphQL */ `
     deliveryIconUrl: String!
     primaryColor: String!
     accentColor: String!
+    fontFamily: String!
     companyName: String!
     companyAddress: String!
     companyPhone: String!
@@ -736,6 +737,7 @@ export const typeDefs = /* GraphQL */ `
     deliveryIconUrl: String
     primaryColor: String
     accentColor: String
+    fontFamily: String
     companyName: String
     companyAddress: String
     companyPhone: String
@@ -1056,6 +1058,7 @@ export const typeDefs = /* GraphQL */ `
     updateProfile(name: String, phone: String): User!
     addAddress(input: AddressInput!): User!
     removeAddress(addressId: ID!): User!
+    setDefaultAddress(addressId: ID!): User! # pick the active delivery location
 
     # Catalogue (admin)
     createCategory(input: CategoryInput!): Category!

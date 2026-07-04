@@ -31,6 +31,8 @@ export interface ISettings extends Document {
   deliveryIconUrl: string;
   primaryColor: string;
   accentColor: string;
+  /** Google Font family name applied across web apps & admin ("" = system). */
+  fontFamily: string;
   companyName: string;
   companyAddress: string;
   companyPhone: string;
@@ -122,6 +124,7 @@ const settingsSchema = new Schema<ISettings>(
     deliveryIconUrl: { type: String, default: "" },
     primaryColor: { type: String, default: "#e4b65c" },
     accentColor: { type: String, default: "#5e2218" },
+    fontFamily: { type: String, default: "" },
     companyName: { type: String, default: "D&B Foods" },
     companyAddress: { type: String, default: "" },
     companyPhone: { type: String, default: "" },

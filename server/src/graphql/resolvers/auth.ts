@@ -213,5 +213,24 @@ export const authResolvers = {
       await user.save();
       return user;
     },
+
+    setDefaultAddress: async (_: unknown, { addressId }: { addressId: string }, ctx: Context) => {
+      const u = requireAuth(ctx);
+      const user = await User.findById(u.id);
+      if (!user) throw new GraphQLError("User not found.");
+      let found = false;
+      user.addresses.forEach((a) => {
+        const isTarget = String(a._id) === addressId;
+        a.isDefault = isTarget;
+        if (isTarget) {
+          found = true;
+        }
+      });
+      if (!found) {
+        throw new GraphQLError("Address not found.", { extensions: { code: "BAD_USER_INPUT" } });
+      }
+      await user.save();
+      return user;
+    },
   },
 };

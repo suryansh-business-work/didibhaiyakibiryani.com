@@ -31,7 +31,7 @@ export function FulfilmentToggle() {
             backgroundColor={active ? "rgba(228,182,92,0.16)" : brand.card}
             borderColor={active ? brand.goldDeep : brand.border}
             borderWidth={1}
-            pressStyle={{ opacity: 0.85, scale: 0.98 }}
+            pressStyle={{ opacity: 0.85 }}
             onPress={() => setOrderType(o.type)}
           >
             <MIcon name={o.icon} size={22} color={active ? brand.gold : brand.dim} />

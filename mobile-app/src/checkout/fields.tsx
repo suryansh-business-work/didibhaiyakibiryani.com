@@ -57,7 +57,7 @@ export function PayOption({ label, active, onPress }: Readonly<PayOptionProps>) 
       borderWidth={1}
       color={active ? brand.gold : brand.dim}
       fontWeight="700"
-      pressStyle={{ scale: 0.97 }}
+      pressStyle={{ opacity: 0.9 }}
     >
       {label}
     </Button>

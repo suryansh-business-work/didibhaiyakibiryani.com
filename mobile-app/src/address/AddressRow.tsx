@@ -12,24 +12,42 @@ export interface SavedAddress {
   isDefault: boolean;
 }
 
-/** One saved delivery address, Domino's-style: leading pin, label + full line. */
-export function AddressRow({ address, removing, onDelete }: Readonly<{ address: SavedAddress; removing: boolean; onDelete: () => void }>) {
+/** One saved delivery address. Tapping the card selects it as the active
+ *  delivery location; the trash button removes it. The active address is
+ *  highlighted with a gold border + "Delivering here". */
+export function AddressRow({
+  address,
+  removing,
+  onSelect,
+  onDelete,
+}: Readonly<{ address: SavedAddress; removing: boolean; onSelect: () => void; onDelete: () => void }>) {
   const brand = useColors();
+  const active = address.isDefault;
   return (
-    <XStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={12} padding={14} gap={12} alignItems="flex-start">
-      <YStack width={34} height={34} borderRadius={999} backgroundColor={brand.maroonSoft} alignItems="center" justifyContent="center">
-        <MIcon name="map-marker-outline" size={18} color={brand.gold} />
-      </YStack>
-      <YStack flex={1} gap={2}>
-        <XStack gap={8} alignItems="center">
-          <Text fontWeight="800" color={brand.text}>{address.label}</Text>
-          {address.isDefault && (
-            <Text fontSize={11} fontWeight="800" color={brand.gold} backgroundColor="rgba(228,182,92,0.2)" paddingHorizontal={6} paddingVertical={2} borderRadius={4}>Default</Text>
-          )}
-        </XStack>
-        <Text fontSize={13} color={brand.dim}>{address.line1}{address.line2 ? `, ${address.line2}` : ""}</Text>
-        <Text fontSize={12} color={brand.muted}>{address.city}{address.pincode ? ` — ${address.pincode}` : ""}</Text>
-      </YStack>
+    <XStack
+      backgroundColor={active ? "rgba(228,182,92,0.12)" : brand.card}
+      borderColor={active ? brand.gold : brand.border}
+      borderWidth={1}
+      borderRadius={12}
+      padding={14}
+      gap={12}
+      alignItems="flex-start"
+    >
+      <XStack flex={1} gap={12} alignItems="flex-start" pressStyle={{ opacity: 0.85 }} onPress={onSelect}>
+        <YStack width={34} height={34} borderRadius={999} backgroundColor={active ? brand.gold : brand.maroonSoft} alignItems="center" justifyContent="center">
+          <MIcon name={active ? "check" : "map-marker-outline"} size={18} color={active ? brand.onGold : brand.gold} />
+        </YStack>
+        <YStack flex={1} gap={2}>
+          <XStack gap={8} alignItems="center">
+            <Text fontWeight="800" color={brand.text}>{address.label}</Text>
+            {active && (
+              <Text fontSize={11} fontWeight="800" color={brand.gold} backgroundColor="rgba(228,182,92,0.2)" paddingHorizontal={6} paddingVertical={2} borderRadius={4}>Delivering here</Text>
+            )}
+          </XStack>
+          <Text fontSize={13} color={brand.dim}>{address.line1}{address.line2 ? `, ${address.line2}` : ""}</Text>
+          <Text fontSize={12} color={brand.muted}>{address.city}{address.pincode ? ` — ${address.pincode}` : ""}</Text>
+        </YStack>
+      </XStack>
       <Button size="$2" circular backgroundColor="rgba(224,88,75,0.12)" borderColor="rgba(224,88,75,0.4)" borderWidth={1} disabled={removing} onPress={onDelete}>
         <MIcon name="trash-can-outline" size={16} color={brand.red} />
       </Button>

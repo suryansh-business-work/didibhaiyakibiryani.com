@@ -14,6 +14,7 @@ import { FulfilmentProvider } from "../src/fulfilment";
 import { SettingsProvider } from "../src/settings";
 import { MaintenanceGate } from "../src/MaintenanceGate";
 import { ActiveOrderBar } from "../src/order/ActiveOrderBar";
+import { BrandFont } from "../src/BrandFont";
 import { ThemeProvider, useThemeMode } from "../src/theme";
 
 /** Phone-frame width: on wide screens (web/tablet) the app is capped to a
@@ -35,12 +36,13 @@ function ThemedShell() {
                   <FulfilmentProvider>
                     <SafeAreaProvider>
                       <StatusBar style={scheme === "dark" ? "light" : "dark"} />
+                      <BrandFont />
                       <MaintenanceGate>
                         <Stack
                           screenOptions={{
                             headerShown: false,
                             contentStyle: { backgroundColor: colors.bg },
-                            animation: "slide_from_right",
+                            animation: "none",
                           }}
                         />
                         <ActiveOrderBar />

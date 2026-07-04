@@ -46,7 +46,7 @@ export function SocietyPicker({ selectedId, onSelect }: Readonly<SocietyPickerPr
             backgroundColor={active ? "rgba(228,182,92,0.16)" : brand.card}
             borderColor={active ? brand.goldDeep : brand.border}
             borderWidth={1}
-            pressStyle={{ scale: 0.98 }}
+            pressStyle={{ opacity: 0.9 }}
             onPress={() => onSelect(s)}
           >
             <YStack gap={2} width="100%">

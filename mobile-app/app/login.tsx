@@ -6,12 +6,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { useAuth } from "../src/auth";
 import { useColors } from "../src/theme";
+import { useSettings } from "../src/settings";
 import { errorMessage } from "../src/error";
 import { RHFTextField, loginSchema, type LoginForm } from "../src/form";
 import { BackButton, BrandLogo } from "../src/components";
 
 export default function Login() {
   const brand = useColors();
+  const settings = useSettings();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login } = useAuth();
@@ -42,8 +44,9 @@ export default function Login() {
       <YStack flex={1} padding={24} gap={18} justifyContent="center">
         <YStack alignItems="center" gap={6} marginBottom={6}>
           <BrandLogo />
-          <Text fontSize={14} color={brand.gold} marginTop={6}>Har bite, yaad rahe!</Text>
-          <Text fontSize={26} fontWeight="800" color={brand.text}>Welcome back</Text>
+          <Text fontSize={20} fontWeight="800" color={brand.text} marginTop={4}>{settings.brandName}</Text>
+          <Text fontSize={13} color={brand.gold}>{settings.tagline}</Text>
+          <Text fontSize={26} fontWeight="800" color={brand.text} marginTop={6}>Welcome back</Text>
           <Text color={brand.muted}>Log in to order your favourite biryani.</Text>
         </YStack>
 

@@ -6,6 +6,7 @@ export const APP_SETTINGS = gql`
       brandName
       logoUrl
       tagline
+      fontFamily
       storeOpenTime
       storeCloseTime
       storeOpenNow
@@ -140,6 +141,15 @@ export const ADD_ADDRESS = gql`
 export const REMOVE_ADDRESS = gql`
   mutation RemoveAddress($addressId: ID!) {
     removeAddress(addressId: $addressId) {
+      id
+      addresses { id label line1 line2 city pincode isDefault }
+    }
+  }
+`;
+
+export const SET_DEFAULT_ADDRESS = gql`
+  mutation SetDefaultAddress($addressId: ID!) {
+    setDefaultAddress(addressId: $addressId) {
       id
       addresses { id label line1 line2 city pincode isDefault }
     }

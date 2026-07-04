@@ -21,6 +21,7 @@ export const SETTINGS_LITE = gql`
       brandName
       logoUrl
       tagline
+      fontFamily
       supportPhone
       supportEmail
       maintenance { delivery }

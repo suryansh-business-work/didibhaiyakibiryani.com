@@ -52,7 +52,7 @@ export function RecentOrderStrip({ orders, onAdd }: Readonly<Props>) {
                 backgroundColor="rgba(228,182,92,0.16)"
                 borderColor={brand.goldDeep}
                 borderWidth={1}
-                pressStyle={{ opacity: 0.8, scale: 0.96 }}
+                pressStyle={{ opacity: 0.8 }}
                 onPress={() => onAdd({ id: d.id, name: d.name, price: d.price, spiceLevel: d.spiceLevel, spiceSelectable: d.spiceSelectable })}
               >
                 <MIcon name="plus" size={14} color={brand.gold} />

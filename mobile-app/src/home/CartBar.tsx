@@ -26,7 +26,7 @@ export function CartBar({ count, subtotal, onPress }: Readonly<CartBarProps>) {
         paddingVertical={14}
         alignItems="center"
         justifyContent="space-between"
-        pressStyle={{ opacity: 0.9, scale: 0.98 }}
+        pressStyle={{ opacity: 0.9 }}
         onPress={onPress}
       >
         <Text color="#2a1a06" fontWeight="800">

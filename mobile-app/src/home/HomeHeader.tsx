@@ -41,7 +41,7 @@ export function HomeHeader({ location, initial, paddingTop, onLocation, onRedeem
             backgroundColor="rgba(228,182,92,0.14)"
             borderColor={brand.goldDeep}
             borderWidth={1}
-            pressStyle={{ opacity: 0.8, scale: 0.96 }}
+            pressStyle={{ opacity: 0.8 }}
             onPress={onRedeem}
           >
             <MIcon name="gift-outline" size={16} color={brand.gold} />
@@ -57,7 +57,7 @@ export function HomeHeader({ location, initial, paddingTop, onLocation, onRedeem
             borderWidth={1}
             alignItems="center"
             justifyContent="center"
-            pressStyle={{ opacity: 0.8, scale: 0.95 }}
+            pressStyle={{ opacity: 0.8 }}
             onPress={onAccount}
           >
             {initial ? (

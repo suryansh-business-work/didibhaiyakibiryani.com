@@ -26,6 +26,7 @@ import RawItems from "./pages/RawItems";
 import Store from "./pages/Store";
 import Riders from "./pages/Riders";
 import Support from "./pages/Support";
+import BrandTheme from "./BrandTheme";
 import type { ReactNode } from "react";
 
 function Protected({ children }: Readonly<{ children: ReactNode }>) {
@@ -38,6 +39,8 @@ function Protected({ children }: Readonly<{ children: ReactNode }>) {
 export default function App() {
   const { user } = useAuth();
   return (
+    <>
+    <BrandTheme />
     <Routes>
       {/* The customer survey + live tracking now live in their own public apps
           (survey./track. subdomains), keyed by order number. */}
@@ -70,5 +73,6 @@ export default function App() {
       <Route path="/support" element={<Protected><Support /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
