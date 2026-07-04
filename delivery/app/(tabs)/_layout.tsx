@@ -53,6 +53,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <MaterialDesignIcons name="headset" color={color} size={size ?? 24} />,
         }}
       />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => <MaterialDesignIcons name="account-circle-outline" color={color} size={size ?? 24} />,
+        }}
+      />
       </Tabs>
     </>
   );

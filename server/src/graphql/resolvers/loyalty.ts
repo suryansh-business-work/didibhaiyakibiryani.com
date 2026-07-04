@@ -22,6 +22,7 @@ export const loyaltyResolvers = {
         pointsMinOrder: settings.pointsMinOrder,
         pointsPerReward: settings.pointsPerReward,
         rewardsAvailable: Math.floor(points / perReward),
+        rewardName: settings.rewardName,
         rewardItem: settings.rewardItem, // resolved by Rewards.rewardItem
       };
     },

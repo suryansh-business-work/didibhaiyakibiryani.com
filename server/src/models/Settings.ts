@@ -77,6 +77,7 @@ export interface ISettings extends Document {
   pointsMinOrder: number; // min order total (₹) to earn points
   pointsPerReward: number; // points needed to redeem one reward
   rewardItem?: Types.ObjectId; // free menu item granted on redeem
+  rewardName: string; // display name for the reward ("" = use the item's name)
   // Support — admin-managed subject lines for the order support box
   supportSubjects: string[];
   // Integrations — secret credentials entered from admin → Integrations.
@@ -159,6 +160,7 @@ const settingsSchema = new Schema<ISettings>(
     pointsMinOrder: { type: Number, default: 350, min: 0 },
     pointsPerReward: { type: Number, default: 600, min: 1 },
     rewardItem: { type: Schema.Types.ObjectId, ref: "MenuItem" },
+    rewardName: { type: String, default: "" },
     supportSubjects: {
       type: [String],
       default: () => [

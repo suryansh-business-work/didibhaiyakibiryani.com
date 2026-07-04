@@ -20,6 +20,7 @@ import Integrations from "./pages/Integrations";
 import Payments from "./pages/Payments";
 import Campaigns from "./pages/Campaigns";
 import Finance from "./pages/Finance";
+import Rewards from "./pages/Rewards";
 import ExpenseSources from "./pages/ExpenseSources";
 import Expenses from "./pages/Expenses";
 import RawItems from "./pages/RawItems";
@@ -65,6 +66,7 @@ export default function App() {
       <Route path="/payments" element={<Protected><Payments /></Protected>} />
       <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
       <Route path="/finance" element={<Protected><Finance /></Protected>} />
+      <Route path="/rewards" element={<Protected><Rewards /></Protected>} />
       <Route path="/expense-sources" element={<Protected><ExpenseSources /></Protected>} />
       <Route path="/expenses" element={<Protected><Expenses /></Protected>} />
       <Route path="/raw-items" element={<Protected><RawItems /></Protected>} />

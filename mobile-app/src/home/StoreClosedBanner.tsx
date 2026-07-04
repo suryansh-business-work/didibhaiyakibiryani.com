@@ -12,8 +12,8 @@ export function StoreClosedBanner() {
   return (
     <DropIn>
       <XStack
-        marginHorizontal={14}
-        marginBottom={10}
+        marginHorizontal={16}
+        marginBottom={2}
         backgroundColor="rgba(224,88,75,0.12)"
         borderColor="rgba(224,88,75,0.4)"
         borderWidth={1}

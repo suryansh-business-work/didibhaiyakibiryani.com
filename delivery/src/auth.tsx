@@ -13,6 +13,7 @@ interface AuthCtx {
   loading: boolean;
   login: (emailOrPhone: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
 const Ctx = createContext<AuthCtx>(null as unknown as AuthCtx);
@@ -65,7 +66,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     await apollo.clearStore();
   }
 
-  return <Ctx.Provider value={{ user, loading, login, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, loading, login, logout, refresh: load }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth() {

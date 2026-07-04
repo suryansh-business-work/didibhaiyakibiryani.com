@@ -85,6 +85,25 @@ export const RATE_ORDER = gql`
   }
 `;
 
+export const UPDATE_PROFILE = gql`
+  mutation UpdateProfile($name: String, $phone: String, $avatarUrl: String) {
+    updateProfile(name: $name, phone: $phone, avatarUrl: $avatarUrl) {
+      id
+      name
+      phone
+      avatarUrl
+    }
+  }
+`;
+
+export const UPLOAD_AVATAR = gql`
+  mutation UploadAvatar($file: String!, $fileName: String!) {
+    uploadAvatarImage(file: $file, fileName: $fileName) {
+      url
+    }
+  }
+`;
+
 export const ME = gql`
   query Me {
     me {
@@ -92,6 +111,7 @@ export const ME = gql`
       name
       email
       phone
+      avatarUrl
       addresses {
         id
         label
@@ -198,6 +218,7 @@ export const MY_REWARDS = gql`
       pointsMinOrder
       pointsPerReward
       rewardsAvailable
+      rewardName
       rewardItem { id name image }
     }
   }

@@ -9,15 +9,10 @@ export interface FinanceSettingsData {
   fssaiLicense: string;
   codEnabled: boolean;
   onlineEnabled: boolean;
-  loyaltyEnabled: boolean;
-  pointsPerOrder: number;
-  pointsMinOrder: number;
-  pointsPerReward: number;
-  rewardItem?: { id: string; name: string } | null;
   updatedAt?: string;
 }
 
-export type FinanceForm = Omit<FinanceSettingsData, "updatedAt" | "rewardItem"> & { rewardItem: string };
+export type FinanceForm = Omit<FinanceSettingsData, "updatedAt">;
 
 export const BLANK_FINANCE: FinanceForm = {
   minDeliveryCost: 39,
@@ -30,11 +25,6 @@ export const BLANK_FINANCE: FinanceForm = {
   fssaiLicense: "",
   codEnabled: true,
   onlineEnabled: true,
-  loyaltyEnabled: false,
-  pointsPerOrder: 100,
-  pointsMinOrder: 350,
-  pointsPerReward: 600,
-  rewardItem: "",
 };
 
 export function settingsToFinanceForm(s: Partial<FinanceSettingsData>): FinanceForm {
@@ -49,11 +39,6 @@ export function settingsToFinanceForm(s: Partial<FinanceSettingsData>): FinanceF
     fssaiLicense: s.fssaiLicense ?? "",
     codEnabled: s.codEnabled ?? true,
     onlineEnabled: s.onlineEnabled ?? true,
-    loyaltyEnabled: s.loyaltyEnabled ?? false,
-    pointsPerOrder: s.pointsPerOrder ?? BLANK_FINANCE.pointsPerOrder,
-    pointsMinOrder: s.pointsMinOrder ?? BLANK_FINANCE.pointsMinOrder,
-    pointsPerReward: s.pointsPerReward ?? BLANK_FINANCE.pointsPerReward,
-    rewardItem: s.rewardItem?.id ?? "",
   };
 }
 

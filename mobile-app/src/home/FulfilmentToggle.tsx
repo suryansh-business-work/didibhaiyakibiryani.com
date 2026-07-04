@@ -17,7 +17,7 @@ export function FulfilmentToggle() {
   const { storeOpenNow } = useSettings();
 
   return (
-    <XStack paddingHorizontal={16} paddingTop={12} gap={10}>
+    <XStack paddingHorizontal={16} paddingTop={4} gap={10}>
       {OPTIONS.map((o) => {
         const active = orderType === o.type;
         return (

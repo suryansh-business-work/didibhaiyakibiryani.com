@@ -174,13 +174,14 @@ export const authResolvers = {
 
     updateProfile: async (
       _: unknown,
-      { name, phone }: { name?: string; phone?: string },
+      { name, phone, avatarUrl }: { name?: string; phone?: string; avatarUrl?: string },
       ctx: Context
     ) => {
       const u = requireAuth(ctx);
       const update: Record<string, unknown> = {};
       if (name !== undefined) update.name = name.trim();
       if (phone !== undefined) update.phone = phone.trim();
+      if (avatarUrl !== undefined) update.avatarUrl = avatarUrl.trim();
       return User.findByIdAndUpdate(u.id, update, { new: true }).exec();
     },
 

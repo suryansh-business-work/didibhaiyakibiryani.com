@@ -62,6 +62,7 @@ export default function Home() {
       <HomeHeader
         location={location}
         initial={initial}
+        avatarUri={user?.avatarUrl}
         paddingTop={insets.top + 8}
         onLocation={() => router.push("/addresses")}
         onRedeem={() => router.push("/rewards")}

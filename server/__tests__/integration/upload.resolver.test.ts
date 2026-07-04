@@ -21,6 +21,9 @@ describe("upload resolver", () => {
     const sup = await uploadResolvers.Mutation.uploadSupportImage(null, { file: "AAAA", fileName: "s.png" }, custCtx);
     expect(sup.url).toContain("s.png");
 
+    const av = await uploadResolvers.Mutation.uploadAvatarImage(null, { file: "AAAA", fileName: "me.jpg" }, custCtx);
+    expect(av.url).toContain("me.jpg");
+
     await expect(uploadResolvers.Mutation.uploadImage(null, { file: "", fileName: "x.png" }, adminCtx)).rejects.toThrow(/missing|larger/i);
 
     vi.mocked(imagekitConfigured).mockResolvedValueOnce(false);

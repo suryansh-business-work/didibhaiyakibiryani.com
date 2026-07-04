@@ -11,7 +11,26 @@ export const LOGIN = gql`
 
 export const ME = gql`
   query Me {
-    me { id name email role }
+    me { id name email phone avatarUrl role }
+  }
+`;
+
+export const UPDATE_PROFILE = gql`
+  mutation UpdateProfile($name: String, $phone: String, $avatarUrl: String) {
+    updateProfile(name: $name, phone: $phone, avatarUrl: $avatarUrl) {
+      id
+      name
+      phone
+      avatarUrl
+    }
+  }
+`;
+
+export const UPLOAD_AVATAR = gql`
+  mutation UploadAvatar($file: String!, $fileName: String!) {
+    uploadAvatarImage(file: $file, fileName: $fileName) {
+      url
+    }
   }
 `;
 

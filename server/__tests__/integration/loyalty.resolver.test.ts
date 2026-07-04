@@ -64,12 +64,13 @@ describe("loyalty — earning on delivery", () => {
 
 describe("loyalty — myRewards", () => {
   it("reports the snapshot for a customer with points", async () => {
-    await setLoyalty();
+    await setLoyalty({ rewardName: "Free Regular Pizza" });
     const user = await makeUser("CUSTOMER", { loyaltyPoints: 1200 });
     const r = await loyaltyResolvers.Query.myRewards(null, null, ctxFor(user.id, "CUSTOMER"));
     expect(r.enabled).toBe(true);
     expect(r.points).toBe(1200);
     expect(r.rewardsAvailable).toBe(2);
+    expect(r.rewardName).toBe("Free Regular Pizza");
   });
 
   it("falls back to zero points when the account is missing", async () => {
@@ -134,9 +135,10 @@ describe("loyalty — settings config", () => {
     const item = await makeRewardItem();
     const updated = await settingsResolvers.Mutation.updateSettings(
       null,
-      { input: { loyaltyEnabled: true, pointsPerOrder: 50, pointsMinOrder: 200, pointsPerReward: 500, rewardItem: item.id } },
+      { input: { loyaltyEnabled: true, pointsPerOrder: 50, pointsMinOrder: 200, pointsPerReward: 500, rewardItem: item.id, rewardName: "Free Pizza" } },
       adminCtx
     );
+    expect(updated?.rewardName).toBe("Free Pizza");
     expect(updated?.loyaltyEnabled).toBe(true);
     expect(updated?.pointsPerOrder).toBe(50);
     expect(updated?.pointsMinOrder).toBe(200);

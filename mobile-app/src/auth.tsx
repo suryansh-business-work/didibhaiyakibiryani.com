@@ -9,6 +9,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  avatarUrl?: string;
   addresses?: Address[];
 }
 export interface Address {

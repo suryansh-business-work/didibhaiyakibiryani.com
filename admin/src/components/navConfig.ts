@@ -78,6 +78,7 @@ export const NAV_GROUPS: ReadonlyArray<NavGroup> = [
     label: "Engagement",
     items: [
       { to: "/campaigns", label: "Campaigns", icon: ISend },
+      { to: "/rewards", label: "Rewards", icon: IParty },
       { to: "/support", label: "Support", icon: IHeadset },
     ],
   },

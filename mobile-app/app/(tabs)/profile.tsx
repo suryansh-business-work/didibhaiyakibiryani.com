@@ -1,4 +1,5 @@
 import { ScrollView } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { YStack, XStack, Text, Button, Spinner, Separator } from "tamagui";
@@ -49,15 +50,20 @@ export default function Profile() {
   return (
     <YStack flex={1} backgroundColor={brand.bg}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, padding: 18, gap: 16 }}>
-        <XStack gap={14} alignItems="center">
-          <YStack width={62} height={62} borderRadius={999} backgroundColor={brand.maroonSoft} alignItems="center" justifyContent="center">
-            <Text fontSize={26} fontWeight="800" color={brand.gold}>{user.name.charAt(0)}</Text>
+        <XStack gap={14} alignItems="center" pressStyle={{ opacity: 0.85 }} onPress={() => router.push("/profile-edit")}>
+          <YStack width={62} height={62} borderRadius={999} backgroundColor={brand.maroonSoft} alignItems="center" justifyContent="center" overflow="hidden">
+            {user.avatarUrl ? (
+              <Image source={user.avatarUrl} style={{ width: 62, height: 62 }} contentFit="cover" />
+            ) : (
+              <Text fontSize={26} fontWeight="800" color={brand.gold}>{user.name.charAt(0)}</Text>
+            )}
           </YStack>
-          <YStack>
+          <YStack flex={1}>
             <Text fontSize={20} fontWeight="800" color={brand.text}>{user.name}</Text>
             <Text fontSize={13} color={brand.muted}>{user.email}</Text>
             {user.phone ? <Text fontSize={13} color={brand.muted}>{user.phone}</Text> : null}
           </YStack>
+          <MIcon name="pencil-outline" size={20} color={brand.gold} />
         </XStack>
 
         <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} overflow="hidden">

@@ -76,6 +76,7 @@ export const typeDefs = /* GraphQL */ `
     name: String!
     email: String!
     phone: String
+    avatarUrl: String
     role: Role!
     addresses: [Address!]!
     isActive: Boolean!
@@ -248,6 +249,7 @@ export const typeDefs = /* GraphQL */ `
     pointsMinOrder: Float!
     pointsPerReward: Int!
     rewardsAvailable: Int!
+    rewardName: String!
     rewardItem: MenuItem
   }
 
@@ -718,6 +720,7 @@ export const typeDefs = /* GraphQL */ `
     pointsMinOrder: Float!
     pointsPerReward: Int!
     rewardItem: MenuItem
+    rewardName: String!
     supportSubjects: [String!]!
     updatedAt: DateTime!
   }
@@ -772,6 +775,7 @@ export const typeDefs = /* GraphQL */ `
     pointsMinOrder: Float
     pointsPerReward: Int
     rewardItem: ID
+    rewardName: String
     supportSubjects: [String!]
   }
 
@@ -1055,7 +1059,7 @@ export const typeDefs = /* GraphQL */ `
     requestSignupOtp(email: String!, name: String!): Boolean!
     register(input: RegisterInput!): AuthPayload!
     login(emailOrPhone: String!, password: String!): AuthPayload!
-    updateProfile(name: String, phone: String): User!
+    updateProfile(name: String, phone: String, avatarUrl: String): User!
     addAddress(input: AddressInput!): User!
     removeAddress(addressId: ID!): User!
     setDefaultAddress(addressId: ID!): User! # pick the active delivery location
@@ -1127,6 +1131,7 @@ export const typeDefs = /* GraphQL */ `
     # Media (ImageKit)
     uploadImage(file: String!, fileName: String!, folder: String): UploadedImage! # admin
     uploadSupportImage(file: String!, fileName: String!): UploadedImage! # any signed-in user
+    uploadAvatarImage(file: String!, fileName: String!): UploadedImage! # profile photo (customer/rider)
 
     # Support (order help box)
     createSupportTicket(orderId: ID!, subject: String!, body: String!, imageUrl: String): SupportTicket!

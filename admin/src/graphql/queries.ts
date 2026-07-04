@@ -580,6 +580,7 @@ export const SETTINGS_CORE_FIELDS = `
   pointsMinOrder
   pointsPerReward
   rewardItem { id name }
+  rewardName
   supportSubjects
   updatedAt
 `;

@@ -1,4 +1,5 @@
 import { XStack, YStack, Text } from "tamagui";
+import { Image } from "expo-image";
 import { useColors } from "../theme";
 import { MIcon } from "../components";
 import { FadeInView } from "../animations";
@@ -6,6 +7,7 @@ import { FadeInView } from "../animations";
 interface HomeHeaderProps {
   location: string;
   initial: string;
+  avatarUri?: string;
   paddingTop: number;
   onLocation: () => void;
   onRedeem: () => void;
@@ -13,8 +15,14 @@ interface HomeHeaderProps {
 }
 
 /** Domino's-style top bar: Location (left) · Redeem Free Items (pill) · Account. */
-export function HomeHeader({ location, initial, paddingTop, onLocation, onRedeem, onAccount }: Readonly<HomeHeaderProps>) {
+export function HomeHeader({ location, initial, avatarUri, paddingTop, onLocation, onRedeem, onAccount }: Readonly<HomeHeaderProps>) {
   const brand = useColors();
+  let account = <MIcon name="account-outline" size={20} color={brand.gold} />;
+  if (avatarUri) {
+    account = <Image source={avatarUri} style={{ width: 40, height: 40 }} contentFit="cover" />;
+  } else if (initial) {
+    account = <Text fontSize={16} fontWeight="800" color={brand.gold}>{initial}</Text>;
+  }
   return (
     <YStack paddingTop={paddingTop} paddingHorizontal={16} paddingBottom={12} backgroundColor={brand.bg}>
       <FadeInView>
@@ -57,14 +65,11 @@ export function HomeHeader({ location, initial, paddingTop, onLocation, onRedeem
             borderWidth={1}
             alignItems="center"
             justifyContent="center"
+            overflow="hidden"
             pressStyle={{ opacity: 0.8 }}
             onPress={onAccount}
           >
-            {initial ? (
-              <Text fontSize={16} fontWeight="800" color={brand.gold}>{initial}</Text>
-            ) : (
-              <MIcon name="account-outline" size={20} color={brand.gold} />
-            )}
+            {account}
           </YStack>
         </XStack>
       </FadeInView>

@@ -87,6 +87,8 @@ describe("auth resolver", () => {
     const u = await makeCustomer("addr@b.com");
     const ctx = ctxFor(u.id, "CUSTOMER");
     await M.updateProfile(null, { name: "New Name", phone: "9000000000" }, ctx);
+    const withAvatar = await M.updateProfile(null, { avatarUrl: "https://ik/me.jpg" }, ctx);
+    expect(withAvatar.avatarUrl).toBe("https://ik/me.jpg");
 
     await M.addAddress(null, { input: { line1: "1 St", city: "BLR", pincode: "560001" } }, ctx);
     const withSecond = await M.addAddress(null, { input: { line1: "2 St", city: "BLR", pincode: "560002", isDefault: true } }, ctx);

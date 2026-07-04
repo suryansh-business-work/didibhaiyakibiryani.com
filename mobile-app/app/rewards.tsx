@@ -17,12 +17,13 @@ interface Rewards {
   pointsMinOrder: number;
   pointsPerReward: number;
   rewardsAvailable: number;
+  rewardName?: string;
   rewardItem?: { id: string; name: string; image?: string } | null;
 }
 
 function HowItWorks({ r }: Readonly<{ r: Rewards }>) {
   const brand = useColors();
-  const itemName = r.rewardItem?.name ?? "a free item";
+  const itemName = r.rewardName || r.rewardItem?.name || "a free item";
   return (
     <YStack backgroundColor={brand.card} borderColor={brand.border} borderWidth={1} borderRadius={16} padding={18} gap={14}>
       <Text fontWeight="800" color={brand.text} fontSize={16}>How it works</Text>
@@ -109,7 +110,7 @@ export default function RewardsScreen() {
             <XStack gap={14} alignItems="center">
               <FoodThumb size={64} uri={r.rewardItem?.image ?? undefined} />
               <YStack flex={1}>
-                <Text fontWeight="800" color={brand.text} fontSize={16}>{r.rewardItem?.name ?? "Free item"}</Text>
+                <Text fontWeight="800" color={brand.text} fontSize={16}>{r.rewardName || r.rewardItem?.name || "Free item"}</Text>
                 <Text fontSize={13} color={brand.muted}>{canRedeem ? `${r.rewardsAvailable} reward${r.rewardsAvailable > 1 ? "s" : ""} available` : `Redeem at ${r.pointsPerReward} points`}</Text>
               </YStack>
             </XStack>

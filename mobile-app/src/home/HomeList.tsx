@@ -39,7 +39,7 @@ export function HomeList({ loading, error, onRetry, items, count, onAdd, header 
 
   return (
     <ScrollView
-      contentContainerStyle={{ padding: 14, paddingBottom: tabBarHeight + (count > 0 ? 84 : 20), gap: 12 }}
+      contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 6, paddingBottom: tabBarHeight + (count > 0 ? 84 : 20), gap: 12 }}
     >
       {header && <YStack marginHorizontal={-14}>{header}</YStack>}
       {items.map((it, idx) => (

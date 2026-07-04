@@ -21,6 +21,7 @@ const STRING_FIELDS = new Set([
   "storeOpenTime", "storeCloseTime", "storeTimezone",
   "gstLegalName", "gstNumber", "surveyUrl",
   "surveyMessageTemplate", "trackingMessageTemplate", "receiptMessageTemplate",
+  "rewardName",
 ]);
 const NUMBER_FIELDS = new Set([
   "minDeliveryCost", "perKmCharge", "freeDeliveryAbove", "storeLat", "storeLng",

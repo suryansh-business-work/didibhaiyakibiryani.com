@@ -47,5 +47,15 @@ export const uploadResolvers = {
       requireAuth(ctx);
       return doUpload({ ...args, folder: "/support" });
     },
+
+    /** Any signed-in user (customer or rider) uploads their profile photo. */
+    uploadAvatarImage: async (
+      _: unknown,
+      args: Omit<UploadArgs, "folder">,
+      ctx: Context
+    ) => {
+      requireAuth(ctx);
+      return doUpload({ ...args, folder: "/avatars" });
+    },
   },
 };
