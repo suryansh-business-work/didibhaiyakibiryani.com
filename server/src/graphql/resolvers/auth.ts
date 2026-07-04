@@ -174,7 +174,7 @@ export const authResolvers = {
 
     updateProfile: async (
       _: unknown,
-      { name, phone, avatarUrl }: { name?: string; phone?: string; avatarUrl?: string },
+      { name, phone, avatarUrl, dob, anniversary }: { name?: string; phone?: string; avatarUrl?: string; dob?: string; anniversary?: string },
       ctx: Context
     ) => {
       const u = requireAuth(ctx);
@@ -182,6 +182,8 @@ export const authResolvers = {
       if (name !== undefined) update.name = name.trim();
       if (phone !== undefined) update.phone = phone.trim();
       if (avatarUrl !== undefined) update.avatarUrl = avatarUrl.trim();
+      if (dob !== undefined) update.dob = dob.trim();
+      if (anniversary !== undefined) update.anniversary = anniversary.trim();
       return User.findByIdAndUpdate(u.id, update, { new: true }).exec();
     },
 

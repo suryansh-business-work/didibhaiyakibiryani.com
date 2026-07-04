@@ -11,7 +11,7 @@ export interface SettingsInput {
 }
 
 const STRING_FIELDS = new Set([
-  "brandName", "tagline", "logoUrl", "primaryColor", "accentColor", "fontFamily",
+  "brandName", "tagline", "logoUrl", "primaryColor", "accentColor", "fontFamily", "allCategoryImage",
   "websiteHeaderLogoUrl", "websiteFooterLogoUrl", "faviconUrl",
   "consumerAppName", "consumerSplashUrl", "consumerIconUrl",
   "deliveryAppName", "deliverySplashUrl", "deliveryIconUrl",
@@ -21,7 +21,7 @@ const STRING_FIELDS = new Set([
   "storeOpenTime", "storeCloseTime", "storeTimezone",
   "gstLegalName", "gstNumber", "surveyUrl",
   "surveyMessageTemplate", "trackingMessageTemplate", "receiptMessageTemplate",
-  "rewardName",
+  "rewardName", "rewardsProgramName",
 ]);
 const NUMBER_FIELDS = new Set([
   "minDeliveryCost", "perKmCharge", "freeDeliveryAbove", "storeLat", "storeLng",

@@ -8,6 +8,8 @@ export interface AppSettings {
   logoUrl: string;
   tagline: string;
   fontFamily: string;
+  allCategoryImage: string;
+  rewardsProgramName: string;
   storeOpenTime: string;
   storeCloseTime: string;
   storeOpenNow: boolean;
@@ -26,6 +28,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   logoUrl: "",
   tagline: "Har bite, yaad rahe!",
   fontFamily: "",
+  allCategoryImage: "",
+  rewardsProgramName: "Cheesy Rewards",
   storeOpenTime: "11:00",
   storeCloseTime: "23:00",
   storeOpenNow: true,

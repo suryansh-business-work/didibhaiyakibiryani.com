@@ -10,6 +10,7 @@ import { UPDATE_PROFILE, UPLOAD_AVATAR } from "../src/graphql";
 import { useAuth } from "../src/auth";
 import { useColors } from "../src/theme";
 import { errorMessage } from "../src/error";
+import { PastDateField } from "../src/form";
 import { BackButton, MIcon } from "../src/components";
 
 export default function ProfileEdit() {
@@ -19,6 +20,8 @@ export default function ProfileEdit() {
   const { user, loading: authLoading, refresh } = useAuth();
   const [name, setName] = useState(user?.name ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
+  const [dob, setDob] = useState(user?.dob ?? "");
+  const [anniversary, setAnniversary] = useState(user?.anniversary ?? "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? "");
   const [uploading, setUploading] = useState(false);
   const [update, { loading: saving }] = useMutation(UPDATE_PROFILE);
@@ -54,7 +57,7 @@ export default function ProfileEdit() {
       return;
     }
     try {
-      await update({ variables: { name: name.trim(), phone: phone.trim(), avatarUrl } });
+      await update({ variables: { name: name.trim(), phone: phone.trim(), avatarUrl, dob, anniversary } });
       await refresh();
       router.back();
     } catch (e: unknown) {
@@ -103,6 +106,11 @@ export default function ProfileEdit() {
           <Text fontSize={12} color={brand.muted} fontWeight="700">Phone</Text>
           <Input value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="Phone number" backgroundColor={brand.bgSoft} borderColor={brand.borderStrong} color={brand.text} placeholderTextColor={brand.faint} />
         </YStack>
+
+        <XStack gap={12}>
+          <PastDateField label="Date of birth" value={dob} onChange={setDob} placeholder="Add birthday" />
+          <PastDateField label="Anniversary" value={anniversary} onChange={setAnniversary} placeholder="Add anniversary" />
+        </XStack>
 
         <Button height={50} backgroundColor={brand.gold} color={brand.onGold} fontWeight="800" fontSize={16} borderRadius={12} disabled={saving || uploading} onPress={save}>
           {saving ? "Saving…" : "Save changes"}

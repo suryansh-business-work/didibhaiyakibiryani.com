@@ -1,4 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { useAuth } from "../../src/auth";
 import { Loading } from "../../src/ui";
@@ -7,6 +8,7 @@ import LocationBroadcaster from "../../src/LocationBroadcaster";
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
+  const insets = useSafeAreaInsets();
 
   if (loading) return <Loading label="Loading…" />;
   if (!user) return <Redirect href="/login" />;
@@ -18,10 +20,17 @@ export default function TabsLayout() {
       <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: brand.card, borderTopColor: brand.border },
+        tabBarStyle: {
+          backgroundColor: brand.card,
+          borderTopColor: brand.border,
+          height: 68 + insets.bottom,
+          paddingBottom: 10 + insets.bottom,
+          paddingTop: 8,
+        },
         tabBarActiveTintColor: brand.gold,
         tabBarInactiveTintColor: brand.muted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
+        tabBarIconStyle: { marginTop: 2 },
         sceneStyle: { backgroundColor: brand.bg },
       }}
     >

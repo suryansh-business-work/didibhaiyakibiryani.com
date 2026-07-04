@@ -33,6 +33,8 @@ export interface ISettings extends Document {
   accentColor: string;
   /** Google Font family name applied across web apps & admin ("" = system). */
   fontFamily: string;
+  /** Icon for the synthetic "All" category tile in the app ("" = illustration). */
+  allCategoryImage: string;
   companyName: string;
   companyAddress: string;
   companyPhone: string;
@@ -78,6 +80,7 @@ export interface ISettings extends Document {
   pointsPerReward: number; // points needed to redeem one reward
   rewardItem?: Types.ObjectId; // free menu item granted on redeem
   rewardName: string; // display name for the reward ("" = use the item's name)
+  rewardsProgramName: string; // the loyalty programme's display name (e.g. "Cheesy Rewards")
   // Support — admin-managed subject lines for the order support box
   supportSubjects: string[];
   // Integrations — secret credentials entered from admin → Integrations.
@@ -126,6 +129,7 @@ const settingsSchema = new Schema<ISettings>(
     primaryColor: { type: String, default: "#e4b65c" },
     accentColor: { type: String, default: "#5e2218" },
     fontFamily: { type: String, default: "" },
+    allCategoryImage: { type: String, default: "" },
     companyName: { type: String, default: "D&B Foods" },
     companyAddress: { type: String, default: "" },
     companyPhone: { type: String, default: "" },
@@ -161,6 +165,7 @@ const settingsSchema = new Schema<ISettings>(
     pointsPerReward: { type: Number, default: 600, min: 1 },
     rewardItem: { type: Schema.Types.ObjectId, ref: "MenuItem" },
     rewardName: { type: String, default: "" },
+    rewardsProgramName: { type: String, default: "Cheesy Rewards" },
     supportSubjects: {
       type: [String],
       default: () => [

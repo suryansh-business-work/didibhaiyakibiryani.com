@@ -21,6 +21,7 @@ export const recoverSchema = z.object({
 export const categorySchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   description: z.string().optional(),
+  image: z.string().optional(),
   sortOrder,
   isActive: z.boolean(),
 });

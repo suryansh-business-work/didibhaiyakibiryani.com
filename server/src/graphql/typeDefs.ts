@@ -77,6 +77,8 @@ export const typeDefs = /* GraphQL */ `
     email: String!
     phone: String
     avatarUrl: String
+    dob: String
+    anniversary: String
     role: Role!
     addresses: [Address!]!
     isActive: Boolean!
@@ -685,6 +687,7 @@ export const typeDefs = /* GraphQL */ `
     primaryColor: String!
     accentColor: String!
     fontFamily: String!
+    allCategoryImage: String!
     companyName: String!
     companyAddress: String!
     companyPhone: String!
@@ -721,6 +724,7 @@ export const typeDefs = /* GraphQL */ `
     pointsPerReward: Int!
     rewardItem: MenuItem
     rewardName: String!
+    rewardsProgramName: String!
     supportSubjects: [String!]!
     updatedAt: DateTime!
   }
@@ -741,6 +745,7 @@ export const typeDefs = /* GraphQL */ `
     primaryColor: String
     accentColor: String
     fontFamily: String
+    allCategoryImage: String
     companyName: String
     companyAddress: String
     companyPhone: String
@@ -776,6 +781,7 @@ export const typeDefs = /* GraphQL */ `
     pointsPerReward: Int
     rewardItem: ID
     rewardName: String
+    rewardsProgramName: String
     supportSubjects: [String!]
   }
 
@@ -1059,7 +1065,7 @@ export const typeDefs = /* GraphQL */ `
     requestSignupOtp(email: String!, name: String!): Boolean!
     register(input: RegisterInput!): AuthPayload!
     login(emailOrPhone: String!, password: String!): AuthPayload!
-    updateProfile(name: String, phone: String, avatarUrl: String): User!
+    updateProfile(name: String, phone: String, avatarUrl: String, dob: String, anniversary: String): User!
     addAddress(input: AddressInput!): User!
     removeAddress(addressId: ID!): User!
     setDefaultAddress(addressId: ID!): User! # pick the active delivery location

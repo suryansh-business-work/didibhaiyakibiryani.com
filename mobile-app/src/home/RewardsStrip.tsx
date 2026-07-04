@@ -4,15 +4,17 @@ import { XStack, YStack, Text } from "tamagui";
 import { MY_REWARDS } from "../graphql";
 import { useAuth } from "../auth";
 import { useColors } from "../theme";
+import { useSettings } from "../settings";
 import { MIcon } from "../components";
 
 interface Rewards { enabled: boolean; points: number; rewardsAvailable: number }
 
-/** Home "Cheesy Rewards" strip — shows points / a ready reward, links to the
- *  full Rewards screen. Hidden when logged out or loyalty is off. */
+/** Home loyalty strip — shows points / a ready reward, links to the full
+ *  Rewards screen. Hidden when logged out or loyalty is off. */
 export function RewardsStrip() {
   const brand = useColors();
   const router = useRouter();
+  const { rewardsProgramName } = useSettings();
   const { user } = useAuth();
   const { data } = useQuery<{ myRewards: Rewards }>(MY_REWARDS, { skip: !user });
   const r = data?.myRewards;
@@ -36,7 +38,7 @@ export function RewardsStrip() {
           <MIcon name="gift-outline" size={20} color={brand.gold} />
         </YStack>
         <YStack flex={1}>
-          <Text fontWeight="800" color={brand.text}>Cheesy Rewards</Text>
+          <Text fontWeight="800" color={brand.text}>{rewardsProgramName}</Text>
           <Text fontSize={12} color={brand.muted}>{ready ? "A free item is ready to redeem!" : `${r.points} points earned`}</Text>
         </YStack>
         <MIcon name="chevron-right" size={20} color={brand.gold} />

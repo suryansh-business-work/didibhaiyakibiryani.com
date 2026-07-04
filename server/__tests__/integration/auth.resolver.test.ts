@@ -87,8 +87,10 @@ describe("auth resolver", () => {
     const u = await makeCustomer("addr@b.com");
     const ctx = ctxFor(u.id, "CUSTOMER");
     await M.updateProfile(null, { name: "New Name", phone: "9000000000" }, ctx);
-    const withAvatar = await M.updateProfile(null, { avatarUrl: "https://ik/me.jpg" }, ctx);
+    const withAvatar = await M.updateProfile(null, { avatarUrl: "https://ik/me.jpg", dob: "1995-08-15", anniversary: "2020-02-14" }, ctx);
     expect(withAvatar.avatarUrl).toBe("https://ik/me.jpg");
+    expect(withAvatar.dob).toBe("1995-08-15");
+    expect(withAvatar.anniversary).toBe("2020-02-14");
 
     await M.addAddress(null, { input: { line1: "1 St", city: "BLR", pincode: "560001" } }, ctx);
     const withSecond = await M.addAddress(null, { input: { line1: "2 St", city: "BLR", pincode: "560002", isDefault: true } }, ctx);

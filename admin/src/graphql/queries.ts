@@ -207,6 +207,7 @@ export const CATEGORIES = gql`
       name
       slug
       description
+      image
       sortOrder
       isActive
       itemCount
@@ -539,6 +540,7 @@ export const SETTINGS_CORE_FIELDS = `
   primaryColor
   accentColor
   fontFamily
+  allCategoryImage
   companyName
   companyAddress
   companyPhone
@@ -581,6 +583,7 @@ export const SETTINGS_CORE_FIELDS = `
   pointsPerReward
   rewardItem { id name }
   rewardName
+  rewardsProgramName
   supportSubjects
   updatedAt
 `;

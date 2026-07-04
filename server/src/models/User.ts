@@ -19,6 +19,9 @@ export interface IUser extends Document {
   email: string;
   phone?: string;
   avatarUrl?: string;
+  /** Optional "YYYY-MM-DD" dates for birthday / anniversary marketing. */
+  dob?: string;
+  anniversary?: string;
   passwordHash: string;
   role: Role;
   addresses: IAddress[];
@@ -53,6 +56,8 @@ const userSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     phone: { type: String, trim: true },
     avatarUrl: { type: String },
+    dob: { type: String },
+    anniversary: { type: String },
     passwordHash: { type: String, required: true },
     role: {
       type: String,

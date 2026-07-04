@@ -2,7 +2,8 @@ import type { GestureResponderEvent } from "react-native";
 import { Link } from "expo-router";
 import { YStack, XStack, Text, Button } from "tamagui";
 import { useColors, inr } from "../theme";
-import { FoodThumb, Badge, Spice, Stars } from "../components";
+import { useCart } from "../cart";
+import { FoodThumb, Badge, Spice, Stars, MIcon } from "../components";
 import type { Item } from "./types";
 
 interface MenuItemCardProps {
@@ -27,9 +28,59 @@ function TopBadge({ item }: Readonly<{ item: Item }>) {
   );
 }
 
+/** Rounded − qty + stepper shown once the item is in the cart. */
+function QtyStepper({ qty, onDec, onInc }: Readonly<{ qty: number; onDec: () => void; onInc: () => void }>) {
+  const brand = useColors();
+  const stop = (e: GestureResponderEvent, fn: () => void) => {
+    e?.stopPropagation?.();
+    fn();
+  };
+  return (
+    <XStack marginTop={10} height={40} borderRadius={10} borderWidth={1} borderColor={brand.gold} backgroundColor="rgba(228,182,92,0.14)" alignItems="center" justifyContent="space-between">
+      <XStack width={54} height="100%" alignItems="center" justifyContent="center" pressStyle={{ opacity: 0.6 }} onPress={(e: GestureResponderEvent) => stop(e, onDec)}>
+        <MIcon name="minus" size={20} color={brand.gold} />
+      </XStack>
+      <Text fontWeight="800" color={brand.gold} fontSize={16}>{qty}</Text>
+      <XStack width={54} height="100%" alignItems="center" justifyContent="center" pressStyle={{ opacity: 0.6 }} onPress={(e: GestureResponderEvent) => stop(e, onInc)}>
+        <MIcon name="plus" size={20} color={brand.gold} />
+      </XStack>
+    </XStack>
+  );
+}
+
 export function MenuItemCard({ item, hue, onAdd }: Readonly<MenuItemCardProps>) {
   const brand = useColors();
+  const { lines, setQty } = useCart();
   const soldOut = !item.isAvailable;
+  const qty = lines.find((l) => l.id === item.id)?.qty ?? 0;
+
+  let control = (
+    <Button
+      size="$3"
+      marginTop={10}
+      backgroundColor="rgba(228,182,92,0.12)"
+      borderColor={brand.gold}
+      borderWidth={1}
+      color={brand.gold}
+      fontWeight="800"
+      pressStyle={{ backgroundColor: brand.gold }}
+      onPress={(e: GestureResponderEvent) => {
+        e?.stopPropagation?.();
+        onAdd(item);
+      }}
+    >
+      + Add to cart
+    </Button>
+  );
+  if (soldOut) {
+    control = (
+      <Button size="$3" marginTop={10} backgroundColor="rgba(255,255,255,0.05)" borderColor={brand.border} borderWidth={1} color={brand.muted} fontWeight="800" disabled>
+        Out of stock
+      </Button>
+    );
+  } else if (qty > 0) {
+    control = <QtyStepper qty={qty} onDec={() => setQty(item.id, qty - 1)} onInc={() => setQty(item.id, qty + 1)} />;
+  }
 
   return (
     <Link href={`/item/${item.id}`} asChild>
@@ -66,23 +117,7 @@ export function MenuItemCard({ item, hue, onAdd }: Readonly<MenuItemCardProps>) 
           </YStack>
         </XStack>
 
-        <Button
-          size="$3"
-          marginTop={10}
-          backgroundColor={soldOut ? "rgba(255,255,255,0.05)" : "rgba(228,182,92,0.12)"}
-          borderColor={soldOut ? brand.border : brand.gold}
-          borderWidth={1}
-          color={soldOut ? brand.muted : brand.gold}
-          fontWeight="800"
-          disabled={soldOut}
-          pressStyle={soldOut ? undefined : { backgroundColor: brand.gold }}
-          onPress={(e: GestureResponderEvent) => {
-            e?.stopPropagation?.();
-            if (!soldOut) onAdd(item);
-          }}
-        >
-          {soldOut ? "Out of stock" : "+ Add to cart"}
-        </Button>
+        {control}
       </YStack>
     </Link>
   );

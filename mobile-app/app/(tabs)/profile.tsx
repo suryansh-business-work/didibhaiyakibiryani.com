@@ -71,7 +71,7 @@ export default function Profile() {
           <Separator borderColor={brand.border} />
           <Row icon="receipt-text-outline" label="My orders" onPress={() => router.push("/orders")} chevron />
           <Separator borderColor={brand.border} />
-          <Row icon="gift-outline" label="Cheesy Rewards" onPress={() => router.push("/rewards")} chevron />
+          <Row icon="gift-outline" label={settings.rewardsProgramName} onPress={() => router.push("/rewards")} chevron />
           <Separator borderColor={brand.border} />
           <Row icon="tag-heart-outline" label="Offers & coupons" onPress={() => router.push("/offers")} chevron />
           <Separator borderColor={brand.border} />

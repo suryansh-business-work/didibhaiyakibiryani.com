@@ -126,6 +126,43 @@ export function DateField({ label, value, onChange, error }: Readonly<FieldProps
   );
 }
 
+/** Past-date picker (birthday / anniversary) — stores "YYYY-MM-DD", no future. */
+export function PastDateField({ label, value, onChange, placeholder = "Select date" }: Readonly<{ label: string; value: string; onChange: (v: string) => void; placeholder?: string }>) {
+  const brand = useColors();
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<Date>(value ? new Date(`${value}T00:00:00`) : new Date(2000, 0, 1));
+
+  function handle(event: DateTimePickerEvent, selected?: Date) {
+    setOpen(false);
+    if (event.type === "dismissed") return;
+    const chosen = selected ?? picked;
+    setPicked(chosen);
+    onChange(toDateValue(chosen));
+  }
+
+  return (
+    <YStack gap={5} flex={1}>
+      <Text fontSize={12} color={brand.muted} fontWeight="700">{label}</Text>
+      <XStack
+        onPress={() => setOpen(true)}
+        alignItems="center"
+        justifyContent="space-between"
+        backgroundColor={brand.bgSoft}
+        borderColor={brand.borderStrong}
+        borderWidth={1}
+        borderRadius={9}
+        paddingHorizontal={12}
+        paddingVertical={12}
+        pressStyle={{ opacity: 0.85 }}
+      >
+        <Text color={value ? brand.text : brand.faint}>{dateLabel(value) || placeholder}</Text>
+        <MIcon name="calendar" size={18} color={brand.gold} />
+      </XStack>
+      {open ? <DateTimePicker value={picked} mode="date" maximumDate={new Date()} onChange={handle} /> : null}
+    </YStack>
+  );
+}
+
 /** Native time picker — stores "HH:mm". */
 export function TimeField({ label, value, onChange, error }: Readonly<FieldProps>) {
   return (

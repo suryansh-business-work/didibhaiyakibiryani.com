@@ -11,6 +11,7 @@ interface MenuRef { id: string; name: string }
 
 interface RewardsData {
   loyaltyEnabled: boolean;
+  rewardsProgramName: string;
   pointsPerOrder: number;
   pointsMinOrder: number;
   pointsPerReward: number;
@@ -20,6 +21,7 @@ interface RewardsData {
 
 interface RewardsForm {
   loyaltyEnabled: boolean;
+  rewardsProgramName: string;
   pointsPerOrder: number;
   pointsMinOrder: number;
   pointsPerReward: number;
@@ -29,6 +31,7 @@ interface RewardsForm {
 
 const BLANK: RewardsForm = {
   loyaltyEnabled: false,
+  rewardsProgramName: "Cheesy Rewards",
   pointsPerOrder: 100,
   pointsMinOrder: 350,
   pointsPerReward: 600,
@@ -39,6 +42,7 @@ const BLANK: RewardsForm = {
 function toForm(s: RewardsData): RewardsForm {
   return {
     loyaltyEnabled: s.loyaltyEnabled ?? false,
+    rewardsProgramName: s.rewardsProgramName ?? BLANK.rewardsProgramName,
     pointsPerOrder: s.pointsPerOrder ?? BLANK.pointsPerOrder,
     pointsMinOrder: s.pointsMinOrder ?? BLANK.pointsMinOrder,
     pointsPerReward: s.pointsPerReward ?? BLANK.pointsPerReward,
@@ -104,6 +108,13 @@ export default function Rewards() {
           Customers earn points on delivered orders and redeem them for a free item.
           Everything here updates the customer app instantly — no deploy.
         </p>
+        <div className="field" style={{ maxWidth: 360 }}>
+          <label>Rewards program name</label>
+          <input value={form.rewardsProgramName} onChange={(e) => patch({ rewardsProgramName: e.target.value })} placeholder="e.g. Cheesy Rewards" />
+          <div className="muted" style={{ fontSize: "0.75rem", marginTop: 4 }}>
+            The name shown to customers on the home strip, profile and rewards screen.
+          </div>
+        </div>
         <Switch
           label="Enable rewards"
           hint="Turn the whole loyalty programme on or off"

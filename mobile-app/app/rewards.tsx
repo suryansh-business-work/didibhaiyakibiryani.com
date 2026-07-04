@@ -7,6 +7,7 @@ import { YStack, XStack, Text, Button, Spinner } from "tamagui";
 import { MY_REWARDS, REDEEM_REWARD } from "../src/graphql";
 import { useAuth } from "../src/auth";
 import { useColors } from "../src/theme";
+import { useSettings } from "../src/settings";
 import { errorMessage } from "../src/error";
 import { BackButton, ErrorState, FoodThumb, MIcon } from "../src/components";
 
@@ -41,6 +42,7 @@ function HowItWorks({ r }: Readonly<{ r: Rewards }>) {
 
 export default function RewardsScreen() {
   const brand = useColors();
+  const { rewardsProgramName } = useSettings();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -80,7 +82,7 @@ export default function RewardsScreen() {
     <YStack flex={1} backgroundColor={brand.bg}>
       <XStack paddingTop={insets.top + 8} paddingHorizontal={16} paddingBottom={10} alignItems="center" gap={12}>
         <BackButton onPress={() => router.back()} />
-        <Text fontSize={22} fontWeight="800" color={brand.text}>Cheesy Rewards</Text>
+        <Text fontSize={22} fontWeight="800" color={brand.text}>{rewardsProgramName}</Text>
       </XStack>
 
       {loading && !data ? (

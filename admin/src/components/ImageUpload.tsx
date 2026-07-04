@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { Box, Button, Typography } from "@mui/material";
 import { UPLOAD_IMAGE } from "../graphql/mutations";
+import CropDialog from "./CropDialog";
 
 const MAX_FILE_BYTES = 7 * 1024 * 1024; // matches the server-side limit
 
@@ -13,6 +14,8 @@ interface ImageUploadProps {
   label?: string;
   /** File picker accept filter. Defaults to images; pass e.g. "image/*,application/pdf" for invoices. */
   accept?: string;
+  /** Crop box aspect ratio for the crop dialog (images only). Default 1 (square). */
+  cropAspect?: number;
 }
 
 const IMAGE_URL_RE = /\.(png|jpe?g|webp|gif|svg|avif)(\?|$)/i;
@@ -27,11 +30,18 @@ function readAsDataUrl(file: File): Promise<string> {
 }
 
 /** Picks a local image and uploads it to ImageKit via the server. */
-export default function ImageUpload({ folder, currentUrl, onUploaded, label = "Image", accept = "image/*" }: Readonly<ImageUploadProps>) {
+export default function ImageUpload({ folder, currentUrl, onUploaded, label = "Image", accept = "image/*", cropAspect = 1 }: Readonly<ImageUploadProps>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [upload, { loading }] = useMutation(UPLOAD_IMAGE);
   const [error, setError] = useState("");
+  const [cropSrc, setCropSrc] = useState("");
+  const [fileName, setFileName] = useState("image.jpg");
   const imagesOnly = accept === "image/*";
+
+  async function doUpload(dataUrl: string, name: string) {
+    const { data } = await upload({ variables: { file: dataUrl, fileName: name, folder } });
+    onUploaded(data.uploadImage.url);
+  }
 
   async function onPick(file: File | undefined) {
     if (!file) return;
@@ -46,8 +56,22 @@ export default function ImageUpload({ folder, currentUrl, onUploaded, label = "I
     }
     try {
       const dataUrl = await readAsDataUrl(file);
-      const { data } = await upload({ variables: { file: dataUrl, fileName: file.name, folder } });
-      onUploaded(data.uploadImage.url);
+      // Images go through the crop dialog first; PDFs upload as-is.
+      if (imagesOnly) {
+        setFileName(file.name);
+        setCropSrc(dataUrl);
+      } else {
+        await doUpload(dataUrl, file.name);
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Upload failed — please try again.");
+    }
+  }
+
+  async function onCropped(dataUrl: string) {
+    setCropSrc("");
+    try {
+      await doUpload(dataUrl, fileName);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Upload failed — please try again.");
     }
@@ -88,8 +112,19 @@ export default function ImageUpload({ folder, currentUrl, onUploaded, label = "I
           </Typography>
         </Box>
       </Box>
-      <input ref={inputRef} type="file" accept={accept} style={{ display: "none" }} onChange={(e) => onPick(e.target.files?.[0])} />
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const el = e.currentTarget;
+          onPick(el.files?.[0]);
+          el.value = "";
+        }}
+      />
       {error ? <Typography color="error" variant="caption" sx={{ mt: 1, display: "block" }}>{error}</Typography> : null}
+      <CropDialog open={Boolean(cropSrc)} imageSrc={cropSrc} aspect={cropAspect} onCancel={() => setCropSrc("")} onCropped={onCropped} />
     </Box>
   );
 }

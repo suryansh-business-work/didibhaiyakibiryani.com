@@ -155,6 +155,7 @@ export default function Slider() {
           <ImageUpload
             folder="/slider"
             label="Slide image"
+            cropAspect={16 / 9}
             currentUrl={watch("imageUrl")}
             onUploaded={(url) => setValue("imageUrl", url, { shouldValidate: true })}
           />

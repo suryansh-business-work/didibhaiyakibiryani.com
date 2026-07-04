@@ -7,6 +7,8 @@ export const APP_SETTINGS = gql`
       logoUrl
       tagline
       fontFamily
+      allCategoryImage
+      rewardsProgramName
       storeOpenTime
       storeCloseTime
       storeOpenNow
@@ -86,12 +88,14 @@ export const RATE_ORDER = gql`
 `;
 
 export const UPDATE_PROFILE = gql`
-  mutation UpdateProfile($name: String, $phone: String, $avatarUrl: String) {
-    updateProfile(name: $name, phone: $phone, avatarUrl: $avatarUrl) {
+  mutation UpdateProfile($name: String, $phone: String, $avatarUrl: String, $dob: String, $anniversary: String) {
+    updateProfile(name: $name, phone: $phone, avatarUrl: $avatarUrl, dob: $dob, anniversary: $anniversary) {
       id
       name
       phone
       avatarUrl
+      dob
+      anniversary
     }
   }
 `;
@@ -112,6 +116,8 @@ export const ME = gql`
       email
       phone
       avatarUrl
+      dob
+      anniversary
       addresses {
         id
         label

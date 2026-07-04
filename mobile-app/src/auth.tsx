@@ -10,6 +10,8 @@ export interface User {
   email: string;
   phone?: string;
   avatarUrl?: string;
+  dob?: string;
+  anniversary?: string;
   addresses?: Address[];
 }
 export interface Address {
